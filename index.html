@@ -112,7 +112,7 @@
                     <label class="text-[11px] font-medium text-slate-600">Etykieta</label>
                     <input type="text" id="custom-name" value="Element Stoiska" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
-                <button onclick="addCustomItem()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
+                <button onclick="startPlacingCustom()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-plus"></i> Przypnij Własny Obiekt
                 </button>
             </div>
@@ -359,8 +359,7 @@
         let selectedId = null;
         let nextObjectId = 1;
 
-        // Stan przypięcia do kursora
-        let activeGhost = null; // Przechowuje dane obiektu, który "leci" za kursorem
+        let activeGhost = null;
 
         let bgConfig = {
             url: '',
@@ -401,7 +400,7 @@
             centerViewport();
 
             if (objects.length === 0) {
-                addObject({ name: 'Stół duży', x: 1000, y: 1000, w: 1.80, h: 0.74, color: '#1e293b' });
+                addObject({ name: 'Stół duży', x: 10000, y: 10000, w: 1.80, h: 0.74, color: '#1e293b' });
             }
         }
 
@@ -459,7 +458,6 @@
             document.getElementById('zoom-level').textContent = `${Math.round(currentZoom * 100)}%`;
         }
 
-        // --- OBSŁUGA PRZYPIĘCIA DO KURSORA ---
         function startPlacingPreset(idx) {
             const p = PRESETS[idx];
             activeGhost = {
@@ -553,7 +551,6 @@
             const viewport = document.getElementById('viewport');
 
             viewport.addEventListener('mousedown', (e) => {
-                // Jeśli element jest przypięty do kursora, pierwsze/kolejne kliknięcie w siatkę go upuszcza (odпиna)
                 if (activeGhost) {
                     const coords = screenToCanvasCoords(e.clientX, e.clientY);
                     let finalX = coords.x;
@@ -580,7 +577,6 @@
                     return;
                 }
 
-                // Standardowa obsługa przesuwania planszy (panning) lub odznaczania
                 if (e.target === viewport || e.target.id === 'canvas-wrapper' || e.target.id === 'grid-bg' || e.target.id === 'subgrid-bg') {
                     deselectAll();
                     panning = true;
@@ -589,7 +585,6 @@
                 }
             });
 
-            // Śledzenie kursora dla ducha i przesuwania
             window.addEventListener('mousemove', (e) => {
                 if (activeGhost) {
                     const ghost = document.getElementById('cursor-ghost');
@@ -612,7 +607,6 @@
             window.addEventListener('mouseup', endDragOrPan);
         }
 
-        // Pomocnicza funkcja przeliczająca pozycję myszy na ekranie na współrzędne nieskończonej siatki
         function screenToCanvasCoords(clientX, clientY) {
             const viewport = document.getElementById('viewport');
             const rect = viewport.getBoundingClientRect();
@@ -776,8 +770,34 @@
         }
 
         function adjustZoom(amount) {
+            const viewport = document.getElementById('viewport');
+            const oldZoom = currentZoom;
             currentZoom = Math.min(Math.max(0.2, currentZoom + amount), 3.0);
+
+            const vx = viewport.clientWidth / 2;
+            const vy = viewport.clientHeight / 2;
+
+            const canvasCenterX = (viewport.scrollLeft + vx) / oldZoom;
+            const canvasCenterY = (viewport.scrollTop + vy) / oldZoom;
+
             applyCanvasTransform();
+
+            let targetX = canvasCenterX;
+            let targetY = canvasCenterY;
+
+            if (objects.length > 0) {
+                const avgX = objects.reduce((sum, o) => sum + o.x, 0) / objects.length;
+                const avgY = objects.reduce((sum, o) => sum + o.y, 0) / objects.length;
+                targetX = canvasCenterX * 0.7 + avgX * 0.3;
+                targetY = canvasCenterY * 0.7 + avgY * 0.3;
+            }
+
+            viewport.scrollTo({
+                left: targetX * currentZoom - vx,
+                top: targetY * currentZoom - vy,
+                behavior: 'smooth'
+            });
+
             if (activeGhost) showGhostElement();
         }
 
