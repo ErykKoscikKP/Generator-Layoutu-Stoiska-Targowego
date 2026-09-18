@@ -50,7 +50,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none">
+<body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none" oncontextmenu="return false;">
 
     <header class="bg-slate-900 text-white px-4 py-2.5 flex justify-between items-center shadow-md z-30 shrink-0">
         <div class="flex items-center space-x-3">
@@ -62,7 +62,7 @@
             </div>
             <div>
                 <h1 class="font-bold text-base md:text-lg leading-tight">Planer Layoutu Stoiska</h1>
-                <p class="text-xs text-slate-400 hidden sm:block">Nieskończona siatka | 1 metr = 100 px</p>
+                <p class="text-xs text-slate-400 hidden sm:block">Lewy: przesuwanie/plansza | Prawy: zaznaczanie</p>
             </div>
         </div>
 
@@ -533,21 +533,20 @@
                 return `
                     <div id="obj-${obj.id}" data-id="${obj.id}" class="booth-object pointer-events-auto ${isSel} rounded-md shadow flex flex-col items-center justify-center p-1 text-white text-xs font-medium"
                          style="left: ${obj.x - pxW/2}px; top: ${obj.y - pxH/2}px; width: ${pxW}px; height: ${pxH}px; background-color: ${obj.color}; opacity: ${obj.opacity}; transform: rotate(${obj.rotation}deg); z-index: ${obj.zIndex};"
-                         onmousedown="startDrag(event, ${obj.id})" ontouchstart="startDrag(event, ${obj.id})" onclick="event.stopPropagation(); selectObjectClick(event, ${obj.id})">
+                         onmousedown="handleObjMouseDown(event, ${obj.id})" ontouchstart="handleObjTouchStart(event, ${obj.id})">
                         ${content}
                     </div>
                 `;
             }).join('');
         }
 
-        let draggingObjId = null, dragStartX = 0, dragStartY = 0, objInitialX = 0, objInitialY = 0;
+        let draggingObjId = null, dragStartX = 0, dragStartY = 0;
         let groupDragOffsets = {};
         let panning = false, panStartX = 0, panStartY = 0;
         let initialPinchDistance = null;
         let gestureInitialZoom = 1;
 
         let marqueeActive = false;
-        let marqueeStartX = 0, marqueeStartY = 0;
         let marqueeCanvasStartX = 0, marqueeCanvasStartY = 0;
 
         function initInteractions() {
@@ -580,28 +579,31 @@
                 }
 
                 if (e.target === viewport || e.target.id === 'canvas-wrapper' || e.target.id.includes('grid')) {
-                    if (!e.shiftKey) {
-                        deselectAll();
+                    if (e.button === 2) {
+                        // Right click: Marquee Selection
+                        if (!e.shiftKey) {
+                            deselectAll();
+                        }
+                        marqueeActive = true;
+                        const coords = screenToCanvasCoords(e.clientX, e.clientY);
+                        marqueeCanvasStartX = coords.x;
+                        marqueeCanvasStartY = coords.y;
+
+                        const mBox = document.getElementById('marqueeBox');
+                        mBox.style.display = 'block';
+                        mBox.style.left = `${coords.x}px`;
+                        mBox.style.top = `${coords.y}px`;
+                        mBox.style.width = '0px';
+                        mBox.style.height = '0px';
+                    } else if (e.button === 0) {
+                        // Left click on background: Panning
+                        if (!e.shiftKey) {
+                            deselectAll();
+                        }
+                        panning = true;
+                        panStartX = e.clientX;
+                        panStartY = e.clientY;
                     }
-                    
-                    // Start Marquee Selection
-                    marqueeActive = true;
-                    const coords = screenToCanvasCoords(e.clientX, e.clientY);
-                    marqueeCanvasStartX = coords.x;
-                    marqueeCanvasStartY = coords.y;
-                    marqueeStartX = e.clientX;
-                    marqueeStartY = e.clientY;
-
-                    const mBox = document.getElementById('marqueeBox');
-                    mBox.style.display = 'block';
-                    mBox.style.left = `${coords.x}px`;
-                    mBox.style.top = `${coords.y}px`;
-                    mBox.style.width = '0px';
-                    mBox.style.height = '0px';
-
-                    panning = true;
-                    panStartX = e.clientX;
-                    panStartY = e.clientY;
                 }
             });
 
@@ -700,7 +702,6 @@
                     mBox.style.width = `${width}px`;
                     mBox.style.height = `${height}px`;
 
-                    // Check which objects fall within marquee box
                     selectedIds = objects.filter(o => {
                         const pxW = o.w * SCALE;
                         const pxH = o.h * SCALE;
@@ -715,11 +716,6 @@
 
                     renderObjects();
                     updatePropertiesPanel();
-
-                    // If moving far enough, disable pan to let marquee work seamlessly
-                    if (Math.hypot(e.clientX - marqueeStartX, e.clientY - marqueeStartY) > 5) {
-                        panning = false;
-                    }
                 } else if (panning) {
                     viewport.scrollLeft -= (e.clientX - panStartX);
                     viewport.scrollTop -= (e.clientY - panStartY);
@@ -737,7 +733,6 @@
                 }
             });
 
-            // Shortcut Ctrl+A
             window.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
                     if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
@@ -759,10 +754,29 @@
             };
         }
 
-        function startDrag(e, id) {
+        function handleObjMouseDown(e, id) {
             if (activeGhost) return;
             e.stopPropagation();
 
+            if (e.button === 2) {
+                // Right click on object: can be used to select/deselect individually without starting drag
+                if (e.shiftKey) {
+                    if (selectedIds.includes(id)) {
+                        selectedIds = selectedIds.filter(i => i !== id);
+                    } else {
+                        selectedIds.push(id);
+                    }
+                } else {
+                    if (!selectedIds.includes(id)) {
+                        selectedIds = [id];
+                    }
+                }
+                renderObjects();
+                updatePropertiesPanel();
+                return;
+            }
+
+            // Left click on object: dragging/selection
             if (!selectedIds.includes(id)) {
                 if (e.shiftKey) {
                     selectedIds.push(id);
@@ -774,8 +788,8 @@
             updatePropertiesPanel();
 
             draggingObjId = id;
-            dragStartX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-            dragStartY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
             
             groupDragOffsets = {};
             selectedIds.forEach(selId => {
@@ -786,18 +800,28 @@
             });
         }
 
-        function selectObjectClick(e, id) {
-            if (e.shiftKey) {
-                if (selectedIds.includes(id)) {
-                    selectedIds = selectedIds.filter(i => i !== id);
-                } else {
-                    selectedIds.push(id);
-                }
-            } else {
+        function handleObjTouchStart(e, id) {
+            if (activeGhost) return;
+            e.stopPropagation();
+
+            if (!selectedIds.includes(id)) {
                 selectedIds = [id];
             }
             renderObjects();
             updatePropertiesPanel();
+
+            const touch = e.touches[0];
+            draggingObjId = id;
+            dragStartX = touch.clientX;
+            dragStartY = touch.clientY;
+            
+            groupDragOffsets = {};
+            selectedIds.forEach(selId => {
+                const o = objects.find(obj => obj.id === selId);
+                if (o) {
+                    groupDragOffsets[selId] = { x: o.x, y: o.y };
+                }
+            });
         }
 
         function selectObject(id) {
