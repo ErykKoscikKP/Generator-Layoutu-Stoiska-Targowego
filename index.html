@@ -528,6 +528,7 @@
         let draggingObjId = null, dragStartX = 0, dragStartY = 0, objInitialX = 0, objInitialY = 0;
         let panning = false, panStartX = 0, panStartY = 0;
         let initialPinchDistance = null;
+        let gestureInitialZoom = 1;
 
         function initInteractions() {
             const viewport = document.getElementById('viewport');
@@ -566,50 +567,56 @@
                 }
             });
 
-            // Obsługa zoomowania kółkiem myszy oraz gładzikiem (trackpadem / pinch)
+            // Kompleksowa obsługa kółka myszy oraz zoomu gładzika (w tym trackpady z macOS/Windows oraz gesty pinch)
             viewport.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const zoomFactor = 1.1;
-                let newZoom = currentZoom;
+                // Pozwalamy przeglądarce rozróżnić czy to pinch/zoom gładzika, czy zwykłe przewijanie dwoma palcami.
+                // Jeśli e.ctrlKey jest wciśnięty LUB e.deltaMode jest linią/pikslem z bardzo płynną deltą (typową dla trackpada bez domyślnego scrolla poziomego/pionowego), 
+                // traktujemy to jako zoom. Dodatkowo sprawdzamy czy to wyraźny gest szczypania (pinch).
+                const isTrackpadPinch = e.ctrlKey || (Math.abs(e.deltaY) < 50 && !e.shiftKey && e.deltaMode === 0);
 
-                if (e.ctrlKey || e.metaKey || Math.abs(e.deltaY) < 50) {
-                    // Główne zachowanie gładzika / szczypania / zoomu CTRL
-                    if (e.deltaY < 0) {
-                        newZoom = currentZoom * zoomFactor;
-                    } else {
-                        newZoom = currentZoom / zoomFactor;
-                    }
-                } else {
-                    // Tradycyjne kółko myszy
-                    if (e.deltaY < 0) {
-                        newZoom = currentZoom * 1.15;
-                    } else {
-                        newZoom = currentZoom / 1.15;
-                    }
+                if (isTrackpadPinch) {
+                    e.preventDefault();
+                    // Skalujemy płynnie na podstawie delty z gładzika
+                    const zoomFactor = 1 - e.deltaY * 0.01;
+                    let newZoom = Math.min(Math.max(0.1, currentZoom * zoomFactor), 4.0);
+
+                    const rect = viewport.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+
+                    const canvasX = (viewport.scrollLeft + mouseX) / currentZoom;
+                    const canvasY = (viewport.scrollTop + mouseY) / currentZoom;
+
+                    currentZoom = newZoom;
+                    applyCanvasTransform();
+
+                    viewport.scrollTo({
+                        left: canvasX * currentZoom - mouseX,
+                        top: canvasY * currentZoom - mouseY,
+                        behavior: 'auto'
+                    });
+
+                    if (activeGhost) showGhostElement();
                 }
-
-                newZoom = Math.min(Math.max(0.1, newZoom), 4.0);
-                
-                const rect = viewport.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                
-                const canvasX = (viewport.scrollLeft + mouseX) / currentZoom;
-                const canvasY = (viewport.scrollTop + mouseY) / currentZoom;
-
-                currentZoom = newZoom;
-                applyCanvasTransform();
-
-                viewport.scrollTo({
-                    left: canvasX * currentZoom - mouseX,
-                    top: canvasY * currentZoom - mouseY,
-                    behavior: 'auto'
-                });
-
-                if (activeGhost) showGhostElement();
             }, { passive: false });
 
-            // Obsługa gestów dotykowych (np. Pinch-to-zoom na telefonach)
+            // Obsługa natywnych gestów WebKit / Safari (macOS trackpad pinch-to-zoom)
+            viewport.addEventListener('gesturestart', (e) => {
+                e.preventDefault();
+                gestureInitialZoom = currentZoom;
+            }, { passive: false });
+
+            viewport.addEventListener('gesturechange', (e) => {
+                e.preventDefault();
+                let newZoom = Math.min(Math.max(0.1, gestureInitialZoom * e.scale), 4.0);
+                setZoomFromSlider(newZoom);
+            }, { passive: false });
+
+            viewport.addEventListener('gestureend', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+
+            // Obsługa gestów dotykowych (np. Pinch-to-zoom na ekranach telefonów)
             viewport.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2) {
                     initialPinchDistance = Math.hypot(
