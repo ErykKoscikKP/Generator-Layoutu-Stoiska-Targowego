@@ -567,17 +567,15 @@
                 }
             });
 
-            // Kompleksowa obsługa kółka myszy oraz zoomu gładzika (w tym trackpady z macOS/Windows oraz gesty pinch)
+            // Obsługa kółka myszy oraz zooma z gładzika (z uwzględnieniem wciśniętego Ctrl / Pinch)
             viewport.addEventListener('wheel', (e) => {
-                // Pozwalamy przeglądarce rozróżnić czy to pinch/zoom gładzika, czy zwykłe przewijanie dwoma palcami.
-                // Jeśli e.ctrlKey jest wciśnięty LUB e.deltaMode jest linią/pikslem z bardzo płynną deltą (typową dla trackpada bez domyślnego scrolla poziomego/pionowego), 
-                // traktujemy to jako zoom. Dodatkowo sprawdzamy czy to wyraźny gest szczypania (pinch).
-                const isTrackpadPinch = e.ctrlKey || (Math.abs(e.deltaY) < 50 && !e.shiftKey && e.deltaMode === 0);
+                // Zoom aktywujemy tylko wtedy, gdy użytkownik trzyma Ctrl (lub robi gest szczypania typu pinch generujący ctrlKey)
+                const isZoomGesture = e.ctrlKey || e.metaKey;
 
-                if (isTrackpadPinch) {
+                if (isZoomGesture) {
                     e.preventDefault();
-                    // Skalujemy płynnie na podstawie delty z gładzika
-                    const zoomFactor = 1 - e.deltaY * 0.01;
+                    // Znacznie łagodniejszy współczynnik (0.0015) zapobiegający hiperaktywności
+                    const zoomFactor = 1 - e.deltaY * 0.0015;
                     let newZoom = Math.min(Math.max(0.1, currentZoom * zoomFactor), 4.0);
 
                     const rect = viewport.getBoundingClientRect();
@@ -597,6 +595,8 @@
                     });
 
                     if (activeGhost) showGhostElement();
+                } else {
+                    // Bez klawisza Ctrl tradycyjne przesuwanie dwoma palcami góra/dół/lewo/prawo działa w pełni naturalnie dzięki overflow: auto w #viewport
                 }
             }, { passive: false });
 
