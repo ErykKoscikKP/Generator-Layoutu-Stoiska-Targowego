@@ -96,6 +96,27 @@
                 <div class="grid grid-cols-2 gap-2.5" id="preset-library"></div>
             </div>
 
+            <div class="p-4 border-b border-slate-200 bg-indigo-50/50">
+                <h3 class="font-semibold text-xs text-indigo-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-route"></i> Ruch klienta i kształty
+                </h3>
+                <div class="space-y-2">
+                    <button onclick="startPlacingArrow()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-arrow-right-long"></i> Dodaj Strzałkę Ruchu
+                    </button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] font-medium text-slate-600">Długość (m)</label>
+                            <input type="number" id="arrow-w" value="2.0" step="0.5" min="0.5" class="w-full text-xs px-2 py-1 border border-slate-300 rounded bg-white outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-medium text-slate-600">Przezroczystość</label>
+                            <input type="range" id="arrow-opacity" min="0.1" max="1.0" step="0.1" value="0.7" class="w-full mt-1.5 accent-indigo-600">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="p-4 border-b border-slate-200">
                 <h3 class="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-3">Niestandardowy Element</h3>
                 <div class="grid grid-cols-2 gap-2 mb-2">
@@ -109,7 +130,7 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="text-[11px] font-medium text-slate-600">Etykieta</label>
+                    <label class="text-[11px] font-medium text-slate-600">Etykieta / Gatunek</label>
                     <input type="text" id="custom-name" value="Element Stoiska" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <button onclick="startPlacingCustom()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
@@ -118,7 +139,7 @@
             </div>
 
             <div class="p-4 border-b border-slate-200 bg-slate-50">
-                <h3 class="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                <h3 class="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-3">
                     <span><i class="fa-solid fa-image text-slate-600"></i> Tło / Mapa przestrzeni</span>
                 </h3>
                 
@@ -151,28 +172,14 @@
                                 <span id="bg-rotation-val">0°</span>
                             </div>
                             <input type="range" id="bg-rotation" min="0" max="360" value="0" step="1" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
-                            <div class="grid grid-cols-4 gap-1 mt-1.5">
-                                <button onclick="setBgRotation(0)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">0°</button>
-                                <button onclick="setBgRotation(90)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">90°</button>
-                                <button onclick="setBgRotation(180)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">180°</button>
-                                <button onclick="setBgRotation(270)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">270°</button>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Przesunięcie tła (X / Y px)</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="bg-x" value="0" step="5" oninput="updateBgSettings()" placeholder="X" class="w-full text-xs px-2 py-1 border border-slate-300 rounded outline-none">
-                                <input type="number" id="bg-y" value="0" step="5" oninput="updateBgSettings()" placeholder="Y" class="w-full text-xs px-2 py-1 border border-slate-300 rounded outline-none">
-                            </div>
                         </div>
 
                         <div class="flex gap-2 pt-1">
                             <button onclick="resetBgTransform()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 rounded transition font-medium flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-rotate-left"></i> Resetuj Tło
+                                <i class="fa-solid fa-rotate-left"></i> Reset
                             </button>
                             <button onclick="removeBackground()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded transition font-medium flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-trash-can"></i> Usuń Tło
+                                <i class="fa-solid fa-trash-can"></i> Usuń
                             </button>
                         </div>
                     </div>
@@ -192,10 +199,10 @@
                     </label>
 
                     <select id="snap-step" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="0.1">co 0.1m (10cm)</option>
-                        <option value="0.25">co 0.25m (25cm)</option>
-                        <option value="0.5" selected>co 0.5m (50cm)</option>
-                        <option value="1.0">co 1.0m (1m)</option>
+                        <option value="0.1">co 0.1m</option>
+                        <option value="0.25">co 0.25m</option>
+                        <option value="0.5" selected>co 0.5m</option>
+                        <option value="1.0">co 1.0m</option>
                     </select>
                 </div>
 
@@ -206,14 +213,8 @@
                     </div>
                     <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-24 sm:w-32 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                     <div class="flex items-center gap-1">
-                        <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-12 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none focus:ring-1 focus:ring-blue-500">
+                        <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-12 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none">
                         <span class="text-xs font-bold text-slate-500">°</span>
-                    </div>
-                    <div class="flex gap-1 border-l border-slate-300 pl-2">
-                        <button onclick="setGridRotation(0)" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600">0°</button>
-                        <button onclick="setGridRotation(90)" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600">90°</button>
-                        <button onclick="setGridRotation(180)" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600">180°</button>
-                        <button onclick="setGridRotation(270)" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600">270°</button>
                     </div>
                 </div>
 
@@ -222,9 +223,9 @@
                         <i class="fa-solid fa-magnifying-glass text-sm"></i>
                         <span class="hidden sm:inline">Zoom:</span>
                     </div>
-                    <input type="range" id="zoom-slider" min="0.2" max="3.0" value="1.0" step="0.05" oninput="setZoomFromSlider(this.value)" class="w-24 sm:w-32 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                    <span id="zoom-level" class="text-xs font-mono font-bold text-slate-700 w-10 text-right">100%</span>
-                    <button onclick="resetZoom()" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600 border-l border-slate-300 ml-1" title="Resetuj przybliżenie">1:1</button>
+                    <input type="range" id="zoom-slider" min="0.1" max="4.0" value="1.0" step="0.05" oninput="setZoomFromSlider(this.value)" class="w-24 sm:w-32 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <span id="zoom-level" class="text-xs font-mono font-bold text-slate-700 w-12 text-right">100%</span>
+                    <button onclick="resetZoom()" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600 border-l border-slate-300 ml-1">1:1</button>
                 </div>
             </div>
 
@@ -248,7 +249,6 @@
 
                 </div>
 
-                <!-- Pływający element przypięty do kursora -->
                 <div id="cursor-ghost" class="absolute pointer-events-none z-50 hidden rounded-md shadow-lg opacity-85 flex flex-col items-center justify-center p-1 text-white text-xs font-medium border-2 border-dashed border-white">
                     <span id="ghost-name" class="truncate max-w-full px-1"></span>
                     <span id="ghost-dims" class="text-[9px] opacity-75"></span>
@@ -266,11 +266,6 @@
                     </div>
                     <span id="compass-deg" class="font-mono font-bold text-[11px] text-blue-300">0°</span>
                 </div>
-
-                <div class="fixed bottom-4 left-4 bg-slate-900/85 backdrop-blur text-white text-xs px-3.5 py-2 rounded-full shadow-lg pointer-events-none z-20 flex items-center gap-2.5 border border-slate-700">
-                    <span class="w-8 h-0.5 bg-blue-400 inline-block rounded-full"></span>
-                    <span class="font-medium text-slate-200">Siatka nieskończona: 1 metr (100 px)</span>
-                </div>
             </div>
         </main>
 
@@ -286,8 +281,13 @@
 
             <div class="space-y-4 flex-1 overflow-y-auto">
                 <div>
-                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Nazwa / Etykieta</label>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Nazwa / Gatunek</label>
                     <input type="text" id="prop-label" oninput="updateSelectedObject()" class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Notatka przypisana do elementu</label>
+                    <textarea id="prop-note" oninput="updateSelectedObject()" rows="2" placeholder="Dodatkowa informacja / opis..." class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -324,15 +324,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Kolejność warstw</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="changeZIndex(1)" class="bg-slate-100 hover:bg-slate-200 text-xs py-1.5 rounded font-medium text-slate-700 flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-layer-group"></i> Na wierzch
-                        </button>
-                        <button onclick="changeZIndex(-1)" class="bg-slate-100 hover:bg-slate-200 text-xs py-1.5 rounded font-medium text-slate-700 flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-layer-group"></i> Pod spód
-                        </button>
-                    </div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Przezroczystość (Opacity)</label>
+                    <input type="range" id="prop-opacity" min="0.1" max="1.0" step="0.05" value="1.0" oninput="updateSelectedObject()" class="w-full accent-blue-600">
                 </div>
 
                 <div class="pt-4 border-t border-slate-200 space-y-2">
@@ -355,33 +348,16 @@
         let objects = [];
         let selectedId = null;
         let nextObjectId = 1;
-
         let activeGhost = null;
 
-        let bgConfig = {
-            url: '',
-            opacity: 0.5,
-            scale: 1,
-            rotation: 0,
-            x: 0,
-            y: 0
-        };
+        let bgConfig = { url: '', opacity: 0.5, scale: 1, rotation: 0, x: 0, y: 0 };
 
         const PRESETS = [
             { type: 'kallax_1x4', name: 'Kallax 1x4', w: 0.42, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'kallax_2x4', name: 'Kallax 2x4', w: 0.77, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'kallax_3x4', name: 'Kallax 3x4', w: 1.12, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'kallax_4x4', name: 'Kallax 4x4', w: 1.47, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'billie', name: 'Regał Billie', w: 0.80, h: 0.20, color: '#64748b', icon: 'fa-book-open' },
-            { type: 'trolley', name: 'Wózek jezdny', w: 0.92, h: 0.58, color: '#d97706', icon: 'fa-truck-ramp-box' },
-            { type: 'rot_silver', name: 'Ekspozytor obrotowy (srebrny)', w: 0.40, h: 0.40, color: '#94a3b8', icon: 'fa-arrows-spin' },
-            { type: 'rot_black', name: 'Ekspozytor obrotowy (czarny)', w: 0.45, h: 0.45, color: '#334155', icon: 'fa-arrows-spin' },
-            { type: 'disp_white', name: 'Ekspozytor biały', w: 0.845, h: 0.46, color: '#e2e8f0', icon: 'fa-box-open' },
             { type: 'table_large', name: 'Stół duży', w: 1.80, h: 0.74, color: '#1e293b', icon: 'fa-table' },
             { type: 'table_small', name: 'Stół mały', w: 1.50, h: 0.73, color: '#334155', icon: 'fa-table' },
-            { type: 'cash_desk', name: 'Kasa stolik mały', w: 0.70, h: 0.50, color: '#059669', icon: 'fa-cash-register' },
+            { type: 'cash_desk', name: 'Kasa stolik', w: 0.70, h: 0.50, color: '#059669', icon: 'fa-cash-register' },
             { type: 'chair', name: 'Krzesło / Hoker', w: 0.45, h: 0.45, color: '#475569', icon: 'fa-chair' },
-            { type: 'table_round', name: 'Stolik okrągły', w: 0.80, h: 0.80, color: '#d97706', icon: 'fa-circle' },
             { type: 'rollup', name: 'Roll-up banner', w: 0.85, h: 0.30, color: '#10b981', icon: 'fa-scroll' }
         ];
 
@@ -390,7 +366,6 @@
         function initApp() {
             if (window.appInitialized) return;
             window.appInitialized = true;
-            
             renderPresetLibrary();
             initInteractions();
             applyCanvasTransform();
@@ -429,21 +404,15 @@
         }
 
         function setGridRotation(deg) {
-            let angle = parseFloat(deg);
-            if (isNaN(angle)) angle = 0;
+            let angle = parseFloat(deg) || 0;
             angle = ((angle % 360) + 360) % 360;
-
             gridRotation = angle;
-
             document.getElementById('grid-rotation-slider').value = Math.round(gridRotation);
             document.getElementById('grid-rotation-num').value = Math.round(gridRotation);
             document.getElementById('compass-deg').textContent = `${Math.round(gridRotation)}°`;
 
             const compass = document.getElementById('compass-rose');
-            if (compass) {
-                compass.style.transform = `rotate(${gridRotation}deg)`;
-            }
-
+            if (compass) compass.style.transform = `rotate(${gridRotation}deg)`;
             applyCanvasTransform();
         }
 
@@ -458,12 +427,7 @@
 
         function startPlacingPreset(idx) {
             const p = PRESETS[idx];
-            activeGhost = {
-                name: p.name,
-                w: p.w,
-                h: p.h,
-                color: p.color
-            };
+            activeGhost = { name: p.name, w: p.w, h: p.h, color: p.color, opacity: 1, isArrow: false };
             showGhostElement();
             if (window.innerWidth < 768) toggleMobileSidebar();
         }
@@ -472,12 +436,15 @@
             const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
             const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
             const name = document.getElementById('custom-name').value || 'Element';
-            activeGhost = {
-                name,
-                w,
-                h,
-                color: '#3b82f6'
-            };
+            activeGhost = { name, w, h, color: '#3b82f6', opacity: 1, isArrow: false };
+            showGhostElement();
+            if (window.innerWidth < 768) toggleMobileSidebar();
+        }
+
+        function startPlacingArrow() {
+            const w = parseFloat(document.getElementById('arrow-w').value) || 2.0;
+            const opacity = parseFloat(document.getElementById('arrow-opacity').value) || 0.7;
+            activeGhost = { name: 'Kierunek ruchu', w, h: 0.4, color: '#4f46e5', opacity, isArrow: true };
             showGhostElement();
             if (window.innerWidth < 768) toggleMobileSidebar();
         }
@@ -490,6 +457,7 @@
             ghost.style.width = `${activeGhost.w * SCALE * currentZoom}px`;
             ghost.style.height = `${activeGhost.h * SCALE * currentZoom}px`;
             ghost.style.backgroundColor = activeGhost.color;
+            ghost.style.opacity = activeGhost.opacity;
             ghost.classList.remove('hidden');
         }
 
@@ -503,12 +471,15 @@
             const obj = {
                 id: nextObjectId++,
                 name: data.name || 'Obiekt',
+                note: data.note || '',
                 x: data.x !== undefined ? data.x : 10000,
                 y: data.y !== undefined ? data.y : 10000,
                 w: data.w || 1.0,
                 h: data.h || 1.0,
                 rotation: data.rotation || 0,
                 color: data.color || '#3b82f6',
+                opacity: data.opacity !== undefined ? data.opacity : 1.0,
+                isArrow: data.isArrow || false,
                 zIndex: data.zIndex || objects.length + 1
             };
             objects.push(obj);
@@ -524,26 +495,30 @@
                 const pxW = obj.w * SCALE;
                 const pxH = obj.h * SCALE;
                 const isSel = obj.id === selectedId ? 'selected' : '';
+                
+                let content = `
+                    <span class="truncate max-w-full px-1 pointer-events-none">${obj.name}</span>
+                    <span class="text-[9px] opacity-75 pointer-events-none">${obj.w}m × ${obj.h}m</span>
+                `;
+                if (obj.isArrow) {
+                    content = `<div class="w-full h-full flex items-center justify-center pointer-events-none"><i class="fa-solid fa-arrow-right text-white text-lg"></i></div>`;
+                }
+                if (obj.note) {
+                    content += `<span class="absolute -bottom-5 bg-amber-100 text-amber-900 text-[9px] px-1 rounded border border-amber-300 shadow-sm whitespace-nowrap pointer-events-none">${obj.note}</span>`;
+                }
+
                 return `
                     <div id="obj-${obj.id}" data-id="${obj.id}" class="booth-object pointer-events-auto ${isSel} rounded-md shadow flex flex-col items-center justify-center p-1 text-white text-xs font-medium"
-                         style="left: ${obj.x - pxW/2}px; top: ${obj.y - pxH/2}px; width: ${pxW}px; height: ${pxH}px; background-color: ${obj.color}; transform: rotate(${obj.rotation}deg); z-index: ${obj.zIndex};"
+                         style="left: ${obj.x - pxW/2}px; top: ${obj.y - pxH/2}px; width: ${pxW}px; height: ${pxH}px; background-color: ${obj.color}; opacity: ${obj.opacity}; transform: rotate(${obj.rotation}deg); z-index: ${obj.zIndex};"
                          onmousedown="startDrag(event, ${obj.id})" ontouchstart="startDrag(event, ${obj.id})" onclick="event.stopPropagation(); selectObject(${obj.id})">
-                        <span class="truncate max-w-full px-1 pointer-events-none">${obj.name}</span>
-                        <span class="text-[9px] opacity-75 pointer-events-none">${obj.w}m × ${obj.h}m</span>
+                        ${content}
                     </div>
                 `;
             }).join('');
         }
 
-        let draggingObjId = null;
-        let dragStartX = 0;
-        let dragStartY = 0;
-        let objInitialX = 0;
-        let objInitialY = 0;
-
-        let panning = false;
-        let panStartX = 0;
-        let panStartY = 0;
+        let draggingObjId = null, dragStartX = 0, dragStartY = 0, objInitialX = 0, objInitialY = 0;
+        let panning = false, panStartX = 0, panStartY = 0;
 
         function initInteractions() {
             const viewport = document.getElementById('viewport');
@@ -551,15 +526,12 @@
             viewport.addEventListener('mousedown', (e) => {
                 if (activeGhost) {
                     const coords = screenToCanvasCoords(e.clientX, e.clientY);
-                    let finalX = coords.x;
-                    let finalY = coords.y;
+                    let finalX = coords.x, finalY = coords.y;
 
-                    const snapEnabled = document.getElementById('snap-toggle').checked;
-                    if (snapEnabled) {
-                        const snapStepMeters = parseFloat(document.getElementById('snap-step').value) || 0.5;
-                        const snapStepPx = snapStepMeters * SCALE;
-                        finalX = Math.round(finalX / snapStepPx) * snapStepPx;
-                        finalY = Math.round(finalY / snapStepPx) * snapStepPx;
+                    if (document.getElementById('snap-toggle').checked) {
+                        const stepPx = (parseFloat(document.getElementById('snap-step').value) || 0.5) * SCALE;
+                        finalX = Math.round(finalX / stepPx) * stepPx;
+                        finalY = Math.round(finalY / stepPx) * stepPx;
                     }
 
                     addObject({
@@ -567,6 +539,8 @@
                         w: activeGhost.w,
                         h: activeGhost.h,
                         color: activeGhost.color,
+                        opacity: activeGhost.opacity,
+                        isArrow: activeGhost.isArrow,
                         x: finalX,
                         y: finalY
                     });
@@ -575,7 +549,7 @@
                     return;
                 }
 
-                if (e.target === viewport || e.target.id === 'canvas-wrapper' || e.target.id === 'grid-bg' || e.target.id === 'subgrid-bg') {
+                if (e.target === viewport || e.target.id === 'canvas-wrapper' || e.target.id.includes('grid')) {
                     deselectAll();
                     panning = true;
                     panStartX = e.clientX;
@@ -593,35 +567,26 @@
                 } else if (draggingObjId !== null) {
                     handleObjDrag(e.clientX, e.clientY);
                 } else if (panning) {
-                    const dx = e.clientX - panStartX;
-                    const dy = e.clientY - panStartY;
-                    viewport.scrollLeft -= dx;
-                    viewport.scrollTop -= dy;
+                    viewport.scrollLeft -= (e.clientX - panStartX);
+                    viewport.scrollTop -= (e.clientY - panStartY);
                     panStartX = e.clientX;
                     panStartY = e.clientY;
                 }
             });
 
-            window.addEventListener('mouseup', endDragOrPan);
+            window.addEventListener('mouseup', () => { draggingObjId = null; panning = false; });
         }
 
         function screenToCanvasCoords(clientX, clientY) {
             const viewport = document.getElementById('viewport');
             const rect = viewport.getBoundingClientRect();
-            const scrollLeft = viewport.scrollLeft;
-            const scrollTop = viewport.scrollTop;
-
-            const screenX = clientX - rect.left + scrollLeft;
-            const screenY = clientY - rect.top + scrollTop;
-
-            const unscaledX = screenX / currentZoom;
-            const unscaledY = screenY / currentZoom;
-
+            const unscaledX = (clientX - rect.left + viewport.scrollLeft) / currentZoom;
+            const unscaledY = (clientY - rect.top + viewport.scrollTop) / currentZoom;
             const rad = -gridRotation * (Math.PI / 180);
-            const rotX = unscaledX * Math.cos(rad) - unscaledY * Math.sin(rad);
-            const rotY = unscaledX * Math.sin(rad) + unscaledY * Math.cos(rad);
-
-            return { x: rotX, y: rotY };
+            return {
+                x: unscaledX * Math.cos(rad) - unscaledY * Math.sin(rad),
+                y: unscaledX * Math.sin(rad) + unscaledY * Math.cos(rad)
+            };
         }
 
         function startDrag(e, id) {
@@ -629,59 +594,32 @@
             e.stopPropagation();
             selectObject(id);
             draggingObjId = id;
-            const clientX = e.clientX;
-            const clientY = e.clientY;
-            dragStartX = clientX;
-            dragStartY = clientY;
-
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
             const obj = objects.find(o => o.id === id);
-            if (obj) {
-                objInitialX = obj.x;
-                objInitialY = obj.y;
-            }
+            if (obj) { objInitialX = obj.x; objInitialY = obj.y; }
         }
 
         function handleObjDrag(clientX, clientY) {
-            if (draggingObjId === null) return;
             const obj = objects.find(o => o.id === draggingObjId);
             if (!obj) return;
 
-            const dxScreen = clientX - dragStartX;
-            const dyScreen = clientY - dragStartY;
-
-            const dxUnscaled = dxScreen / currentZoom;
-            const dyUnscaled = dyScreen / currentZoom;
-
+            const dx = (clientX - dragStartX) / currentZoom;
+            const dy = (clientY - dragStartY) / currentZoom;
             const rad = gridRotation * (Math.PI / 180);
-            const dxRotated = dxUnscaled * Math.cos(rad) - dyUnscaled * Math.sin(rad);
-            const dyRotated = dxUnscaled * Math.sin(rad) + dyUnscaled * Math.cos(rad);
 
-            let newX = objInitialX + dxRotated;
-            let newY = objInitialY + dyRotated;
+            let newX = objInitialX + (dx * Math.cos(rad) - dy * Math.sin(rad));
+            let newY = objInitialY + (dx * Math.sin(rad) + dy * Math.cos(rad));
 
-            const snapEnabled = document.getElementById('snap-toggle').checked;
-            if (snapEnabled) {
-                const snapStepMeters = parseFloat(document.getElementById('snap-step').value) || 0.5;
-                const snapStepPx = snapStepMeters * SCALE;
-                newX = Math.round(newX / snapStepPx) * snapStepPx;
-                newY = Math.round(newY / snapStepPx) * snapStepPx;
+            if (document.getElementById('snap-toggle').checked) {
+                const stepPx = (parseFloat(document.getElementById('snap-step').value) || 0.5) * SCALE;
+                newX = Math.round(newX / stepPx) * stepPx;
+                newY = Math.round(newY / stepPx) * stepPx;
             }
 
             obj.x = newX;
             obj.y = newY;
-
-            const el = document.getElementById(`obj-${obj.id}`);
-            if (el) {
-                const pxW = obj.w * SCALE;
-                const pxH = obj.h * SCALE;
-                el.style.left = `${obj.x - pxW/2}px`;
-                el.style.top = `${obj.y - pxH/2}px`;
-            }
-        }
-
-        function endDragOrPan() {
-            draggingObjId = null;
-            panning = false;
+            renderObjects();
         }
 
         function selectObject(id) {
@@ -693,35 +631,36 @@
             if (obj && panel) {
                 panel.classList.remove('hidden');
                 document.getElementById('prop-label').value = obj.name;
+                document.getElementById('prop-note').value = obj.note || '';
                 document.getElementById('prop-width').value = obj.w;
                 document.getElementById('prop-height').value = obj.h;
                 document.getElementById('prop-rotation').value = obj.rotation;
                 document.getElementById('prop-rotation-val').textContent = `${obj.rotation}°`;
                 document.getElementById('prop-color').value = obj.color;
                 document.getElementById('prop-color-hex').textContent = obj.color;
+                document.getElementById('prop-opacity').value = obj.opacity;
             }
         }
 
         function deselectAll() {
             selectedId = null;
             renderObjects();
-            const panel = document.getElementById('properties-panel');
-            if (panel) panel.classList.add('hidden');
+            document.getElementById('properties-panel').classList.add('hidden');
         }
 
         function updateSelectedObject() {
             if (selectedId === null) return;
             const obj = objects.find(o => o.id === selectedId);
             if (!obj) return;
-
             obj.name = document.getElementById('prop-label').value;
+            obj.note = document.getElementById('prop-note').value;
             obj.w = parseFloat(document.getElementById('prop-width').value) || 0.5;
             obj.h = parseFloat(document.getElementById('prop-height').value) || 0.5;
             obj.rotation = parseInt(document.getElementById('prop-rotation').value) || 0;
             document.getElementById('prop-rotation-val').textContent = `${obj.rotation}°`;
             obj.color = document.getElementById('prop-color').value;
             document.getElementById('prop-color-hex').textContent = obj.color;
-
+            obj.opacity = parseFloat(document.getElementById('prop-opacity').value);
             renderObjects();
         }
 
@@ -736,28 +675,11 @@
             }
         }
 
-        function changeZIndex(direction) {
-            if (selectedId === null) return;
-            const obj = objects.find(o => o.id === selectedId);
-            if (!obj) return;
-            obj.zIndex = Math.max(1, (obj.zIndex || 1) + direction);
-            renderObjects();
-        }
-
         function duplicateSelected() {
             if (selectedId === null) return;
             const obj = objects.find(o => o.id === selectedId);
             if (!obj) return;
-            addObject({
-                name: `${obj.name} (Kopia)`,
-                x: obj.x + 30,
-                y: obj.y + 30,
-                w: obj.w,
-                h: obj.h,
-                rotation: obj.rotation,
-                color: obj.color,
-                zIndex: objects.length + 1
-            });
+            addObject({ ...obj, id: undefined, x: obj.x + 30, y: obj.y + 30 });
         }
 
         function deleteSelected() {
@@ -770,30 +692,19 @@
         function setZoomFromSlider(val) {
             const viewport = document.getElementById('viewport');
             const oldZoom = currentZoom;
-            currentZoom = Math.min(Math.max(0.2, parseFloat(val)), 3.0);
+            currentZoom = Math.min(Math.max(0.1, parseFloat(val)), 4.0);
 
             const vx = viewport.clientWidth / 2;
             const vy = viewport.clientHeight / 2;
-
             const canvasCenterX = (viewport.scrollLeft + vx) / oldZoom;
             const canvasCenterY = (viewport.scrollTop + vy) / oldZoom;
 
             applyCanvasTransform();
 
-            let targetX = canvasCenterX;
-            let targetY = canvasCenterY;
-
-            if (objects.length > 0) {
-                const avgX = objects.reduce((sum, o) => sum + o.x, 0) / objects.length;
-                const avgY = objects.reduce((sum, o) => sum + o.y, 0) / objects.length;
-                targetX = canvasCenterX * 0.7 + avgX * 0.3;
-                targetY = canvasCenterY * 0.7 + avgY * 0.3;
-            }
-
             viewport.scrollTo({
-                left: targetX * currentZoom - vx,
-                top: targetY * currentZoom - vy,
-                behavior: 'smooth'
+                left: canvasCenterX * currentZoom - vx,
+                top: canvasCenterY * currentZoom - vy,
+                behavior: 'auto'
             });
 
             if (activeGhost) showGhostElement();
@@ -801,7 +712,6 @@
 
         function resetZoom() {
             setZoomFromSlider(1.0);
-            centerViewport();
         }
 
         function handleBgUpload(event) {
@@ -823,40 +733,25 @@
             bgConfig.opacity = parseFloat(document.getElementById('bg-opacity').value);
             bgConfig.scale = parseFloat(document.getElementById('bg-scale').value);
             bgConfig.rotation = parseInt(document.getElementById('bg-rotation').value);
-            bgConfig.x = parseFloat(document.getElementById('bg-x').value) || 0;
-            bgConfig.y = parseFloat(document.getElementById('bg-y').value) || 0;
-
             document.getElementById('bg-opacity-val').textContent = `${Math.round(bgConfig.opacity * 100)}%`;
             document.getElementById('bg-scale-val').textContent = `${Math.round(bgConfig.scale * 100)}%`;
             document.getElementById('bg-rotation-val').textContent = `${bgConfig.rotation}°`;
-
             const img = document.getElementById('bg-image');
             img.style.opacity = bgConfig.opacity;
-            img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
-        }
-
-        function setBgRotation(deg) {
-            document.getElementById('bg-rotation').value = deg;
-            updateBgSettings();
+            img.style.transform = `scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
         }
 
         function resetBgTransform() {
-            bgConfig.scale = 1.0;
-            bgConfig.rotation = 0;
-            bgConfig.x = 0;
-            bgConfig.y = 0;
+            bgConfig.scale = 1.0; bgConfig.rotation = 0;
             document.getElementById('bg-scale').value = 1.0;
             document.getElementById('bg-rotation').value = 0;
-            document.getElementById('bg-x').value = 0;
-            document.getElementById('bg-y').value = 0;
             updateBgSettings();
         }
 
         function removeBackground() {
             bgConfig.url = '';
-            const img = document.getElementById('bg-image');
-            img.src = '';
-            img.classList.add('hidden');
+            document.getElementById('bg-image').src = '';
+            document.getElementById('bg-image').classList.add('hidden');
             document.getElementById('bg-controls').classList.add('hidden');
             document.getElementById('bg-upload').value = '';
         }
@@ -881,27 +776,10 @@
                     const data = JSON.parse(e.target.result);
                     if (data.objects) objects = data.objects;
                     if (data.gridRotation !== undefined) setGridRotation(data.gridRotation);
-                    if (data.bgConfig) {
-                        bgConfig = data.bgConfig;
-                        if (bgConfig.url) {
-                            const img = document.getElementById('bg-image');
-                            img.src = bgConfig.url;
-                            img.classList.remove('hidden');
-                            document.getElementById('bg-controls').classList.remove('hidden');
-                            document.getElementById('bg-opacity').value = bgConfig.opacity;
-                            document.getElementById('bg-scale').value = bgConfig.scale;
-                            document.getElementById('bg-rotation').value = bgConfig.rotation;
-                            document.getElementById('bg-x').value = bgConfig.x;
-                            document.getElementById('bg-y').value = bgConfig.y;
-                            updateBgSettings();
-                        }
-                    }
                     nextObjectId = objects.reduce((max, o) => Math.max(max, o.id), 0) + 1;
                     renderObjects();
                     deselectAll();
-                } catch (err) {
-                    alert('Błąd podczas wczytywania pliku JSON.');
-                }
+                } catch (err) { alert('Błąd pliku JSON.'); }
             };
             reader.readAsText(file);
         }
@@ -911,7 +789,6 @@
             const wrapper = document.getElementById('canvas-wrapper');
             const originalTransform = wrapper.style.transform;
             wrapper.style.transform = 'scale(1) rotate(0deg)';
-
             html2canvas(wrapper, { scale: 2, useCORS: true }).then(canvas => {
                 wrapper.style.transform = originalTransform;
                 const a = document.createElement('a');
@@ -920,7 +797,7 @@
                 a.click();
             }).catch(() => {
                 wrapper.style.transform = originalTransform;
-                alert('Eksport do PNG nie powiódł się.');
+                alert('Błąd eksportu PNG.');
             });
         }
     </script>
