@@ -639,49 +639,43 @@ function initInteractions() {
             }
         }
 
-        function handleObjDrag(clientX, clientY) {
-            if (draggingObjId === null) return;
-            const obj = objects.find(o => o.id === id => id === draggingObjId);
-            if (!obj) return;
+function handleObjDrag(clientX, clientY) {
+    if (draggingObjId === null) return;
+    const obj = objects.find(o => o.id === draggingObjId);
+    if (!obj) return;
 
-            const dxScreen = clientX - dragStartX;
-            const dyScreen = clientY - dragStartY;
+    const dxScreen = clientX - dragStartX;
+    const dyScreen = clientY - dragStartY;
 
-            const dxUnscaled = dxScreen / currentZoom;
-            const dyUnscaled = dyScreen / currentZoom;
+    const dxUnscaled = dxScreen / currentZoom;
+    const dyUnscaled = dyScreen / currentZoom;
 
-            const rad = gridRotation * (Math.PI / 180);
-            const dxRotated = dxUnscaled * Math.cos(rad) - dyUnscaled * Math.sin(rad);
-            const dyRotated = dxUnscaled * Math.sin(rad) + dyUnscaled * Math.cos(rad);
+    const rad = gridRotation * (Math.PI / 180);
+    const dxRotated = dxUnscaled * Math.cos(rad) - dyUnscaled * Math.sin(rad);
+    const dyRotated = dxUnscaled * Math.sin(rad) + dyUnscaled * Math.cos(rad);
 
-            let newX = objInitialX + dxRotated;
-            let newY = objInitialY + dyRotated;
+    let newX = objInitialX + dxRotated;
+    let newY = objInitialY + dyRotated;
 
-            const snapEnabled = document.getElementById('snap-toggle').checked;
-            if (snapEnabled) {
-                const snapStepMeters = parseFloat(document.getElementById('snap-step').value) || 0.5;
-                const snapStepPx = snapStepMeters * SCALE;
-                newX = Math.round(newX / snapStepPx) * snapStepPx;
-                newY = Math.round(newY / snapStepPx) * snapStepPx;
-            }
+    const snapEnabled = document.getElementById('snap-toggle').checked;
+    if (snapEnabled) {
+        const snapStepMeters = parseFloat(document.getElementById('snap-step').value) || 0.5;
+        const snapStepPx = snapStepMeters * SCALE;
+        newX = Math.round(newX / snapStepPx) * snapStepPx;
+        newY = Math.round(newY / snapStepPx) * snapStepPx;
+    }
 
-            obj.x = newX;
-            obj.y = newY;
+    obj.x = newX;
+    obj.y = newY;
 
-            const el = document.getElementById(`obj-${obj.id}`);
-            if (el) {
-                const pxW = obj.w * SCALE;
-                const pxH = obj.h * SCALE;
-                el.style.left = `${obj.x - pxW/2}px`;
-                el.style.top = `${obj.y - pxH/2}px`;
-            }
-        }
-
-        function endDragOrPan() {
-            draggingObjId = null;
-            panning = false;
-        }
-
+    const el = document.getElementById(`obj-${obj.id}`);
+    if (el) {
+        const pxW = obj.w * SCALE;
+        const pxH = obj.h * SCALE;
+        el.style.left = `${obj.x - pxW/2}px`;
+        el.style.top = `${obj.y - pxH/2}px`;
+    }
+}
         function selectObject(id) {
             selectedId = id;
             renderObjects();
