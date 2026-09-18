@@ -2,7 +2,7 @@
 <html lang="pl" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Planer Layoutu Stoiska Targowego</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -10,7 +10,6 @@
     <style>
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            touch-action: none;
         }
         ::-webkit-scrollbar {
             width: 6px;
@@ -528,6 +527,7 @@
 
         let draggingObjId = null, dragStartX = 0, dragStartY = 0, objInitialX = 0, objInitialY = 0;
         let panning = false, panStartX = 0, panStartY = 0;
+        let initialPinchDistance = null;
 
         function initInteractions() {
             const viewport = document.getElementById('viewport');
@@ -564,6 +564,77 @@
                     panStartX = e.clientX;
                     panStartY = e.clientY;
                 }
+            });
+
+            // Obsługa zoomowania kółkiem myszy oraz gładzikiem (trackpadem / pinch)
+            viewport.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomFactor = 1.1;
+                let newZoom = currentZoom;
+
+                if (e.ctrlKey || e.metaKey || Math.abs(e.deltaY) < 50) {
+                    // Główne zachowanie gładzika / szczypania / zoomu CTRL
+                    if (e.deltaY < 0) {
+                        newZoom = currentZoom * zoomFactor;
+                    } else {
+                        newZoom = currentZoom / zoomFactor;
+                    }
+                } else {
+                    // Tradycyjne kółko myszy
+                    if (e.deltaY < 0) {
+                        newZoom = currentZoom * 1.15;
+                    } else {
+                        newZoom = currentZoom / 1.15;
+                    }
+                }
+
+                newZoom = Math.min(Math.max(0.1, newZoom), 4.0);
+                
+                const rect = viewport.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const canvasX = (viewport.scrollLeft + mouseX) / currentZoom;
+                const canvasY = (viewport.scrollTop + mouseY) / currentZoom;
+
+                currentZoom = newZoom;
+                applyCanvasTransform();
+
+                viewport.scrollTo({
+                    left: canvasX * currentZoom - mouseX,
+                    top: canvasY * currentZoom - mouseY,
+                    behavior: 'auto'
+                });
+
+                if (activeGhost) showGhostElement();
+            }, { passive: false });
+
+            // Obsługa gestów dotykowych (np. Pinch-to-zoom na telefonach)
+            viewport.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    initialPinchDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDistance !== null) {
+                    const currentDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const factor = currentDistance / initialPinchDistance;
+                    initialPinchDistance = currentDistance;
+
+                    let newZoom = Math.min(Math.max(0.1, currentZoom * factor), 4.0);
+                    setZoomFromSlider(newZoom);
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchend', () => {
+                initialPinchDistance = null;
             });
 
             window.addEventListener('mousemove', (e) => {
@@ -603,8 +674,8 @@
             e.stopPropagation();
             selectObject(id);
             draggingObjId = id;
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
+            dragStartX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            dragStartY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
             const obj = objects.find(o => o.id === id);
             if (obj) { objInitialX = obj.x; objInitialY = obj.y; }
         }
