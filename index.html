@@ -2,7 +2,7 @@
 <html lang="pl" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Planer Layoutu Stoiska Targowego</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -34,6 +34,7 @@
             box-sizing: border-box;
             cursor: move;
             user-select: none;
+            touch-action: none;
         }
         .booth-object.selected {
             outline: 2px solid #2563eb;
@@ -144,7 +145,7 @@
 
                         <div>
                             <div class="flex justify-between text-[11px] text-slate-600 mb-1">
-                                <span>Skala tła </span>
+                                <span>Skala tła</span>
                                 <span id="bg-scale-val">100%</span>
                             </div>
                             <input type="range" id="bg-scale" min="0.1" max="10.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
@@ -244,14 +245,14 @@
                 
                 <!-- Główny kontener planszy ze wspólną transformacją obrotu i skali -->
                 <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[3000px] min-h-[3000px]" style="transform-origin: 1500px 1500px;">
-                    
+                   
                     <!-- Warstwa Siatki Podstawowej (1 metr = 100px) -->
-                    <div id="grid-bg" class="absolute inset-0 bg-white" 
+                    <div id="grid-bg" class="absolute inset-0 bg-white"
                          style="background-size: 100px 100px; background-image: linear-gradient(to right, rgba(203, 213, 225, 0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.7) 1px, transparent 1px);">
                     </div>
 
                     <!-- Podsiatka 10cm -->
-                    <div id="subgrid-bg" class="absolute inset-0 pointer-events-none" 
+                    <div id="subgrid-bg" class="absolute inset-0 pointer-events-none"
                          style="background-size: 10px 10px; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);">
                     </div>
 
@@ -369,7 +370,6 @@
         // --- STAŁE I STAN APLIKACJI ---
         const SCALE = 100; // 1 metr = 100 pikseli
         const CANVAS_SIZE = 3000; // Rozmiar planszy 3000x3000px
-        const CENTER_POINT = CANVAS_SIZE / 2; // Środek rotacji (1500, 1500)
 
         let currentZoom = 1;
         let gridRotation = 0; // Obrót siatki w stopniach (0 - 360)
@@ -479,7 +479,6 @@
             document.getElementById('zoom-level').textContent = `${Math.round(currentZoom * 100)}%`;
         }
 
-        // Konwersja współrzędnych ekranu do układu współrzędnych obróconej siatki
         function screenToCanvasCoords(clientX, clientY) {
             const wrapper = document.getElementById('canvas-wrapper');
             const rect = wrapper.getBoundingClientRect();
@@ -498,101 +497,196 @@
             const dyRotated = dxUnscaled * Math.sin(rad) + dyUnscaled * Math.cos(rad);
 
             return {
-                x: CENTER_POINT + dxRotated,
-                y: CENTER_POINT + dyRotated
+                x: 1500 + dxRotated,
+                y: 1500 + dyRotated
             };
         }
 
         function addObject(data) {
             const obj = {
-                id: 'obj_' + nextObjectId++,
+                id: nextObjectId++,
                 name: data.name || 'Obiekt',
-                x: data.x !== undefined ? data.x : 1450,
-                y: data.y !== undefined ? data.y : 1450,
+                x: data.x !== undefined ? data.x : 1500,
+                y: data.y !== undefined ? data.y : 1500,
                 w: data.w || 1.0,
                 h: data.h || 1.0,
                 rotation: data.rotation || 0,
-                color: data.color || '#334155',
-                zIndex: data.zIndex || 10
+                color: data.color || '#3b82f6',
+                zIndex: data.zIndex || objects.length + 1
             };
             objects.push(obj);
             renderObjects();
             selectObject(obj.id);
         }
 
-        function addPresetItem(index) {
-            const preset = PRESETS[index];
-            if (!preset) return;
+        function addPresetItem(idx) {
+            const p = PRESETS[idx];
             addObject({
-                name: preset.name,
-                w: preset.w,
-                h: preset.h,
-                color: preset.color,
-                x: 1500 - (preset.w * SCALE) / 2,
-                y: 1500 - (preset.h * SCALE) / 2
+                name: p.name,
+                w: p.w,
+                h: p.h,
+                color: p.color,
+                x: 1450,
+                y: 1450
             });
+            if (window.innerWidth < 768) toggleMobileSidebar();
         }
 
         function addCustomItem() {
             const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
             const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
-            const name = document.getElementById('custom-name').value || 'Własny Obiekt';
-            addObject({
-                name: name,
-                w: w,
-                h: h,
-                x: 1500 - (w * SCALE) / 2,
-                y: 1500 - (h * SCALE) / 2,
-                color: '#2563eb'
-            });
+            const name = document.getElementById('custom-name').value || 'Element';
+            addObject({ name, w, h, color: '#3b82f6', x: 1450, y: 1450 });
+            if (window.innerWidth < 768) toggleMobileSidebar();
         }
 
         function renderObjects() {
-            const container = document.getElementById('objects-layer');
-            if (!container) return;
-            container.innerHTML = '';
+            const layer = document.getElementById('objects-layer');
+            if (!layer) return;
 
-            objects.forEach(obj => {
-                const el = document.createElement('div');
-                el.id = obj.id;
-                el.className = `booth-object ${obj.id === selectedId ? 'selected' : ''}`;
-                
+            layer.innerHTML = objects.map(obj => {
                 const pxW = obj.w * SCALE;
                 const pxH = obj.h * SCALE;
-
-                el.style.width = pxW + 'px';
-                el.style.height = pxH + 'px';
-                el.style.left = obj.x + 'px';
-                el.style.top = obj.y + 'px';
-                el.style.transform = `rotate(${obj.rotation}deg)`;
-                el.style.backgroundColor = obj.color;
-                el.style.zIndex = obj.zIndex;
-
-                el.innerHTML = `
-                    <div class="w-full h-full p-1 flex flex-col justify-center items-center text-center text-white font-medium text-xs pointer-events-none overflow-hidden drop-shadow">
-                        <span class="truncate w-full font-semibold leading-tight">${obj.name}</span>
-                        <span class="text-[9px] opacity-80">${obj.w}m x ${obj.h}m</span>
+                const isSel = obj.id === selectedId ? 'selected' : '';
+                return `
+                    <div id="obj-${obj.id}" data-id="${obj.id}" class="booth-object ${isSel} rounded-md shadow flex flex-col items-center justify-center p-1 text-white text-xs font-medium"
+                         style="left: ${obj.x - pxW/2}px; top: ${obj.y - pxH/2}px; width: ${pxW}px; height: ${pxH}px; background-color: ${obj.color}; transform: rotate(${obj.rotation}deg); z-index: ${obj.zIndex};"
+                         onmousedown="startDrag(event, ${obj.id})" ontouchstart="startDrag(event, ${obj.id})" onclick="event.stopPropagation(); selectObject(${obj.id})">
+                        <span class="truncate max-w-full px-1 pointer-events-none">${obj.name}</span>
+                        <span class="text-[9px] opacity-75 pointer-events-none">${obj.w}m × ${obj.h}m</span>
                     </div>
                 `;
+            }).join('');
+        }
 
-                el.addEventListener('pointerdown', (e) => {
-                    e.stopPropagation();
-                    selectObject(obj.id);
-                    startDraggingObject(e, obj);
-                });
+        let draggingObjId = null;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let objInitialX = 0;
+        let objInitialY = 0;
 
-                container.appendChild(el);
+        let panning = false;
+        let panStartX = 0;
+        let panStartY = 0;
+
+        function initInteractions() {
+            const viewport = document.getElementById('viewport');
+
+            viewport.addEventListener('mousedown', (e) => {
+                if (e.target === viewport || e.target.id === 'canvas-wrapper' || e.target.id === 'grid-bg' || e.target.id === 'subgrid-bg' || e.target.id === 'bg-layer' || e.target.id === 'objects-layer') {
+                    deselectAll();
+                    panning = true;
+                    panStartX = e.clientX;
+                    panStartY = e.clientY;
+                }
             });
+
+            viewport.addEventListener('touchstart', (e) => {
+                if (e.target === viewport || e.target.id === 'canvas-wrapper' || e.target.id === 'grid-bg' || e.target.id === 'subgrid-bg' || e.target.id === 'bg-layer' || e.target.id === 'objects-layer') {
+                    deselectAll();
+                    if (e.touches.length === 1) {
+                        panning = true;
+                        panStartX = e.touches[0].clientX;
+                        panStartY = e.touches[0].clientY;
+                    }
+                }
+            }, { passive: true });
+
+            window.addEventListener('mousemove', (e) => {
+                if (draggingObjId !== null) {
+                    handleObjDrag(e.clientX, e.clientY);
+                } else if (panning) {
+                    const dx = e.clientX - panStartX;
+                    const dy = e.clientY - panStartY;
+                    viewport.scrollLeft -= dx;
+                    viewport.scrollTop -= dy;
+                    panStartX = e.clientX;
+                    panStartY = e.clientY;
+                }
+            });
+
+            window.addEventListener('touchmove', (e) => {
+                if (draggingObjId !== null && e.touches.length === 1) {
+                    handleObjDrag(e.touches[0].clientX, e.touches[0].clientY);
+                } else if (panning && e.touches.length === 1) {
+                    const dx = e.touches[0].clientX - panStartX;
+                    const dy = e.touches[0].clientY - panStartY;
+                    viewport.scrollLeft -= dx;
+                    viewport.scrollTop -= dy;
+                    panStartX = e.touches[0].clientX;
+                    panStartY = e.touches[0].clientY;
+                }
+            }, { passive: true });
+
+            window.addEventListener('mouseup', endDragOrPan);
+            window.addEventListener('touchend', endDragOrPan);
+        }
+
+        function startDrag(e, id) {
+            e.stopPropagation();
+            selectObject(id);
+            draggingObjId = id;
+            const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            dragStartX = clientX;
+            dragStartY = clientY;
+
+            const obj = objects.find(o => o.id === id);
+            if (obj) {
+                objInitialX = obj.x;
+                objInitialY = obj.y;
+            }
+        }
+
+        function handleObjDrag(clientX, clientY) {
+            if (draggingObjId === null) return;
+            const obj = objects.find(o => o.id === id => id === draggingObjId);
+            if (!obj) return;
+
+            const dxScreen = clientX - dragStartX;
+            const dyScreen = clientY - dragStartY;
+
+            const dxUnscaled = dxScreen / currentZoom;
+            const dyUnscaled = dyScreen / currentZoom;
+
+            const rad = gridRotation * (Math.PI / 180);
+            const dxRotated = dxUnscaled * Math.cos(rad) - dyUnscaled * Math.sin(rad);
+            const dyRotated = dxUnscaled * Math.sin(rad) + dyUnscaled * Math.cos(rad);
+
+            let newX = objInitialX + dxRotated;
+            let newY = objInitialY + dyRotated;
+
+            const snapEnabled = document.getElementById('snap-toggle').checked;
+            if (snapEnabled) {
+                const snapStepMeters = parseFloat(document.getElementById('snap-step').value) || 0.5;
+                const snapStepPx = snapStepMeters * SCALE;
+                newX = Math.round(newX / snapStepPx) * snapStepPx;
+                newY = Math.round(newY / snapStepPx) * snapStepPx;
+            }
+
+            obj.x = newX;
+            obj.y = newY;
+
+            const el = document.getElementById(`obj-${obj.id}`);
+            if (el) {
+                const pxW = obj.w * SCALE;
+                const pxH = obj.h * SCALE;
+                el.style.left = `${obj.x - pxW/2}px`;
+                el.style.top = `${obj.y - pxH/2}px`;
+            }
+        }
+
+        function endDragOrPan() {
+            draggingObjId = null;
+            panning = false;
         }
 
         function selectObject(id) {
             selectedId = id;
             renderObjects();
-            
             const panel = document.getElementById('properties-panel');
             const obj = objects.find(o => o.id === id);
-
-            if (obj) {
+            if (obj && panel) {
                 panel.classList.remove('hidden');
                 document.getElementById('prop-label').value = obj.name;
                 document.getElementById('prop-width').value = obj.w;
@@ -601,169 +695,101 @@
                 document.getElementById('prop-rotation-val').textContent = `${obj.rotation}°`;
                 document.getElementById('prop-color').value = obj.color;
                 document.getElementById('prop-color-hex').textContent = obj.color;
-            } else {
-                panel.classList.add('hidden');
             }
         }
 
         function deselectAll() {
             selectedId = null;
             renderObjects();
-            document.getElementById('properties-panel').classList.add('hidden');
+            const panel = document.getElementById('properties-panel');
+            if (panel) panel.classList.add('hidden');
         }
 
         function updateSelectedObject() {
-            if (!selectedId) return;
+            if (selectedId === null) return;
             const obj = objects.find(o => o.id === selectedId);
             if (!obj) return;
 
-            obj.name = document.getElementById('prop-label').value || 'Obiekt';
-            obj.w = parseFloat(document.getElementById('prop-width').value) || 0.1;
-            obj.h = parseFloat(document.getElementById('prop-height').value) || 0.1;
+            obj.name = document.getElementById('prop-label').value;
+            obj.w = parseFloat(document.getElementById('prop-width').value) || 0.5;
+            obj.h = parseFloat(document.getElementById('prop-height').value) || 0.5;
             obj.rotation = parseInt(document.getElementById('prop-rotation').value) || 0;
-            obj.color = document.getElementById('prop-color').value;
-
             document.getElementById('prop-rotation-val').textContent = `${obj.rotation}°`;
+            obj.color = document.getElementById('prop-color').value;
             document.getElementById('prop-color-hex').textContent = obj.color;
 
             renderObjects();
         }
 
         function rotateSelected(deg) {
-            if (!selectedId) return;
-            document.getElementById('prop-rotation').value = deg;
-            updateSelectedObject();
-        }
-
-        function changeZIndex(delta) {
-            if (!selectedId) return;
+            if (selectedId === null) return;
             const obj = objects.find(o => o.id === selectedId);
             if (obj) {
-                obj.zIndex = Math.max(1, (obj.zIndex || 10) + delta * 5);
+                obj.rotation = deg;
+                document.getElementById('prop-rotation').value = deg;
+                document.getElementById('prop-rotation-val').textContent = `${deg}°`;
                 renderObjects();
             }
         }
 
-        function duplicateSelected() {
-            if (!selectedId) return;
+        function changeZIndex(direction) {
+            if (selectedId === null) return;
             const obj = objects.find(o => o.id === selectedId);
             if (!obj) return;
+            obj.zIndex = Math.max(1, (obj.zIndex || 1) + direction);
+            renderObjects();
+        }
 
+        function duplicateSelected() {
+            if (selectedId === null) return;
+            const obj = objects.find(o => o.id === selectedId);
+            if (!obj) return;
             addObject({
-                name: obj.name + ' (Kopia)',
-                x: obj.x + 20,
-                y: obj.y + 20,
+                name: `${obj.name} (Kopia)`,
+                x: obj.x + 30,
+                y: obj.y + 30,
                 w: obj.w,
                 h: obj.h,
                 rotation: obj.rotation,
                 color: obj.color,
-                zIndex: obj.zIndex
+                zIndex: objects.length + 1
             });
         }
 
         function deleteSelected() {
-            if (!selectedId) return;
+            if (selectedId === null) return;
             objects = objects.filter(o => o.id !== selectedId);
             deselectAll();
+            renderObjects();
         }
 
-        function startDraggingObject(e, obj) {
-            let startCoords = screenToCanvasCoords(e.clientX, e.clientY);
-            let initialObjX = obj.x;
-            let initialObjY = obj.y;
-
-            const snapToggle = document.getElementById('snap-toggle');
-            const snapStepSelect = document.getElementById('snap-step');
-
-            function onPointerMove(pe) {
-                let currentCoords = screenToCanvasCoords(pe.clientX, pe.clientY);
-                let dx = currentCoords.x - startCoords.x;
-                let dy = currentCoords.y - startCoords.y;
-
-                let targetX = initialObjX + dx;
-                let targetY = initialObjY + dy;
-
-                if (snapToggle && snapToggle.checked) {
-                    let stepMeters = parseFloat(snapStepSelect.value) || 0.5;
-                    let stepPx = stepMeters * SCALE;
-                    targetX = Math.round(targetX / stepPx) * stepPx;
-                    targetY = Math.round(targetY / stepPx) * stepPx;
-                }
-
-                obj.x = targetX;
-                obj.y = targetY;
-                renderObjects();
-            }
-
-            function onPointerUp() {
-                window.removeEventListener('pointermove', onPointerMove);
-                window.removeEventListener('pointerup', onPointerUp);
-            }
-
-            window.addEventListener('pointermove', onPointerMove);
-            window.addEventListener('pointerup', onPointerUp);
+        function adjustZoom(amount) {
+            currentZoom = Math.min(Math.max(0.2, currentZoom + amount), 3.0);
+            applyCanvasTransform();
         }
 
-        function initInteractions() {
-            const viewport = document.getElementById('viewport');
-            
-            // Kliknięcie w tło odznacza obiekty
-            viewport.addEventListener('click', (e) => {
-                if (e.target === viewport || e.target.id === 'canvas-wrapper' || e.target.id === 'grid-bg' || e.target.id === 'subgrid-bg') {
-                    deselectAll();
-                }
-            });
-
-            // Panowanie (przesuwanie widoku myszą)
-            let isPanning = false;
-            let startX, startY, scrollLeft, scrollTop;
-
-            viewport.addEventListener('pointerdown', (e) => {
-                if (e.target === viewport || e.target.id === 'canvas-wrapper' || e.target.id === 'grid-bg' || e.target.id === 'subgrid-bg' || e.target.id === 'bg-image') {
-                    isPanning = true;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    scrollLeft = viewport.scrollLeft;
-                    scrollTop = viewport.scrollTop;
-                }
-            });
-
-            window.addEventListener('pointermove', (e) => {
-                if (!isPanning) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                viewport.scrollLeft = scrollLeft - dx;
-                viewport.scrollTop = scrollTop - dy;
-            });
-
-            window.addEventListener('pointerup', () => {
-                isPanning = false;
-            });
+        function resetZoom() {
+            currentZoom = 1.0;
+            applyCanvasTransform();
+            centerViewport();
         }
 
-        // --- OBSŁUGA MAPY / TŁA ---
-        function handleBgUpload(e) {
-            const file = e.target.files[0];
+        function handleBgUpload(event) {
+            const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(evt) {
-                bgConfig.url = evt.target.result;
+            reader.onload = function(e) {
+                bgConfig.url = e.target.result;
                 const img = document.getElementById('bg-image');
                 img.src = bgConfig.url;
-                img.onload = () => {
-                    img.classList.remove('hidden');
-                    document.getElementById('bg-controls').classList.remove('hidden');
-                    updateBgSettings();
-                };
+                img.classList.remove('hidden');
+                document.getElementById('bg-controls').classList.remove('hidden');
+                updateBgSettings();
             };
             reader.readAsDataURL(file);
         }
 
         function updateBgSettings() {
-            const img = document.getElementById('bg-image');
-            if (!img) return;
-
             bgConfig.opacity = parseFloat(document.getElementById('bg-opacity').value);
             bgConfig.scale = parseFloat(document.getElementById('bg-scale').value);
             bgConfig.rotation = parseInt(document.getElementById('bg-rotation').value);
@@ -774,8 +800,9 @@
             document.getElementById('bg-scale-val').textContent = `${Math.round(bgConfig.scale * 100)}%`;
             document.getElementById('bg-rotation-val').textContent = `${bgConfig.rotation}°`;
 
+            const img = document.getElementById('bg-image');
             img.style.opacity = bgConfig.opacity;
-            img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) rotate(${bgConfig.rotation}deg) scale(${bgConfig.scale})`;
+            img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
         }
 
         function setBgRotation(deg) {
@@ -788,12 +815,10 @@
             bgConfig.rotation = 0;
             bgConfig.x = 0;
             bgConfig.y = 0;
-
             document.getElementById('bg-scale').value = 1.0;
             document.getElementById('bg-rotation').value = 0;
             document.getElementById('bg-x').value = 0;
             document.getElementById('bg-y').value = 0;
-
             updateBgSettings();
         }
 
@@ -806,47 +831,30 @@
             document.getElementById('bg-upload').value = '';
         }
 
-        // --- ZOOM & EXPORT ---
-        function adjustZoom(delta) {
-            currentZoom = Math.min(Math.max(0.2, currentZoom + delta), 3.0);
-            applyCanvasTransform();
-        }
-
-        function resetZoom() {
-            currentZoom = 1.0;
-            applyCanvasTransform();
-        }
-
         function saveProjectJSON() {
-            const projectData = {
-                version: '2.0',
-                gridRotation,
-                objects,
-                bgConfig
-            };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projectData, null, 2));
-            const anchor = document.createElement('a');
-            anchor.href = dataStr;
-            anchor.download = `plan_stoiska_${Date.now()}.json`;
-            anchor.click();
-            anchor.remove();
+            const data = { gridRotation, objects, bgConfig };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'projekt-stoiska.json';
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
-        function loadProjectJSON(e) {
-            const file = e.target.files[0];
+        function loadProjectJSON(event) {
+            const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(evt) {
+            reader.onload = function(e) {
                 try {
-                    const data = JSON.parse(evt.target.result);
+                    const data = JSON.parse(e.target.result);
                     if (data.objects) objects = data.objects;
                     if (data.gridRotation !== undefined) setGridRotation(data.gridRotation);
-                    
                     if (data.bgConfig) {
                         bgConfig = data.bgConfig;
-                        const img = document.getElementById('bg-image');
                         if (bgConfig.url) {
+                            const img = document.getElementById('bg-image');
                             img.src = bgConfig.url;
                             img.classList.remove('hidden');
                             document.getElementById('bg-controls').classList.remove('hidden');
@@ -858,31 +866,33 @@
                             updateBgSettings();
                         }
                     }
-                    deselectAll();
+                    nextObjectId = objects.reduce((max, o) => Math.max(max, o.id), 0) + 1;
                     renderObjects();
-                } catch(err) {
-                    alert('Błąd odczytu pliku JSON!');
+                    deselectAll();
+                } catch (err) {
+                    alert('Błąd podczas wczytywania pliku JSON.');
                 }
             };
             reader.readAsText(file);
-            e.target.value = '';
         }
 
         function exportToPNG() {
             deselectAll();
             const wrapper = document.getElementById('canvas-wrapper');
-            html2canvas(wrapper, {
-                backgroundColor: '#ffffff',
-                scale: 2
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `wizualizacja_stoiska_${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                link.remove();
+            const originalTransform = wrapper.style.transform;
+            wrapper.style.transform = 'scale(1) rotate(0deg)';
+
+            html2canvas(wrapper, { scale: 2, useCORS: true }).then(canvas => {
+                wrapper.style.transform = originalTransform;
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'layout-stoiska.png';
+                a.click();
+            }).catch(() => {
+                wrapper.style.transform = originalTransform;
+                alert('Eksport do PNG nie powiódł się.');
             });
         }
     </script>
 </body>
 </html>
-
