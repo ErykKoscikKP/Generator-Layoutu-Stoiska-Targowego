@@ -52,55 +52,64 @@
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none" oncontextmenu="return false;">
 
-   <!-- Górny pasek nawigacyjny tym kodem -->
-<header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-4 select-none">
-    
-    <!-- Lewa sekcja: Tytuł i skróty klawiszowe -->
-    <div class="flex items-center space-x-3 min-w-max">
-        <div class="bg-blue-600 p-2 rounded-lg text-white shadow-md">
-            <i class="fas fa-drafting-compass text-lg"></i>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none" oncontextmenu="return false;">
+
+    <!-- Górny pasek nawigacyjny (poprawiony i responsywny) -->
+    <header class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap justify-between items-center shadow-md z-30 shrink-0 gap-3">
+        
+        <!-- Lewa sekcja: Menu mobilne, logo i tytuł -->
+        <div class="flex items-center space-x-3">
+            <button onclick="toggleMobileSidebar()" class="md:hidden bg-slate-800 p-2 rounded text-slate-200 hover:text-white">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <div class="bg-blue-600 p-2 rounded-lg text-white shadow-md">
+                <i class="fa-solid fa-compass-drafting text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base md:text-lg leading-tight">Planer Layoutu Stoiska</h1>
+                <p class="text-xs text-slate-400 hidden sm:block">Lewy: przesuwanie/plansza | Prawy: zaznaczanie</p>
+            </div>
         </div>
-        <div>
-            <h1 class="font-bold text-white text-base md:text-lg tracking-wide leading-tight">Planer Layoutu Stoiska</h1>
-            <p class="text-xs text-slate-400 hidden sm:block">Lewy: przesuwanie/plansza | Prawy: zaznaczanie</p>
+
+        <!-- Prawa sekcja: Przyciski akcji z zawijaniem -->
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Zaznacz wszystko -->
+            <button onclick="selectAllObjects()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-md transition border border-slate-700 shadow-sm">
+                <i class="fa-solid fa-check-double text-blue-400"></i>
+                <span class="hidden sm:inline">Zaznacz wszystko</span>
+            </button>
+
+            <!-- Otwórz JSON -->
+            <button onclick="document.getElementById('json-input').click()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-md transition border border-slate-700 shadow-sm">
+                <i class="fa-solid fa-folder-open text-amber-400"></i>
+                <span>Otwórz JSON</span>
+            </button>
+            <input type="file" id="json-input" accept=".json" class="hidden" onchange="loadFromJson(event)">
+
+            <!-- Zapisz JSON -->
+            <button onclick="saveToJson()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-md transition border border-slate-700 shadow-sm">
+                <i class="fa-solid fa-floppy-disk text-emerald-400"></i>
+                <span>Zapisz JSON</span>
+            </button>
+
+            <!-- Eksportuj PNG -->
+            <button id="export-png-btn" class="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm px-3 py-1.5 rounded-md font-medium transition shadow-sm">
+                <i class="fa-solid fa-image"></i>
+                <span>Eksportuj PNG</span>
+            </button>
+
+            <!-- Właściwości -->
+            <button id="toggle-props-btn" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-md transition border border-slate-700 shadow-sm">
+                <i class="fa-solid fa-sliders text-purple-400"></i>
+                <span>Właściwości</span>
+            </button>
         </div>
-    </div>
+    </header>
 
-    <!-- Prawa sekcja: Przyciski akcji -->
-    <div class="flex flex-wrap items-center gap-2">
-        <!-- Zaznacz wszystko -->
-        <button id="select-all-btn" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md text-sm transition shadow-sm border border-slate-700">
-            <i class="fas fa-check-square text-blue-400"></i>
-            <span class="hidden md:inline">Zaznacz</span> wszystko
-        </button>
-
-        <!-- Otwórz JSON -->
-        <label class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md text-sm transition shadow-sm border border-slate-700 cursor-pointer">
-            <i class="fas fa-folder-open text-amber-400"></i>
-            <span>Otwórz JSON</span>
-            <input type="file" id="load-json-input" accept=".json" class="hidden">
-        </label>
-
-        <!-- Zapisz JSON -->
-        <button id="save-json-btn" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md text-sm transition shadow-sm border border-slate-700">
-            <i class="fas fa-save text-emerald-400"></i>
-            <span>Zapisz JSON</span>
-        </button>
-
-        <!-- Eksportuj PNG -->
-        <button id="export-png-btn" class="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-md text-sm font-medium transition shadow-sm">
-            <i class="fas fa-image"></i>
-            <span>Eksportuj PNG</span>
-        </button>
-
-        <!-- Właściwości -->
-        <button id="toggle-props-btn" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-md text-sm transition shadow-sm border border-slate-700">
-            <i class="fas fa-sliders-h text-purple-400"></i>
-            <span>Właściwości</span>
-        </button>
-    </div>
-</header>
-
+    <!-- Główny kontener aplikacji -->
+    <div class="flex-1 flex overflow-hidden relative">
+        <div id="mobile-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
     <div class="flex-1 flex overflow-hidden relative">
 
         <div id="mobile-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
