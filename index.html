@@ -8,739 +8,852 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        .booth-object { position: absolute; box-sizing: border-box; cursor: move; user-select: none; touch-action: none; }
-        .booth-object.selected { outline: 2px solid #2563eb; outline-offset: 2px; z-index: 999 !important; }
-        #marqueeBox { position: absolute; border: 2px dashed #2563eb; background-color: rgba(37, 99, 235, 0.08); pointer-events: none; z-index: 1000; display: none; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            touch-action: none;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .compass-ring {
+            transition: transform 0.1s ease-out;
+        }
+        .booth-object {
+            position: absolute;
+            box-sizing: border-box;
+            cursor: move;
+            user-select: none;
+        }
+        .booth-object.selected {
+            outline: 2px solid #2563eb;
+            outline-offset: 2px;
+            z-index: 999 !important;
+        }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none" oncontextmenu="return false;">
+<body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none">
 
-    <!-- Górny pasek nawigacyjny -->
-    <header class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap justify-between items-center shadow-md z-30 shrink-0 gap-3">
+    <header class="bg-slate-900 text-white px-4 py-2.5 flex justify-between items-center shadow-md z-30 shrink-0">
         <div class="flex items-center space-x-3">
-            <button onclick="toggleMobileSidebar()" class="md:hidden bg-slate-800 p-2 rounded text-slate-200 hover:text-white" title="Przełącz menu boczne">
+            <button onclick="toggleMobileSidebar()" class="md:hidden bg-slate-800 p-2 rounded text-slate-200 hover:text-white">
                 <i class="fa-solid fa-bars text-lg"></i>
             </button>
-            <div class="bg-blue-600 p-2 rounded-lg text-white shadow-md">
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
                 <i class="fa-solid fa-compass-drafting text-xl"></i>
             </div>
             <div>
                 <h1 class="font-bold text-base md:text-lg leading-tight">Planer Layoutu Stoiska</h1>
-                <p class="text-xs text-slate-400">Papier milimetrowy (1m = 100px) | LPM: przesuwanie/obiekty | PPM: zaznaczanie ramką</p>
+                <p class="text-xs text-slate-400 hidden sm:block">Siatka podstawowa: 1 metr = 100 px | Obrót 360°</p>
             </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-            <!-- Pasek sterowania siatką i zoomem -->
-            <div class="bg-slate-800 px-3 py-1.5 rounded flex items-center gap-3 text-xs border border-slate-700">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" id="gridToggle" checked onchange="toggleGrid()" class="rounded text-blue-600">
-                    <span>Siatka</span>
-                </label>
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" id="snapToggle" checked class="rounded text-blue-600">
-                    <span>Przyciągaj</span>
-                </label>
-                <select id="snapSelect" class="bg-slate-700 text-white rounded px-1.5 py-0.5 border border-slate-600 text-xs">
-                    <option value="25">co 0.25m</option>
-                    <option value="50" selected>co 0.5m</option>
-                    <option value="100">co 1.0m</option>
-                </select>
-                <div class="flex items-center gap-1 border-l border-slate-700 pl-3">
-                    <span>Obrót siatki:</span>
-                    <input type="range" id="gridRotRange" min="0" max="360" value="0" oninput="updateGridRotation(this.value)" class="w-16 accent-blue-500">
-                    <span id="gridRotVal" class="w-8 text-right font-mono">0°</span>
-                </div>
-                <div class="flex items-center gap-1.5 border-l border-slate-700 pl-3">
-                    <span>Zoom:</span>
-                    <input type="range" id="zoomRange" min="10" max="200" value="100" oninput="setZoomFromSlider(this.value)" class="w-20 accent-blue-500">
-                    <span id="zoomVal" class="w-9 text-right font-mono">100%</span>
-                </div>
-            </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="document.getElementById('json-input').click()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-folder-open"></i> <span class="hidden sm:inline">Otwórz JSON</span>
+            </button>
+            <input type="file" id="json-input" class="hidden" accept=".json" onchange="loadProjectJSON(event)">
 
-            <button onclick="selectAllObjects()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded border border-slate-700">Zaznacz wszystko</button>
-            <button onclick="document.getElementById('json-input').click()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded border border-slate-700">Otwórz JSON</button>
-            <input type="file" id="json-input" accept=".json" class="hidden" onchange="loadFromJson(event)">
-            <button onclick="saveToJson()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded border border-slate-700">Zapisz JSON</button>
-            <button onclick="exportToPng()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded">Eksport PNG</button>
-            <button onclick="togglePropertiesPanel()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded border border-slate-700 md:hidden">Właściwości</button>
+            <button onclick="saveProjectJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">Zapisz JSON</span>
+            </button>
+
+            <button onclick="exportToPNG()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm px-3 py-1.5 rounded-lg shadow font-medium transition flex items-center gap-2">
+                <i class="fa-solid fa-file-image"></i> <span>Eksportuj PNG</span>
+            </button>
         </div>
     </header>
 
-    <!-- Główna zawartość -->
     <div class="flex-1 flex overflow-hidden relative">
-        
-        <!-- Lewy panel boczny: Katalog i Narzędzia -->
-        <aside id="sidebar" class="absolute md:relative z-20 inset-y-0 left-0 w-80 bg-white border-r border-slate-200 flex flex-col shadow-lg transition-transform duration-300 -translate-x-full md:translate-x-0 shrink-0">
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 md:hidden">
-                <h2 class="font-bold text-slate-700">Menu</h2>
-                <button onclick="toggleMobileSidebar()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+
+        <!-- Overlay dla urządzeń mobilnych -->
+        <div id="mobile-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
+
+        <aside id="left-sidebar" class="w-80 bg-white border-r border-slate-200 flex flex-col shrink-0 z-30 shadow-lg transition-transform duration-300 absolute md:relative h-full -translate-x-full md:translate-x-0 overflow-y-auto">
+            
+            <div class="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-blue-600"></i> Dodaj do projektu
+                </h2>
+                <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-4 space-y-6">
-                
-                <!-- Ruch klienta i kształty -->
-                <div class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Ruch klienta i kształty</h3>
-                    <button onclick="addArrow()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 rounded font-medium transition shadow-sm">
-                        <i class="fa-solid fa-arrow-right mr-1.5"></i> Dodaj Strzałkę Ruchu
-                    </button>
-                    <div class="grid grid-cols-2 gap-2 pt-1">
-                        <div>
-                            <label class="text-[10px] text-slate-500 block">Długość (m)</label>
-                            <input type="number" id="arrowLen" value="2.0" step="0.5" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-slate-500 block">Przezroczystość</label>
-                            <input type="range" id="arrowOpacity" min="0.1" max="1" step="0.1" value="0.8" class="w-full mt-2 accent-indigo-600">
-                        </div>
-                    </div>
+            <!-- Sekcja: Biblioteka gotowych mebli -->
+            <div class="p-4 border-b border-slate-200">
+                <h3 class="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-3">Katalog Elementów</h3>
+                <div class="grid grid-cols-2 gap-2.5" id="preset-library">
+                    <!-- Dynamicznie generowane elementy -->
                 </div>
+            </div>
 
-                <!-- Niestandardowy element -->
-                <div class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Niestandardowy element</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-[10px] text-slate-500 block">Szerokość (m)</label>
-                            <input type="number" id="customW" value="1.0" step="0.1" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-slate-500 block">Wysokość/Dł. (m)</label>
-                            <input type="number" id="customH" value="1.0" step="0.1" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
-                        </div>
+            <!-- Sekcja: Dodawanie własnego elementu -->
+            <div class="p-4 border-b border-slate-200">
+                <h3 class="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-3">Niestandardowy Element</h3>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                        <label class="text-[11px] font-medium text-slate-600">Szerokość (m)</label>
+                        <input type="number" id="custom-w" value="1.0" step="0.05" min="0.1" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <label class="text-[10px] text-slate-500 block">Etykieta / Gatunek</label>
-                        <input type="text" id="customName" value="Element Stoiska" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
-                    </div>
-                    <button onclick="addCustomObject()" class="w-full bg-slate-800 hover:bg-slate-700 text-white text-xs py-2 rounded font-medium transition shadow-sm">
-                        + Przypnij Własny Obiekt
-                    </button>
-                </div>
-
-                <!-- Katalog elementów -->
-                <div class="space-y-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Katalog elementów</h3>
-                    <div id="catalogGrid" class="grid grid-cols-1 gap-2"></div>
-                </div>
-
-                <!-- Tło / Mapa przestrzeni -->
-                <div class="space-y-3 pt-4 border-t border-slate-200">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Tło / Mapa przestrzeni</h3>
-                    <button onclick="document.getElementById('bg-image-input').click()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-map text-blue-600"></i> Wybierz plik tła
-                    </button>
-                    <input type="file" id="bg-image-input" accept="image/*" class="hidden" onchange="loadBackgroundImage(event)">
-                    
-                    <div class="space-y-2 text-xs">
-                        <div>
-                            <div class="flex justify-between text-slate-500 mb-1"><span>Przezroczystość tła</span><span id="bgOpacityVal">20%</span></div>
-                            <input type="range" id="bgOpacityRange" min="0" max="100" value="20" oninput="updateBgProp()" class="w-full accent-blue-600">
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-slate-500 mb-1"><span>Skala tła</span><span id="bgScaleVal">100%</span></div>
-                            <input type="range" id="bgScaleRange" min="10" max="500" value="100" oninput="updateBgProp()" class="w-full accent-blue-600">
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-slate-500 mb-1"><span>Obrót tła</span><span id="bgRotVal">0°</span></div>
-                            <input type="range" id="bgRotRange" min="0" max="360" value="0" oninput="updateBgProp()" class="w-full accent-blue-600">
-                        </div>
-                    </div>
-                    <div class="flex gap-2 pt-1">
-                        <button onclick="resetBg()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 rounded border border-slate-300">Reset</button>
-                        <button onclick="removeBackground()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded border border-red-200">Usuń</button>
+                        <label class="text-[11px] font-medium text-slate-600">Wysokość/Dł. (m)</label>
+                        <input type="number" id="custom-h" value="1.0" step="0.05" min="0.1" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                 </div>
+                <div class="mb-3">
+                    <label class="text-[11px] font-medium text-slate-600">Etykieta</label>
+                    <input type="text" id="custom-name" value="Element Stoiska" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <button onclick="addCustomItem()" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Dodaj Własny Obiekt
+                </button>
+            </div>
 
+            <!-- Sekcja: Ustawienia tła / Mapy -->
+            <div class="p-4 border-b border-slate-200 bg-slate-50">
+                <h3 class="font-semibold text-xs text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+                    <span><i class="fa-solid fa-image text-slate-600"></i> Tło / Mapa przestrzeni</span>
+                </h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Wgraj zdjęcie lub rzut stoiska</label>
+                        <input type="file" id="bg-upload" accept="image/*" onchange="handleBgUpload(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                    </div>
+
+                    <div id="bg-controls" class="space-y-3 hidden pt-2 border-t border-slate-200">
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-600 mb-1">
+                                <span>Przezroczystość tła</span>
+                                <span id="bg-opacity-val">50%</span>
+                            </div>
+                            <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.5" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-600 mb-1">
+                                <span>Skala tła</span>
+                                <span id="bg-scale-val">100%</span>
+                            </div>
+                            <input type="range" id="bg-scale" min="0.1" max="10.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-600 mb-1">
+                                <span>Obrót tła</span>
+                                <span id="bg-rotation-val">0°</span>
+                            </div>
+                            <input type="range" id="bg-rotation" min="0" max="360" value="0" step="1" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="grid grid-cols-4 gap-1 mt-1.5">
+                                <button onclick="setBgRotation(0)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">0°</button>
+                                <button onclick="setBgRotation(90)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">90°</button>
+                                <button onclick="setBgRotation(180)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">180°</button>
+                                <button onclick="setBgRotation(270)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">270°</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Przesunięcie tła (X / Y px)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="bg-x" value="0" step="5" oninput="updateBgSettings()" placeholder="X" class="w-full text-xs px-2 py-1 border border-slate-300 rounded outline-none">
+                                <input type="number" id="bg-y" value="0" step="5" oninput="updateBgSettings()" placeholder="Y" class="w-full text-xs px-2 py-1 border border-slate-300 rounded outline-none">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 pt-1">
+                            <button onclick="resetBgTransform()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 rounded transition font-medium flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-rotate-left"></i> Resetuj Tło
+                            </button>
+                            <button onclick="removeBackground()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded transition font-medium flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-trash-can"></i> Usuń Tło
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </aside>
 
-        <!-- Główny obszar roboczy -->
-        <main id="viewport" class="flex-1 relative overflow-hidden bg-slate-200 cursor-grab active:cursor-grabbing">
-            <!-- Siatka papieru milimetrowego: 1m = 100px (duża kratka 100px, podziałka milimetrowa co 10px) -->
-            <div id="world" class="absolute origin-top-left w-[15000px] h-[15000px]" style="transform: translate(0px, 0px) scale(1); background-size: 100px 100px, 100px 100px, 10px 10px, 10px 10px; background-image: linear-gradient(to right, rgba(239, 68, 68, 0.25) 1.5px, transparent 1.5px), linear-gradient(to bottom, rgba(239, 68, 68, 0.25) 1.5px, transparent 1.5px), linear-gradient(to right, rgba(239, 68, 68, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(239, 68, 68, 0.1) 1px, transparent 1px); background-color: #fcf8f8;">
-                <div id="backgroundLayer" class="absolute inset-0 pointer-events-none z-0 opacity-20"></div>
-                <div id="objectsLayer" class="absolute inset-0 z-10"></div>
+        <main class="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
+            
+            <!-- Pasek Narzędziowy Przestrzeni Roboczej -->
+            <div class="bg-white border-b border-slate-200 px-4 py-2 flex flex-wrap justify-between items-center gap-3 z-10 shadow-sm">
+                
+                <!-- Przyciąganie do siatki -->
+                <div class="flex items-center space-x-3">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="snap-toggle" checked class="sr-only peer">
+                        <div class="relative w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-2 text-xs font-semibold text-slate-700">Przyciągaj</span>
+                    </label>
+
+                    <select id="snap-step" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="0.1">co 0.1m (10cm)</option>
+                        <option value="0.25">co 0.25m (25cm)</option>
+                        <option value="0.5" selected>co 0.5m (50cm)</option>
+                        <option value="1.0">co 1.0m (1m)</option>
+                    </select>
+                </div>
+
+                <!-- Kontroler Obracania Całej Siatki 360° -->
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1 shadow-inner">
+                    <div class="flex items-center gap-1.5 text-blue-600 text-xs font-bold">
+                        <i class="fa-solid fa-rotate text-sm"></i>
+                        <span class="hidden sm:inline">Obrót Siatki:</span>
+                    </div>
+                    <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-24 sm:w-32 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <div class="flex items-center gap-1">
+                        <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-12 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none focus:ring-1 focus:ring-blue-500">
+                        <span class="text-xs font-bold text-slate-500">°</span>
+                    </div>
+                    <div class="flex gap-1 border-l border-slate-300 pl-2">
+                        <button onclick="setGridRotation(0)" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600" title="Kąt 0°">0°</button>
+                        <button onclick="setGridRotation(90)" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600" title="Kąt 90°">90°</button>
+                        <button onclick="setGridRotation(180)" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600" title="Kąt 180°">180°</button>
+                        <button onclick="setGridRotation(270)" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600" title="Kąt 270°">270°</button>
+                    </div>
+                </div>
+
+                <!-- Kontrolki Przybliżenia (Zoom) -->
+                <div class="flex items-center space-x-1 bg-slate-100 rounded-lg p-1 border border-slate-300">
+                    <button onclick="adjustZoom(-0.1)" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white rounded transition" title="Pomniejsz">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <span id="zoom-level" class="text-xs font-mono px-2 font-bold text-slate-700">100%</span>
+                    <button onclick="adjustZoom(0.1)" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white rounded transition" title="Powiększ">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                    <button onclick="resetZoom()" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white rounded transition border-l border-slate-300 ml-1" title="Resetuj przybliżenie">
+                        <i class="fa-solid fa-rotate-left text-xs"></i>
+                    </button>
+                </div>
             </div>
-            <div id="marqueeBox"></div>
+
+            <div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing">
+                
+                <!-- Główny kontener planszy ze wspólną transformacją obrotu i skali -->
+                <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[3000px] min-h-[3000px]" style="transform-origin: 1500px 1500px;">
+                   
+                    <!-- Warstwa Siatki Podstawowej (1 metr = 100px) -->
+                    <div id="grid-bg" class="absolute inset-0 bg-white"
+                         style="background-size: 100px 100px; background-image: linear-gradient(to right, rgba(203, 213, 225, 0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.7) 1px, transparent 1px);">
+                    </div>
+
+                    <!-- Podsiatka 10cm -->
+                    <div id="subgrid-bg" class="absolute inset-0 pointer-events-none"
+                         style="background-size: 10px 10px; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);">
+                    </div>
+
+                    <!-- Osie środkowe planszy dla ułatwienia orientacji -->
+                    <div class="absolute left-0 top-[1500px] right-0 h-0.5 bg-blue-300/50 pointer-events-none"></div>
+                    <div class="absolute top-0 left-[1500px] bottom-0 w-0.5 bg-blue-300/50 pointer-events-none"></div>
+
+                    <!-- Warstwa obrazu tła / rzutu stoiska -->
+                    <div id="bg-layer" class="absolute inset-0 pointer-events-none origin-center flex items-center justify-center">
+                        <img id="bg-image" src="" class="hidden pointer-events-none max-w-none">
+                    </div>
+
+                    <!-- Warstwa Obiektów Katalogowych -->
+                    <div id="objects-layer" class="absolute inset-0"></div>
+
+                </div>
+
+                <!-- Interaktywny Kompas Orientacji Siatki -->
+                <div class="fixed bottom-4 right-4 bg-slate-900/85 backdrop-blur text-white text-xs p-3 rounded-2xl shadow-xl pointer-events-none z-20 flex flex-col items-center gap-1.5 border border-slate-700">
+                    <div class="relative w-12 h-12 flex items-center justify-center border-2 border-slate-600 rounded-full bg-slate-800">
+                        <div id="compass-rose" class="compass-ring absolute inset-0 flex items-center justify-center">
+                            <span class="absolute top-0.5 text-[9px] font-extrabold text-red-400">N</span>
+                            <span class="absolute right-1 text-[8px] font-bold text-slate-400">E</span>
+                            <span class="absolute bottom-0.5 text-[8px] font-bold text-slate-400">S</span>
+                            <span class="absolute left-1 text-[8px] font-bold text-slate-400">W</span>
+                            <i class="fa-solid fa-location-arrow text-blue-400 text-lg transform -rotate-45"></i>
+                        </div>
+                    </div>
+                    <span id="compass-deg" class="font-mono font-bold text-[11px] text-blue-300">0°</span>
+                </div>
+
+                <!-- Wskaźnik wymiarowania metrycznego -->
+                <div class="fixed bottom-4 left-4 bg-slate-900/85 backdrop-blur text-white text-xs px-3.5 py-2 rounded-full shadow-lg pointer-events-none z-20 flex items-center gap-2.5 border border-slate-700">
+                    <span class="w-8 h-0.5 bg-blue-400 inline-block rounded-full"></span>
+                    <span class="font-medium text-slate-200">Siatka: 1 metr (100 px)</span>
+                </div>
+            </div>
         </main>
 
-        <!-- Prawy panel: Właściwości -->
-        <aside id="propertiesPanel" class="absolute md:relative z-20 inset-y-0 right-0 w-80 bg-white border-l border-slate-200 shadow-2xl flex flex-col shrink-0">
-            <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-purple-600"></i> Właściwości
-                </h3>
+        <aside id="properties-panel" class="w-72 bg-white border-l border-slate-200 p-4 flex flex-col shrink-0 z-20 shadow-lg hidden">
+            <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-200">
+                <h2 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-blue-600"></i> Właściwości
+                </h2>
+                <button onclick="deselectAll()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="propertiesContent">
-                <p class="text-xs text-slate-500 italic text-center py-8">Wybierz obiekt, aby edytować jego właściwości.</p>
+
+            <div class="space-y-4 flex-1 overflow-y-auto">
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Nazwa / Etykieta</label>
+                    <input type="text" id="prop-label" oninput="updateSelectedObject()" class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Szerokość (m)</label>
+                        <input type="number" id="prop-width" step="0.05" min="0.1" oninput="updateSelectedObject()" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Długość (m)</label>
+                        <input type="number" id="prop-height" step="0.05" min="0.1" oninput="updateSelectedObject()" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-[11px] font-medium text-slate-600 mb-1">
+                        <span>Obrót obiektu</span>
+                        <span id="prop-rotation-val">0°</span>
+                    </div>
+                    <input type="range" id="prop-rotation" min="0" max="360" value="0" step="5" oninput="updateSelectedObject()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="grid grid-cols-4 gap-1 mt-2">
+                        <button onclick="rotateSelected(0)" class="text-[10px] bg-slate-100 hover:bg-slate-200 py-1 rounded">0°</button>
+                        <button onclick="rotateSelected(90)" class="text-[10px] bg-slate-100 hover:bg-slate-200 py-1 rounded">90°</button>
+                        <button onclick="rotateSelected(180)" class="text-[10px] bg-slate-100 hover:bg-slate-200 py-1 rounded">180°</button>
+                        <button onclick="rotateSelected(270)" class="text-[10px] bg-slate-100 hover:bg-slate-200 py-1 rounded">270°</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Kolor wypełnienia</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="prop-color" oninput="updateSelectedObject()" class="w-8 h-8 rounded border border-slate-300 cursor-pointer">
+                        <span id="prop-color-hex" class="text-xs font-mono uppercase text-slate-500">#000000</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Kolejność warstw</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="changeZIndex(1)" class="bg-slate-100 hover:bg-slate-200 text-xs py-1.5 rounded font-medium text-slate-700 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-layer-group"></i> Na wierzch
+                        </button>
+                        <button onclick="changeZIndex(-1)" class="bg-slate-100 hover:bg-slate-200 text-xs py-1.5 rounded font-medium text-slate-700 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-layer-group"></i> Pod spód
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 space-y-2">
+                    <button onclick="duplicateSelected()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-copy"></i> Duplikuj Element
+                    </button>
+                    <button onclick="deleteSelected()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash"></i> Usuń Element
+                    </button>
+                </div>
             </div>
         </aside>
-
     </div>
 
     <script>
-        // Dokładne elementy i wymiary z Twojego katalogu
-        const catalogItems = [
+        // --- STAŁE I STAN APLIKACJI ---
+        const SCALE = 100; // 1 metr = 100 pikseli
+        const CANVAS_SIZE = 3000; // Rozmiar planszy 3000x3000px
+        const CENTER_POINT = CANVAS_SIZE / 2; // Środek rotacji (1500, 1500)
+
+        let currentZoom = 1;
+        let gridRotation = 0; // Obrót siatki w stopniach (0 - 360)
+        let objects = [];
+        let selectedId = null;
+        let nextObjectId = 1;
+
+        let bgConfig = {
+            url: '',
+            opacity: 0.5,
+            scale: 1,
+            rotation: 0,
+            x: 0,
+            y: 0
+        };
+
+        // Baza mebli i elementów stoiska z katalogu
+        const PRESETS = [
             { type: 'kallax_1x4', name: 'Kallax 1x4', w: 0.42, h: 0.39, color: '#475569', icon: 'fa-cubes' },
             { type: 'kallax_2x4', name: 'Kallax 2x4', w: 0.77, h: 0.39, color: '#475569', icon: 'fa-cubes' },
             { type: 'kallax_3x4', name: 'Kallax 3x4', w: 1.12, h: 0.39, color: '#475569', icon: 'fa-cubes' },
             { type: 'kallax_4x4', name: 'Kallax 4x4', w: 1.47, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'billie', name: 'Regał Billie', w: 0.80, h: 0.20, color: '#64748b', icon: 'fa-book-open' },
-            { type: 'trolley', name: 'Wózek jezdny', w: 0.92, h: 0.58, color: '#d97706', icon: 'fa-truck-ramp-box' },
-            { type: 'rot_silver', name: 'Ekspozytor obrotowy (srebro)', w: 0.40, h: 0.40, color: '#94a3b8', icon: 'fa-arrows-spin' },
-            { type: 'rot_black', name: 'Ekspozytor obrotowy (czarny)', w: 0.45, h: 0.45, color: '#334155', icon: 'fa-arrows-spin' },
-            { type: 'disp_white', name: 'Ekspozytor biały', w: 0.845, h: 0.46, color: '#e2e8f0', icon: 'fa-box-open' },
-            { type: 'table_large', name: 'Stół duży', w: 1.80, h: 0.74, color: '#1e293b', icon: 'fa-table' },
-            { type: 'table_small', name: 'Stół mały', w: 1.50, h: 0.73, color: '#334155', icon: 'fa-table' },
-            { type: 'cash_desk', name: 'Kasa / Stolik', w: 0.70, h: 0.50, color: '#059669', icon: 'fa-cash-register' },
-            { type: 'chair', name: 'Krzesło / Hoker', w: 0.45, h: 0.45, color: '#475569', icon: 'fa-chair' },
-            { type: 'table_round', name: 'Stolik okrągły', w: 0.80, h: 0.80, color: '#d97706', icon: 'fa-circle' },
-            { type: 'rollup', name: 'Roll-up banner', w: 0.85, h: 0.30, color: '#10b981', icon: 'fa-scroll' }
+            { type: 'counter', name: 'Recepcja / Lada', w: 1.5, h: 0.6, color: '#2563eb', icon: 'fa-store' },
+            { type: 'table', name: 'Stół konferencyjny', w: 1.6, h: 0.9, color: '#0ea5e9', icon: 'fa-table' },
+            { type: 'chair', name: 'Krzesło', w: 0.5, h: 0.5, color: '#64748b', icon: 'fa-chair' },
+            { type: 'shelf', name: 'Regał wystawowy', w: 1.0, h: 0.4, color: '#334155', icon: 'fa-box-archive' },
+            { type: 'wall_panel', name: 'Panel ścianki 1m', w: 1.0, h: 0.1, color: '#1e293b', icon: 'fa-square' },
+            { type: 'pillar', name: 'Filar / Kolumna', w: 0.5, h: 0.5, color: '#cbd5e1', icon: 'fa-columns' },
+            { type: 'tv_stand', name: 'Ekran TV / Stojak', w: 0.8, h: 0.3, color: '#0f172a', icon: 'fa-tv' },
+            { type: 'plant', name: 'Roślina ozdobna', w: 0.4, h: 0.4, color: '#16a34a', icon: 'fa-seedling' }
         ];
 
-        let objects = [];
-        let selectedIds = new Set();
-        let backgroundData = { url: '', x: 0, y: 0, scale: 1, rotation: 0, opacity: 20, width: 800, height: 600 };
-        
-        let panX = 300, panY = 300, zoom = 1;
-        let isPanning = false, isMarqueeSelecting = false;
-        let startPanX = 0, startPanY = 0;
-        let marqueeStartX = 0, marqueeStartY = 0;
-        let gridRotation = 0;
-
+        // Inicjalizacja po załadowaniu DOM
         window.addEventListener('DOMContentLoaded', () => {
-            renderCatalog();
-            const viewport = document.getElementById('viewport');
-            
-            viewport.addEventListener('mousedown', (e) => {
-                if (e.target === viewport || e.target.id === 'world' || e.target.id === 'backgroundLayer' || e.target.id === 'objectsLayer') {
-                    if (e.button === 0) {
-                        isPanning = true;
-                        startPanX = e.clientX - panX;
-                        startPanY = e.clientY - panY;
-                    } else if (e.button === 2) {
-                        startMarquee(e);
-                    }
-                }
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (isPanning) {
-                    panX = e.clientX - startPanX;
-                    panY = e.clientY - startPanY;
-                    updateTransform();
-                } else if (isMarqueeSelecting) {
-                    updateMarquee(e);
-                }
-            });
-
-            window.addEventListener('mouseup', (e) => {
-                if (isPanning) isPanning = false;
-                if (isMarqueeSelecting && e.button === 2) endMarquee(e);
-            });
-
-            viewport.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const zoomFactor = 1.1;
-                let newZoom = e.deltaY < 0 ? zoom * zoomFactor : zoom / zoomFactor;
-                newZoom = Math.max(0.1, Math.min(3, newZoom));
-
-                const rect = viewport.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-
-                panX = mouseX - (mouseX - panX) * (newZoom / zoom);
-                panY = mouseY - (mouseY - panY) * (newZoom / zoom);
-                zoom = newZoom;
-
-                document.getElementById('zoomRange').value = Math.round(zoom * 100);
-                document.getElementById('zoomVal').textContent = Math.round(zoom * 100) + '%';
-                updateTransform();
-            }, { passive: false });
-
-            updateTransform();
-            renderObjects();
+            renderPresetLibrary();
+            initPresetsOnCanvas();
+            initPanning();
+            centerViewport();
         });
 
-        function renderCatalog() {
-            const container = document.getElementById('catalogGrid');
-            container.innerHTML = '';
-            catalogItems.forEach(item => {
-                const btn = document.createElement('button');
-                const widthPx = Math.round(item.w * 100);
-                const heightPx = Math.round(item.h * 100);
-                
-                btn.className = "bg-slate-50 hover:bg-slate-100 border border-slate-200 p-2 rounded text-left transition flex items-center justify-between group cursor-pointer";
-                btn.innerHTML = `
-                    <div class="flex items-center gap-2.5 overflow-hidden pointer-events-none">
-                        <i class="fa-solid ${item.icon} text-slate-500 w-5 text-center"></i>
-                        <div class="truncate">
-                            <div class="text-xs font-medium text-slate-800 truncate">${item.name}</div>
-                            <div class="text-[10px] text-slate-400">${item.w}m × ${item.h}m</div>
-                        </div>
-                    </div>
-                    <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono group-hover:bg-blue-600 group-hover:text-white transition pointer-events-none">+</span>
-                `;
-                btn.onclick = () => addNewObject(item.type, item.name, widthPx, heightPx, item.color);
-                container.appendChild(btn);
-            });
-        }
-
-        function updateTransform() {
-            document.getElementById('world').style.transform = `translate(${panX}px, ${panY}px) scale(${zoom}) rotate(${gridRotation}deg)`;
-        }
-
-        function setZoomFromSlider(val) {
-            zoom = val / 100;
-            document.getElementById('zoomVal').textContent = val + '%';
-            updateTransform();
-        }
-
-        function toggleGrid() {
-            const enabled = document.getElementById('gridToggle').checked;
-            document.getElementById('world').style.backgroundImage = enabled ? 
-                'linear-gradient(to right, rgba(239, 68, 68, 0.25) 1.5px, transparent 1.5px), linear-gradient(to bottom, rgba(239, 68, 68, 0.25) 1.5px, transparent 1.5px), linear-gradient(to right, rgba(239, 68, 68, 0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(239, 68, 68, 0.1) 1px, transparent 1px)' : 'none';
-        }
-
-        function updateGridRotation(val) {
-            gridRotation = parseInt(val);
-            document.getElementById('gridRotVal').textContent = gridRotation + '°';
-            updateTransform();
+        function centerViewport() {
+            const viewport = document.getElementById('viewport');
+            viewport.scrollLeft = (CANVAS_SIZE - viewport.clientWidth) / 2;
+            viewport.scrollTop = (CANVAS_SIZE - viewport.clientHeight) / 2;
         }
 
         function toggleMobileSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            const sidebar = document.getElementById('left-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
         }
 
-        function togglePropertiesPanel() {
-            document.getElementById('propertiesPanel').classList.toggle('translate-x-full');
+        // --- BIBLIOTEKA PRESETÓW ---
+        function renderPresetLibrary() {
+            const container = document.getElementById('preset-library');
+            container.innerHTML = PRESETS.map(p => `
+                <button onclick="addObjectFromPreset('${p.type}')" class="bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 p-2.5 rounded-xl text-left transition flex flex-col justify-between group">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <div class="w-7 h-7 rounded-lg bg-white shadow-sm border border-slate-200 flex items-center justify-center text-blue-600 group-hover:scale-110 transition">
+                            <i class="fa-solid ${p.icon} text-xs"></i>
+                        </div>
+                        <span class="text-[10px] font-mono font-medium text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-100">${p.w}x${p.h}m</span>
+                    </div>
+                    <span class="font-medium text-xs text-slate-700 group-hover:text-blue-700 truncate w-full">${p.name}</span>
+                </button>
+            `).join('');
         }
 
-        function addNewObject(type, name, width, height, color) {
+        function initPresetsOnCanvas() {
+            objects = [
+                { id: nextObjectId++, name: 'Recepcja / Lada', type: 'counter', x: 1500 - 75, y: 1500 - 150, w: 1.5, h: 0.6, rotation: 0, color: '#2563eb', zIndex: 1 },
+                { id: nextObjectId++, name: 'Stół konferencyjny', type: 'table', x: 1500 - 80, y: 1500 + 50, w: 1.6, h: 0.9, rotation: 0, color: '#0ea5e9', zIndex: 2 },
+                { id: nextObjectId++, name: 'Krzesło', type: 'chair', x: 1500 - 25, y: 1500 - 50, w: 0.5, h: 0.5, rotation: 0, color: '#64748b', zIndex: 3 }
+            ];
+            renderObjects();
+        }
+
+        // --- OBSŁUGA PRZESUWANIA (PANNING) MYSZKĄ ---
+        function initPanning() {
             const viewport = document.getElementById('viewport');
-            const centerX = (viewport.clientWidth / 2 - panX) / zoom;
-            const centerY = (viewport.clientHeight / 2 - panY) / zoom;
+            let isPanning = false;
+            let startX, startY;
+
+            viewport.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.booth-object') || e.target.closest('aside') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input')) {
+                    return;
+                }
+                isPanning = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                viewport.style.cursor = 'grabbing';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isPanning) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                startX = e.clientX;
+                startY = e.clientY;
+                viewport.scrollLeft -= dx;
+                viewport.scrollTop -= dy;
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isPanning) {
+                    isPanning = false;
+                    viewport.style.cursor = 'grab';
+                }
+            });
+        }
+
+        // --- FUNKCJE DODAWANIA OBIEKTÓW ---
+        function addObjectFromPreset(type) {
+            const preset = PRESETS.find(p => p.type === type);
+            if (!preset) return;
 
             const newObj = {
-                id: 'obj_' + Date.now() + Math.random().toString(36.substr(2, 5)),
-                type: type,
-                name: name + ' ' + (objects.length + 1),
-                note: '',
-                x: Math.round(centerX - width / 2),
-                y: Math.round(centerY - height / 2),
-                width: width,
-                height: height,
-                color: color,
-                opacity: 1,
-                rotation: 0
+                id: nextObjectId++,
+                name: preset.name,
+                type: preset.type,
+                x: 1500 - (preset.w * SCALE) / 2,
+                y: 1500 - (preset.h * SCALE) / 2,
+                w: preset.w,
+                h: preset.h,
+                rotation: 0,
+                color: preset.color,
+                zIndex: objects.length + 1
             };
-
             objects.push(newObj);
-            selectedIds.clear();
-            selectedIds.add(newObj.id);
             renderObjects();
-            updatePropertiesPanel();
+            selectObject(newObj.id);
         }
 
-        function addCustomObject() {
-            const wM = parseFloat(document.getElementById('customW').value) || 1;
-            const hM = parseFloat(document.getElementById('customH').value) || 1;
-            const name = document.getElementById('customName').value || 'Element';
-            addNewObject('custom', name, Math.round(wM * 100), Math.round(hM * 100), '#475569');
+        function addCustomItem() {
+            const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
+            const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
+            const name = document.getElementById('custom-name').value || 'Własny Obiekt';
+
+            const newObj = {
+                id: nextObjectId++,
+                name: name,
+                type: 'custom',
+                x: 1500 - (w * SCALE) / 2,
+                y: 1500 - (h * SCALE) / 2,
+                w: w,
+                h: h,
+                rotation: 0,
+                color: '#475569',
+                zIndex: objects.length + 1
+            };
+            objects.push(newObj);
+            renderObjects();
+            selectObject(newObj.id);
         }
 
-        function addArrow() {
-            const lengthM = parseFloat(document.getElementById('arrowLen').value) || 2;
-            const opacity = parseFloat(document.getElementById('arrowOpacity').value) || 0.8;
-            addNewObject('arrow', 'Kierunek ruchu', Math.round(lengthM * 100), 30, '#6366f1');
-        }
-
+        // --- RENDEROWANIE OBIEKTÓW NA PLANSZY ---
         function renderObjects() {
-            const layer = document.getElementById('objectsLayer');
-            layer.innerHTML = '';
+            const container = document.getElementById('objects-layer');
+            container.innerHTML = objects.map(obj => {
+                const widthPx = obj.w * SCALE;
+                const heightPx = obj.h * SCALE;
+                const isSelected = obj.id === selectedId;
 
-            objects.forEach(obj => {
-                const el = document.createElement('div');
-                el.className = `booth-object ${selectedIds.has(obj.id) ? 'selected' : ''}`;
-                el.style.left = obj.x + 'px';
-                el.style.top = obj.y + 'px';
-                el.style.width = obj.width + 'px';
-                el.style.height = obj.height + 'px';
-                el.style.backgroundColor = obj.color;
-                el.style.opacity = obj.opacity ?? 1;
-                el.style.transform = `rotate(${obj.rotation || 0}deg)`;
-                el.dataset.id = obj.id;
+                return `
+                    <div id="obj-${obj.id}" 
+                         class="booth-object ${isSelected ? 'selected' : ''}" 
+                         style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
+                         onmousedown="startDragging(event, ${obj.id})"
+                         onclick="selectObject(${obj.id})">
+                        
+                        <div class="w-full h-full rounded-lg shadow-md flex flex-col items-center justify-center p-1.5 text-white overflow-hidden border border-white/20 relative"
+                             style="background-color: ${obj.color};">
+                            
+                            <span class="text-[11px] font-bold leading-tight text-center drop-shadow truncate w-full">${obj.name}</span>
+                            <span class="text-[9px] font-mono opacity-80 mt-0.5">${obj.w}m × ${obj.h}m</span>
 
-                const widthM = (obj.width / 100).toFixed(2);
-                const heightM = (obj.height / 100).toFixed(2);
-
-                el.innerHTML = `
-                    <div class="w-full h-full flex flex-col items-center justify-center p-1 text-center overflow-hidden rounded shadow-sm border border-black/10 pointer-events-none">
-                        <span class="text-[11px] font-bold truncate w-full text-white drop-shadow-sm">${obj.name}</span>
-                        <span class="text-[9px] text-slate-200">${widthM}×${heightM}m</span>
+                            <div class="absolute top-1 right-1 w-5 h-5 bg-black/40 hover:bg-black/70 rounded-full flex items-center justify-center text-[10px] cursor-pointer"
+                                 title="Obróć o 90°" onclick="event.stopPropagation(); rotateObjectQuick(${obj.id})">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </div>
+                        </div>
                     </div>
                 `;
-
-                el.addEventListener('mousedown', (e) => {
-                    e.stopPropagation();
-                    if (e.button === 0) {
-                        if (!e.shiftKey && !selectedIds.has(obj.id)) {
-                            selectedIds.clear();
-                        }
-                        selectedIds.add(obj.id);
-                        renderObjects();
-                        updatePropertiesPanel();
-                        startDraggingObject(e);
-                    }
-                });
-
-                layer.appendChild(el);
-            });
+            }).join('');
         }
 
-        function startDraggingObject(e) {
-            const startMouseX = e.clientX;
-            const startMouseY = e.clientY;
-            const initialPositions = {};
+        // --- PRZECIĄGANIE OBIEKTÓW (DRAG & DROP) Z PRZYCIĄGANIEM ---
+        function startDragging(e, id) {
+            if (e.target.closest('button')) return;
+            e.stopPropagation();
+            selectObject(id);
 
-            selectedIds.forEach(id => {
-                const o = objects.find(item => item.id === id);
-                if (o) initialPositions[id] = { x: o.x, y: o.y };
-            });
+            const obj = objects.find(o => o.id === id);
+            if (!obj) return;
+
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const initialX = obj.x;
+            const initialY = obj.y;
 
             function onMouseMove(moveEvent) {
-                const dx = (moveEvent.clientX - startMouseX) / zoom;
-                const dy = (moveEvent.clientY - startMouseY) / zoom;
-                const snapEnabled = document.getElementById('snapToggle').checked;
-                const snapSize = parseInt(document.getElementById('snapSelect').value);
+                const dx = (moveEvent.clientX - startX) / currentZoom;
+                const dy = (moveEvent.clientY - startY) / currentZoom;
 
-                selectedIds.forEach(id => {
-                    const o = objects.find(item => item.id === id);
-                    if (o && initialPositions[id]) {
-                        let newX = initialPositions[id].x + dx;
-                        let newY = initialPositions[id].y + dy;
+                let newX = initialX + dx;
+                let newY = initialY + dy;
 
-                        if (snapEnabled) {
-                            newX = Math.round(newX / snapSize) * snapSize;
-                            newY = Math.round(newY / snapSize) * snapSize;
-                        }
+                const snapEnabled = document.getElementById('snap-toggle').checked;
+                if (snapEnabled) {
+                    const snapStepMeters = parseFloat(document.getElementById('snap-step').value) || 0.5;
+                    const snapStepPx = snapStepMeters * SCALE;
+                    newX = Math.round(newX / snapStepPx) * snapStepPx;
+                    newY = Math.round(newY / snapStepPx) * snapStepPx;
+                }
 
-                        o.x = newX;
-                        o.y = newY;
-                    }
-                });
-                renderObjects();
+                obj.x = newX;
+                obj.y = newY;
+
+                const el = document.getElementById(`obj-${obj.id}`);
+                if (el) {
+                    el.style.left = `${obj.x}px`;
+                    el.style.top = `${obj.y}px`;
+                }
             }
 
             function onMouseUp() {
                 window.removeEventListener('mousemove', onMouseMove);
                 window.removeEventListener('mouseup', onMouseUp);
-                updatePropertiesPanel();
             }
 
             window.addEventListener('mousemove', onMouseMove);
             window.addEventListener('mouseup', onMouseUp);
         }
 
-        function startMarquee(e) {
-            isMarqueeSelecting = true;
-            const rect = document.getElementById('viewport').getBoundingClientRect();
-            marqueeStartX = e.clientX - rect.left;
-            marqueeStartY = e.clientY - rect.top;
-
-            const box = document.getElementById('marqueeBox');
-            box.style.left = marqueeStartX + 'px';
-            box.style.top = marqueeStartY + 'px';
-            box.style.width = '0px';
-            box.style.height = '0px';
-            box.style.display = 'block';
-        }
-
-        function updateMarquee(e) {
-            if (!isMarqueeSelecting) return;
-            const rect = document.getElementById('viewport').getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-
-            const box = document.getElementById('marqueeBox');
-            box.style.left = Math.min(marqueeStartX, currentX) + 'px';
-            box.style.top = Math.min(marqueeStartY, currentY) + 'px';
-            box.style.width = Math.abs(currentX - marqueeStartX) + 'px';
-            box.style.height = Math.abs(currentY - marqueeStartY) + 'px';
-        }
-
-        function endMarquee(e) {
-            isMarqueeSelecting = false;
-            document.getElementById('marqueeBox').style.display = 'none';
-
-            const rect = document.getElementById('viewport').getBoundingClientRect();
-            const currentX = e.clientX - rect.left;
-            const currentY = e.clientY - rect.top;
-
-            const screenW = Math.abs(currentX - marqueeStartX);
-            const screenH = Math.abs(currentY - marqueeStartY);
-
-            if (screenW < 3 && screenH < 3) {
-                selectedIds.clear();
-                renderObjects();
-                updatePropertiesPanel();
-                return;
-            }
-
-            const worldLeft = (Math.min(marqueeStartX, currentX) - panX) / zoom;
-            const worldTop = (Math.min(marqueeStartY, currentY) - panY) / zoom;
-            const worldRight = worldLeft + (screenW / zoom);
-            const worldBottom = worldTop + (screenH / zoom);
-
-            if (!e.shiftKey) selectedIds.clear();
-
-            objects.forEach(obj => {
-                if (obj.x < worldRight && (obj.x + obj.width) > worldLeft && obj.y < worldBottom && (obj.y + obj.height) > worldTop) {
-                    selectedIds.add(obj.id);
-                }
-            });
-
+        // --- SELEKCJA I PANEL WŁAŚCIWOŚCI ---
+        function selectObject(id) {
+            selectedId = id;
             renderObjects();
-            updatePropertiesPanel();
-        }
-
-        function selectAllObjects() {
-            selectedIds.clear();
-            objects.forEach(o => selectedIds.add(o.id));
-            renderObjects();
-            updatePropertiesPanel();
-        }
-
-        function updatePropertiesPanel() {
-            const container = document.getElementById('propertiesContent');
-            if (selectedIds.size === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-8">Wybierz obiekt, aby edytować jego właściwości.</p>`;
-                return;
-            }
-
-            if (selectedIds.size > 1) {
-                container.innerHTML = `
-                    <div class="space-y-4">
-                        <p class="text-xs font-bold text-blue-600">Zaznaczono obiektów: ${selectedIds.size}</p>
-                        <button onclick="deleteSelectedObjects()" class="w-full bg-red-600 hover:bg-red-500 text-white text-xs py-2 rounded font-medium transition shadow-sm cursor-pointer">
-                            <i class="fa-solid fa-trash-can mr-1.5"></i> Usuń zaznaczone
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-
-            const id = Array.from(selectedIds)[0];
+            
             const obj = objects.find(o => o.id === id);
+            const panel = document.getElementById('properties-panel');
+            
+            if (obj) {
+                panel.classList.remove('hidden');
+                document.getElementById('prop-label').value = obj.name;
+                document.getElementById('prop-width').value = obj.w;
+                document.getElementById('prop-height').value = obj.h;
+                document.getElementById('prop-rotation').value = obj.rotation;
+                document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
+                document.getElementById('prop-color').value = obj.color;
+                document.getElementById('prop-color-hex').innerText = obj.color;
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function deselectAll() {
+            selectedId = null;
+            renderObjects();
+            document.getElementById('properties-panel').classList.add('hidden');
+        }
+
+        function updateSelectedObject() {
+            if (selectedId === null) return;
+            const obj = objects.find(o => o.id === selectedId);
             if (!obj) return;
 
-            const widthM = (obj.width / 100).toFixed(2);
-            const heightM = (obj.height / 100).toFixed(2);
+            obj.name = document.getElementById('prop-label').value || 'Obiekt';
+            obj.w = parseFloat(document.getElementById('prop-width').value) || 0.5;
+            obj.h = parseFloat(document.getElementById('prop-height').value) || 0.5;
+            obj.rotation = parseInt(document.getElementById('prop-rotation').value) || 0;
+            obj.color = document.getElementById('prop-color').value;
 
-            container.innerHTML = `
-                <div class="space-y-4 text-xs">
-                    <div>
-                        <label class="font-semibold text-slate-600 block mb-1">Nazwa / Gatunek</label>
-                        <input type="text" value="${obj.name}" oninput="updateObjProp('${obj.id}', 'name', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label class="font-semibold text-slate-600 block mb-1">Notatka przypisana do elementu</label>
-                        <textarea oninput="updateObjProp('${obj.id}', 'note', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 h-16 focus:outline-none focus:border-blue-500">${obj.note || ''}</textarea>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="font-semibold text-slate-600 block mb-1">Szerokość (m)</label>
-                            <input type="number" step="0.05" value="${widthM}" oninput="updateObjProp('${obj.id}', 'width', Math.round(parseFloat(this.value)*100) || 10)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5">
-                        </div>
-                        <div>
-                            <label class="font-semibold text-slate-600 block mb-1">Długość (m)</label>
-                            <input type="number" step="0.05" value="${heightM}" oninput="updateObjProp('${obj.id}', 'height', Math.round(parseFloat(this.value)*100) || 10)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="font-semibold text-slate-600 block mb-1">Obrót obiektu (°)</label>
-                        <input type="number" value="${obj.rotation || 0}" oninput="updateObjProp('${obj.id}', 'rotation', parseInt(this.value) || 0)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5">
-                        <div class="grid grid-cols-4 gap-1 mt-1.5">
-                            <button onclick="setObjRot('${obj.id}', 0)" class="bg-slate-100 hover:bg-slate-200 py-1 rounded">0°</button>
-                            <button onclick="setObjRot('${obj.id}', 90)" class="bg-slate-100 hover:bg-slate-200 py-1 rounded">90°</button>
-                            <button onclick="setObjRot('${obj.id}', 180)" class="bg-slate-100 hover:bg-slate-200 py-1 rounded">180°</button>
-                            <button onclick="setObjRot('${obj.id}', 270)" class="bg-slate-100 hover:bg-slate-200 py-1 rounded">270°</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="font-semibold text-slate-600 block mb-1">Kolor wypełnienia</label>
-                        <input type="color" value="${obj.color}" oninput="updateObjProp('${obj.id}', 'color', this.value)" class="w-full h-8 bg-slate-50 border border-slate-300 rounded px-1 cursor-pointer">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-slate-600 mb-1"><span>Przezroczystość (Opacity)</span></div>
-                        <input type="range" min="0.1" max="1" step="0.1" value="${obj.opacity ?? 1}" oninput="updateObjProp('${obj.id}', 'opacity', parseFloat(this.value))" class="w-full accent-blue-600">
-                    </div>
-                    <div class="pt-2 flex flex-col gap-2">
-                        <button onclick="duplicateObject('${obj.id}')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 py-2 rounded font-medium">
-                            <i class="fa-solid fa-copy mr-1"></i> Duplikuj Zaznaczone
-                        </button>
-                        <button onclick="deleteSelectedObjects()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-2 rounded font-medium">
-                            <i class="fa-solid fa-trash-can mr-1"></i> Usuń Zaznaczone
-                        </button>
-                    </div>
-                </div>
-            `;
+            document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
+            document.getElementById('prop-color-hex').innerText = obj.color;
+
+            renderObjects();
         }
 
-        function updateObjProp(id, prop, val) {
-            const obj = objects.find(o => o.id === id);
-            if (obj) {
-                obj[prop] = val;
-                renderObjects();
-            }
+        function rotateSelected(deg) {
+            if (selectedId === null) return;
+            const obj = objects.find(o => o.id === selectedId);
+            if (!obj) return;
+            obj.rotation = deg;
+            document.getElementById('prop-rotation').value = deg;
+            document.getElementById('prop-rotation-val').innerText = `${deg}°`;
+            renderObjects();
         }
 
-        function setObjRot(id, angle) {
-            const obj = objects.find(o => o.id === id);
-            if (obj) {
-                obj.rotation = angle;
-                renderObjects();
-                updatePropertiesPanel();
-            }
-        }
-
-        function duplicateObject(id) {
+        function rotateObjectQuick(id) {
             const obj = objects.find(o => o.id === id);
             if (!obj) return;
+            obj.rotation = (obj.rotation + 90) % 360;
+            if (selectedId === id) {
+                document.getElementById('prop-rotation').value = obj.rotation;
+                document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
+            }
+            renderObjects();
+        }
+
+        function changeZIndex(direction) {
+            if (selectedId === null) return;
+            const obj = objects.find(o => o.id === selectedId);
+            if (!obj) return;
+            obj.zIndex = Math.max(1, obj.zIndex + direction);
+            renderObjects();
+        }
+
+        function duplicateSelected() {
+            if (selectedId === null) return;
+            const obj = objects.find(o => o.id === selectedId);
+            if (!obj) return;
+
             const newObj = {
                 ...obj,
-                id: 'obj_' + Date.now() + Math.random().toString(36.substr(2, 5)),
+                id: nextObjectId++,
                 x: obj.x + 30,
                 y: obj.y + 30,
-                name: obj.name + ' (kopia)'
+                zIndex: objects.length + 1
             };
             objects.push(newObj);
-            selectedIds.clear();
-            selectedIds.add(newObj.id);
             renderObjects();
-            updatePropertiesPanel();
+            selectObject(newObj.id);
         }
 
-        function deleteSelectedObjects() {
-            objects = objects.filter(o => !selectedIds.has(o.id));
-            selectedIds.clear();
-            renderObjects();
-            updatePropertiesPanel();
+        function deleteSelected() {
+            if (selectedId === null) return;
+            objects = objects.filter(o => o.id !== selectedId);
+            deselectAll();
         }
 
-        function loadBackgroundImage(event) {
+        // --- TRANSFORMACJE SIATKI I ZOOM ---
+        function adjustZoom(delta) {
+            currentZoom = Math.max(0.4, Math.min(2.5, currentZoom + delta));
+            applyTransforms();
+        }
+
+        function resetZoom() {
+            currentZoom = 1.0;
+            applyTransforms();
+        }
+
+        function setGridRotation(val) {
+            gridRotation = parseInt(val) || 0;
+            document.getElementById('grid-rotation-slider').value = gridRotation;
+            document.getElementById('grid-rotation-num').value = gridRotation;
+            document.getElementById('compass-rose').style.transform = `rotate(${gridRotation}deg)`;
+            document.getElementById('compass-deg').innerText = `${gridRotation}°`;
+            applyTransforms();
+        }
+
+        function applyTransforms() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.transform = `scale(${currentZoom}) rotate(${gridRotation}deg)`;
+            document.getElementById('zoom-level').innerText = `${Math.round(currentZoom * 100)}%`;
+        }
+
+        // --- OBSŁUGA TŁA / RZUTU STOISKA ---
+        function handleBgUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
+
             const reader = new FileReader();
             reader.onload = function(e) {
-                backgroundData.url = e.target.result;
-                const img = new Image();
-                img.onload = function() {
-                    backgroundData.width = img.width;
-                    backgroundData.height = img.height;
-                    renderBackground();
-                };
-                img.src = backgroundData.url;
+                bgConfig.url = e.target.result;
+                const img = document.getElementById('bg-image');
+                img.src = bgConfig.url;
+                img.classList.remove('hidden');
+                document.getElementById('bg-controls').classList.remove('hidden');
+                updateBgSettings();
             };
             reader.readAsDataURL(file);
         }
 
-        function updateBgProp() {
-            backgroundData.opacity = parseInt(document.getElementById('bgOpacityRange').value);
-            backgroundData.scale = parseInt(document.getElementById('bgScaleRange').value) / 100;
-            backgroundData.rotation = parseInt(document.getElementById('bgRotRange').value);
+        function updateBgSettings() {
+            bgConfig.opacity = parseFloat(document.getElementById('bg-opacity').value);
+            bgConfig.scale = parseFloat(document.getElementById('bg-scale').value);
+            bgConfig.rotation = parseInt(document.getElementById('bg-rotation').value);
+            bgConfig.x = parseInt(document.getElementById('bg-x').value) || 0;
+            bgConfig.y = parseInt(document.getElementById('bg-y').value) || 0;
 
-            document.getElementById('bgOpacityVal').textContent = backgroundData.opacity + '%';
-            document.getElementById('bgScaleVal').textContent = Math.round(backgroundData.scale * 100) + '%';
-            document.getElementById('bgRotVal').textContent = backgroundData.rotation + '°';
+            document.getElementById('bg-opacity-val').innerText = `${Math.round(bgConfig.opacity * 100)}%`;
+            document.getElementById('bg-scale-val').innerText = `${Math.round(bgConfig.scale * 100)}%`;
+            document.getElementById('bg-rotation-val').innerText = `${bgConfig.rotation}°`;
 
-            const layer = document.getElementById('backgroundLayer');
-            layer.style.opacity = backgroundData.opacity / 100;
-            renderBackground();
+            const img = document.getElementById('bg-image');
+            img.style.opacity = bgConfig.opacity;
+            img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
         }
 
-        function renderBackground() {
-            const layer = document.getElementById('backgroundLayer');
-            if (!backgroundData.url) {
-                layer.innerHTML = '';
-                return;
-            }
-            layer.innerHTML = `
-                <div style="position: absolute; left: ${backgroundData.x}px; top: ${backgroundData.y}px; width: ${backgroundData.width}px; height: ${backgroundData.height}px; transform: scale(${backgroundData.scale}) rotate(${backgroundData.rotation}deg); transform-origin: top left;">
-                    <img src="${backgroundData.url}" class="w-full h-full object-contain pointer-events-none select-none">
-                </div>
-            `;
+        function setBgRotation(deg) {
+            document.getElementById('bg-rotation').value = deg;
+            updateBgSettings();
         }
 
-        function resetBg() {
-            backgroundData.x = 0;
-            backgroundData.y = 0;
-            backgroundData.scale = 1;
-            backgroundData.rotation = 0;
-            backgroundData.opacity = 20;
-            document.getElementById('bgOpacityRange').value = 20;
-            document.getElementById('bgScaleRange').value = 100;
-            document.getElementById('bgRotRange').value = 0;
-            updateBgProp();
+        function resetBgTransform() {
+            document.getElementById('bg-opacity').value = 0.5;
+            document.getElementById('bg-scale').value = 1.0;
+            document.getElementById('bg-rotation').value = 0;
+            document.getElementById('bg-x').value = 0;
+            document.getElementById('bg-y').value = 0;
+            updateBgSettings();
         }
 
         function removeBackground() {
-            backgroundData.url = '';
-            renderBackground();
+            bgConfig.url = '';
+            const img = document.getElementById('bg-image');
+            img.src = '';
+            img.classList.add('hidden');
+            document.getElementById('bg-controls').classList.add('hidden');
+            document.getElementById('bg-upload').value = '';
         }
 
-        function saveToJson() {
-            const data = { objects: objects, background: backgroundData };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'projekt_stoiska.json';
-            a.click();
-            URL.revokeObjectURL(url);
+        // --- ZAPIS / ODCZYT PROJEKTU JSON ---
+        function saveProjectJSON() {
+            const data = {
+                objects: objects,
+                bgConfig: bgConfig,
+                gridRotation: gridRotation
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "projekt_stoiska.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
         }
 
-        function loadFromJson(event) {
+        function loadProjectJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
                     if (data.objects) objects = data.objects;
-                    if (data.background) {
-                        backgroundData = data.background;
-                        renderBackground();
+                    if (data.gridRotation !== undefined) setGridRotation(data.gridRotation);
+                    if (data.bgConfig) {
+                        bgConfig = data.bgConfig;
+                        if (bgConfig.url) {
+                            const img = document.getElementById('bg-image');
+                            img.src = bgConfig.url;
+                            img.classList.remove('hidden');
+                            document.getElementById('bg-controls').classList.remove('hidden');
+                            document.getElementById('bg-opacity').value = bgConfig.opacity;
+                            document.getElementById('bg-scale').value = bgConfig.scale;
+                            document.getElementById('bg-rotation').value = bgConfig.rotation;
+                            document.getElementById('bg-x').value = bgConfig.x;
+                            document.getElementById('bg-y').value = bgConfig.y;
+                            updateBgSettings();
+                        }
                     }
-                    selectedIds.clear();
+                    nextObjectId = objects.reduce((max, o) => Math.max(max, o.id), 0) + 1;
+                    deselectAll();
                     renderObjects();
-                    updatePropertiesPanel();
                 } catch (err) {
-                    alert('Błąd podczas wczytywania pliku JSON.');
+                    console.error('Błąd odczytu pliku JSON:', err);
                 }
             };
             reader.readAsText(file);
         }
 
-        function exportToPng() {
-            const prevSelected = new Set(selectedIds);
-            selectedIds.clear();
-            renderObjects();
+        // --- EKSPORT DO PNG ---
+        function exportToPNG() {
+            deselectAll();
+            const canvasWrapper = document.getElementById('canvas-wrapper');
+            
+            const origTransform = canvasWrapper.style.transform;
+            canvasWrapper.style.transform = 'scale(1) rotate(0deg)';
 
-            html2canvas(document.getElementById('world'), { backgroundColor: '#fcf8f8', scale: 2 }).then(canvas => {
+            html2canvas(canvasWrapper, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                canvasWrapper.style.transform = origTransform;
                 const link = document.createElement('a');
                 link.download = 'layout_stoiska.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-
-                selectedIds = prevSelected;
-                renderObjects();
+            }).catch(err => {
+                canvasWrapper.style.transform = origTransform;
+                console.error('Wystąpił błąd podczas eksportu do PNG:', err);
             });
         }
     </script>
