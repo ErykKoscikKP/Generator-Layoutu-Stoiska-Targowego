@@ -122,7 +122,7 @@
                     <input type="file" id="bg-image-input" accept="image/*" class="hidden" onchange="loadBackgroundImage(event)">
                 </div>
 
-                <!-- Sekcja: Elementy stoiska (dynamicznie generowane z podanej listy) -->
+                <!-- Sekcja: Elementy stoiska -->
                 <div class="space-y-2">
                     <label class="text-xs font-bold uppercase tracking-wider text-slate-500 block">Wyposażenie stoiska</label>
                     <div id="catalogGrid" class="grid grid-cols-1 gap-2">
@@ -150,8 +150,8 @@
 
         <!-- Główny obszar roboczy -->
         <main id="viewport" class="flex-1 relative overflow-hidden bg-slate-200 cursor-grab active:cursor-grabbing">
-            <!-- 1 metr = 100px, więc główna kratka siatki to 100x100px, podziałki co 20px -->
-            <div id="world" class="absolute origin-top-left w-[5000px] h-[5000px]" style="transform: translate(0px, 0px) scale(1); background-size: 100px 100px, 20px 20px; background-image: linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);">
+            <!-- Siatka: 100px = 1m (główna kratka 100x100, podziałka co 25px) -->
+            <div id="world" class="absolute origin-top-left w-[10000px] h-[10000px]" style="transform: translate(0px, 0px) scale(1); background-size: 100px 100px, 25px 25px; background-image: linear-gradient(to right, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);">
                 <div id="backgroundLayer" class="absolute inset-0 pointer-events-none z-0"></div>
                 <div id="objectsLayer" class="absolute inset-0 z-10"></div>
             </div>
@@ -176,7 +176,6 @@
     </div>
 
     <script>
-        // Katalog elementów (skala: 1 metr = 100 pikseli)
         const catalogItems = [
             { type: 'kallax_1x4', name: 'Kallax 1x4', w: 0.42, h: 0.39, color: '#475569', icon: 'fa-cubes' },
             { type: 'kallax_2x4', name: 'Kallax 2x4', w: 0.77, h: 0.39, color: '#475569', icon: 'fa-cubes' },
@@ -204,7 +203,7 @@
         let startPanX = 0, startPanY = 0;
         let marqueeStartX = 0, marqueeStartY = 0;
         
-        let snapSize = 25; // domyślnie 25px (0.25m)
+        let snapSize = 25;
         let gridEnabled = true;
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -264,20 +263,19 @@
             container.innerHTML = '';
             catalogItems.forEach(item => {
                 const btn = document.createElement('button');
-                // Przeliczenie metrów na piksele (1m = 100px)
                 const widthPx = Math.round(item.w * 100);
                 const heightPx = Math.round(item.h * 100);
                 
-                btn.className = "bg-slate-50 hover:bg-slate-100 border border-slate-200 p-2 rounded text-left transition flex items-center justify-between group";
+                btn.className = "bg-slate-50 hover:bg-slate-100 border border-slate-200 p-2 rounded text-left transition flex items-center justify-between group cursor-pointer";
                 btn.innerHTML = `
-                    <div class="flex items-center gap-2.5 overflow-hidden">
+                    <div class="flex items-center gap-2.5 overflow-hidden pointer-events-none">
                         <i class="fa-solid ${item.icon} text-slate-500 w-5 text-center"></i>
                         <div class="truncate">
                             <div class="text-xs font-medium text-slate-800 truncate">${item.name}</div>
                             <div class="text-[10px] text-slate-400">${item.w}m × ${item.h}m</div>
                         </div>
                     </div>
-                    <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono group-hover:bg-blue-600 group-hover:text-white transition">+</span>
+                    <span class="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-mono group-hover:bg-blue-600 group-hover:text-white transition pointer-events-none">+</span>
                 `;
                 btn.onclick = () => addNewObject(item.type, item.name, widthPx, heightPx, item.color);
                 container.appendChild(btn);
@@ -299,7 +297,7 @@
         function toggleGrid() {
             gridEnabled = document.getElementById('gridToggle').checked;
             document.getElementById('world').style.backgroundImage = gridEnabled ? 
-                'linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px), linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px)' : 'none';
+                'linear-gradient(to right, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px)' : 'none';
         }
 
         function updateSnap(val) {
@@ -352,7 +350,7 @@
                 const heightM = (obj.height / 100).toFixed(2);
 
                 el.innerHTML = `
-                    <div class="w-full h-full flex flex-col items-center justify-center p-1 text-center overflow-hidden rounded shadow-sm border border-black/10">
+                    <div class="w-full h-full flex flex-col items-center justify-center p-1 text-center overflow-hidden rounded shadow-sm border border-black/10 pointer-events-none">
                         <span class="text-[11px] font-bold truncate w-full text-white drop-shadow-sm">${obj.name}</span>
                         <span class="text-[9px] text-slate-200">${widthM}×${heightM}m</span>
                     </div>
@@ -497,7 +495,7 @@
                 container.innerHTML = `
                     <div class="space-y-4">
                         <p class="text-xs font-bold text-blue-600">Zaznaczono obiektów: ${selectedIds.size}</p>
-                        <button onclick="deleteSelectedObjects()" class="w-full bg-red-600 hover:bg-red-500 text-white text-xs py-2 rounded font-medium transition shadow-sm">
+                        <button onclick="deleteSelectedObjects()" class="w-full bg-red-600 hover:bg-red-500 text-white text-xs py-2 rounded font-medium transition shadow-sm cursor-pointer">
                             <i class="fa-solid fa-trash-can mr-1.5"></i> Usuń zaznaczone
                         </button>
                     </div>
@@ -555,10 +553,10 @@
                         </div>
                     </div>
                     <div class="pt-2 flex gap-2">
-                        <button onclick="duplicateObject('${obj.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs py-2 rounded font-medium transition">
+                        <button onclick="duplicateObject('${obj.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs py-2 rounded font-medium transition cursor-pointer">
                             <i class="fa-solid fa-copy mr-1"></i> Duplikuj
                         </button>
-                        <button onclick="deleteSelectedObjects()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs py-2 rounded font-medium transition">
+                        <button onclick="deleteSelectedObjects()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs py-2 rounded font-medium transition cursor-pointer">
                             <i class="fa-solid fa-trash-can mr-1"></i> Usuń
                         </button>
                     </div>
