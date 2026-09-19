@@ -67,6 +67,51 @@
         </div>
 
         <div class="flex items-center space-x-2">
+                <button onclick="selectAllObjects()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-check-double"></i> <span class="hidden sm:inline">Zaznacz wszystko</span>
+                </button>
+
+                <button onclick="document.getElementById('json-input').click()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open"></i> <span class="hidden sm:inline">Otwórz JSON</span>
+                </button>
+                <input type="file" id="json-input" class="hidden" accept=".json" onchange="loadProjectJSON(event)">
+
+                <button onclick="saveProjectJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">Zapisz JSON</span>
+                </button>
+
+                <button onclick="exportToPNG()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm px-3 py-1.5 rounded-lg shadow font-medium transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-image"></i> <span>Eksportuj PNG</span>
+                </button>
+
+                <button onclick="togglePropertiesPanel()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline">Właściwości</span>
+                </button>
+            </div>
+        </header>
+
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <div id="mobile-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden"></div>
+
+        </head>
+<body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none" oncontextmenu="return false;">
+
+    <header class="bg-slate-900 text-white px-4 py-2.5 flex justify-between items-center shadow-md z-30 shrink-0">
+        <div class="flex items-center space-x-3">
+            <button onclick="toggleMobileSidebar()" class="md:hidden bg-slate-800 p-2 rounded text-slate-200 hover:text-white">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <i class="fa-solid fa-compass-drafting text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-base md:text-lg leading-tight">Planer Layoutu Stoiska</h1>
+                <p class="text-xs text-slate-400 hidden sm:block">Lewy: przesuwanie/plansza | Prawy: zaznaczanie</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
             <button onclick="selectAllObjects()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
                 <i class="fa-solid fa-check-double"></i> <span class="hidden sm:inline">Zaznacz wszystko</span>
             </button>
@@ -79,11 +124,11 @@
             <button onclick="saveProjectJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2">
                 <i class="fa-solid fa-floppy-disk"></i> <span class="hidden sm:inline">Zapisz JSON</span>
             </button>
-
-            <button onclick="exportToPNG()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm px-3 py-1.5 rounded-lg shadow font-medium transition flex items-center gap-2">
-                <i class="fa-solid fa-file-image"></i> <span>Eksportuj PNG</span>
-            </button>
         </div>
+        <!-- Przycisk sterujący prawym panelem właściwości -->
+<button onclick="togglePropertiesPanel()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-2" title="Właściwości">
+    <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline">Właściwości</span>
+</button>
     </header>
 
     <div class="flex-1 flex overflow-hidden relative">
@@ -354,9 +399,162 @@
         </aside>
     </div>
 
+        <main class="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
+            
+            <div class="bg-white border-b border-slate-200 px-4 py-2 flex flex-wrap justify-between items-center gap-3 z-10 shadow-sm">
+                
+                <div class="flex items-center space-x-3">
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="snap-toggle" checked class="sr-only peer">
+                        <div class="relative w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-2 text-xs font-semibold text-slate-700">Przyciągaj</span>
+                    </label>
+
+                    <select id="snap-step" class="text-xs border border-slate-300 rounded px-2 py-1 bg-white outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="0.1">co 0.1m</option>
+                        <option value="0.25">co 0.25m</option>
+                        <option value="0.5" selected>co 0.5m</option>
+                        <option value="1.0">co 1.0m</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1 shadow-inner">
+                    <div class="flex items-center gap-1.5 text-blue-600 text-xs font-bold">
+                        <i class="fa-solid fa-rotate text-sm"></i>
+                        <span class="hidden sm:inline">Obrót Siatki:</span>
+                    </div>
+                    <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-24 sm:w-32 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <div class="flex items-center gap-1">
+                        <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-12 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none">
+                        <span class="text-xs font-bold text-slate-500">°</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-300 rounded-lg px-3 py-1 shadow-inner">
+                    <div class="flex items-center gap-1.5 text-blue-600 text-xs font-bold">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                        <span class="hidden sm:inline">Zoom:</span>
+                    </div>
+                    <input type="range" id="zoom-slider" min="0.1" max="4.0" value="1.0" step="0.05" oninput="setZoomFromSlider(this.value)" class="w-24 sm:w-32 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <span id="zoom-level" class="text-xs font-mono font-bold text-slate-700 w-12 text-right">100%</span>
+                    <button onclick="resetZoom()" class="text-[10px] px-1.5 py-0.5 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 rounded font-semibold text-slate-600 border-l border-slate-300 ml-1">1:1</button>
+                </div>
+            </div>
+
+            <div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing">
+                
+                <div id="canvas-wrapper" class="relative transition-transform duration-75 w-[20000px] h-[20000px]" style="transform-origin: 0 0;">
+                   
+                    <div id="grid-bg" class="absolute inset-0 bg-white"
+                         style="background-size: 100px 100px; background-repeat: repeat; background-image: linear-gradient(to right, rgba(203, 213, 225, 0.7) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.7) 1px, transparent 1px);">
+                    </div>
+
+                    <div id="subgrid-bg" class="absolute inset-0 pointer-events-none"
+                         style="background-size: 10px 10px; background-repeat: repeat; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.5) 1px, transparent 1px);">
+                    </div>
+
+                    <div id="bg-layer" class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                        <img id="bg-image" src="" class="hidden pointer-events-none max-w-none">
+                    </div>
+
+                    <div id="objects-layer" class="absolute inset-0 pointer-events-none"></div>
+                    <div id="marqueeBox"></div>
+
+                </div>
+
+                <div id="cursor-ghost" class="absolute pointer-events-none z-50 hidden rounded-md shadow-lg opacity-85 flex flex-col items-center justify-center p-1 text-white text-xs font-medium border-2 border-dashed border-white">
+                    <span id="ghost-name" class="truncate max-w-full px-1"></span>
+                    <span id="ghost-dims" class="text-[9px] opacity-75"></span>
+                </div>
+
+                <div class="fixed bottom-4 right-4 bg-slate-900/85 backdrop-blur text-white text-xs p-3 rounded-2xl shadow-xl pointer-events-none z-20 flex flex-col items-center gap-1.5 border border-slate-700">
+                    <div class="relative w-12 h-12 flex items-center justify-center border-2 border-slate-600 rounded-full bg-slate-800">
+                        <div id="compass-rose" class="compass-ring absolute inset-0 flex items-center justify-center">
+                            <span class="absolute top-0.5 text-[9px] font-extrabold text-red-400">N</span>
+                            <span class="absolute right-1 text-[8px] font-bold text-slate-400">E</span>
+                            <span class="absolute bottom-0.5 text-[8px] font-bold text-slate-400">S</span>
+                            <span class="absolute left-1 text-[8px] font-bold text-slate-400">W</span>
+                            <i class="fa-solid fa-location-arrow text-blue-400 text-lg transform -rotate-45"></i>
+                        </div>
+                    </div>
+                    <span id="compass-deg" class="font-mono font-bold text-[11px] text-blue-300">0°</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Prawy Panel Właściwości - domyślnie ukryty -->
+        <aside id="properties-panel" class="w-72 bg-white border-l border-slate-200 p-4 flex flex-col shrink-0 z-20 shadow-lg hidden">
+            <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-200">
+                <h2 id="panel-title" class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-blue-600"></i> Właściwości
+                </h2>
+                <button onclick="deselectAll()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 flex-1 overflow-y-auto">
+                <div id="single-props" class="space-y-4">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Nazwa / Gatunek</label>
+                        <input type="text" id="prop-label" oninput="updateSelectedObject()" class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">Notatka przypisana do elementu</label>
+                        <textarea id="prop-note" oninput="updateSelectedObject()" rows="2" placeholder="Dodatkowa informacja / opis..." class="w-full text-xs px-2.5 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Szerokość (m)</label>
+                            <input type="number" id="prop-width" step="0.05" min="0.1" oninput="updateSelectedObject()" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Długość (m)</label>
+                            <input type="number" id="prop-height" step="0.05" min="0.1" oninput="updateSelectedObject()" class="w-full text-xs px-2 py-1.5 border border-slate-300 rounded outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] font-medium text-slate-600 mb-1">
+                            <span>Obrót obiektu</span>
+                            <span id="prop-rotation-val">0°</span>
+                        </div>
+                        <input type="range" id="prop-rotation" min="0" max="360" value="0" step="5" oninput="updateSelectedObject()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                        <div class="grid grid-cols-4 gap-1 mt-2">
+                            <button onclick="rotateSelected(0)" class="text-[10px] bg-slate-100 hover:bg-slate-200 py-1 rounded">0°</button>
+                            <button onclick="rotateSelected(90)" class="text-[10px] bg-slate-100 hover:bg-slate-200 py-1 rounded">90°</button>
+                            <button onclick="rotateSelected(180)" class="text-[10px] bg-slate-100 hover:bg-slate-200 py-1 rounded">180°</button>
+                            <button onclick="rotateSelected(270)" class="text-[10px] bg-slate-100 hover:bg-slate-200 py-1 rounded">270°</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Kolor wypełnienia</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="prop-color" oninput="updateSelectedObject()" class="w-8 h-8 rounded border border-slate-300 cursor-pointer">
+                        <span id="prop-color-hex" class="text-xs font-mono uppercase text-slate-500">#000000</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Przezroczystość (Opacity)</label>
+                    <input type="range" id="prop-opacity" min="0.1" max="1.0" step="0.05" value="1.0" oninput="updateSelectedObject()" class="w-full accent-blue-600">
+                </div>
+
+                <div class="pt-4 border-t border-slate-200 space-y-2">
+                    <button onclick="duplicateSelected()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-copy"></i> Duplikuj Zaznaczone
+                    </button>
+                    <button onclick="deleteSelected()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-trash"></i> Usuń Zaznaczone
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
     <script>
         const SCALE = 100;
-
         let currentZoom = 1;
         let gridRotation = 0;
         let objects = [];
