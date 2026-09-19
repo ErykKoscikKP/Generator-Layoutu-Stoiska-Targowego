@@ -8,170 +8,169 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-        .booth-object {
-            position: absolute;
-            box-sizing: border-box;
-            cursor: move;
-            user-select: none;
-            touch-action: none;
-        }
-        .booth-object.selected {
-            outline: 2px solid #2563eb;
-            outline-offset: 2px;
-            z-index: 999 !important;
-        }
-        #marqueeBox {
-            position: absolute;
-            border: 2px dashed #2563eb;
-            background-color: rgba(37, 99, 235, 0.08);
-            pointer-events: none;
-            z-index: 1000;
-            display: none;
-        }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .booth-object { position: absolute; box-sizing: border-box; cursor: move; user-select: none; touch-action: none; }
+        .booth-object.selected { outline: 2px solid #2563eb; outline-offset: 2px; z-index: 999 !important; }
+        #marqueeBox { position: absolute; border: 2px dashed #2563eb; background-color: rgba(37, 99, 235, 0.08); pointer-events: none; z-index: 1000; display: none; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none" oncontextmenu="return false;">
 
-    <!-- Górny pasek nawigacyjny -->
+    <!-- Górny pasek -->
     <header class="bg-slate-900 text-white px-4 py-2.5 flex flex-wrap justify-between items-center shadow-md z-30 shrink-0 gap-3">
         <div class="flex items-center space-x-3">
-            <button onclick="toggleMobileSidebar()" class="md:hidden bg-slate-800 p-2 rounded text-slate-200 hover:text-white" title="Przełącz menu boczne">
-                <i class="fa-solid fa-bars text-lg"></i>
-            </button>
             <div class="bg-blue-600 p-2 rounded-lg text-white shadow-md">
                 <i class="fa-solid fa-compass-drafting text-xl"></i>
             </div>
             <div>
-                <h1 class="font-bold text-base md:text-lg leading-tight">Planer Layoutu Stoiska Targowego</h1>
-                <p class="text-xs text-slate-400 hidden sm:block">Skala: 100px = 1m | LPM: przesuwanie/obiekty | PPM: zaznaczanie ramką</p>
+                <h1 class="font-bold text-base md:text-lg leading-tight">Planer Layoutu Stoiska</h1>
+                <p class="text-xs text-slate-400">Skala: 100px = 1m | LPM: przesuwanie/obiekty | PPM: zaznaczanie ramką</p>
             </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            <button onclick="selectAllObjects()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-md transition border border-slate-700 shadow-sm" title="Zaznacz wszystkie obiekty na planszy">
-                <i class="fa-solid fa-check-double text-blue-400"></i>
-                <span class="hidden sm:inline">Zaznacz wszystko</span>
-            </button>
+            <!-- Pasek sterowania siatką i zoomem -->
+            <div class="bg-slate-800 px-3 py-1.5 rounded flex items-center gap-3 text-xs border border-slate-700">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="gridToggle" checked onchange="toggleGrid()" class="rounded text-blue-600">
+                    <span>Siatka</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" id="snapToggle" checked class="rounded text-blue-600">
+                    <span>Przyciągaj</span>
+                </label>
+                <select id="snapSelect" class="bg-slate-700 text-white rounded px-1.5 py-0.5 border border-slate-600 text-xs">
+                    <value value="25">co 0.25m</value>
+                    <option value="50" selected>co 0.5m</option>
+                    <option value="100">co 1.0m</option>
+                </select>
+                <div class="flex items-center gap-1 border-l border-slate-700 pl-3">
+                    <span>Obrót siatki:</span>
+                    <input type="range" id="gridRotRange" min="0" max="360" value="0" oninput="updateGridRotation(this.value)" class="w-16 accent-blue-500">
+                    <span id="gridRotVal" class="w-8 text-right font-mono">0°</span>
+                </div>
+                <div class="flex items-center gap-1.5 border-l border-slate-700 pl-3">
+                    <span>Zoom:</span>
+                    <input type="range" id="zoomRange" min="10" max="200" value="100" oninput="setZoomFromSlider(this.value)" class="w-20 accent-blue-500">
+                    <span id="zoomVal" class="w-9 text-right font-mono">100%</span>
+                </div>
+            </div>
 
-            <button onclick="document.getElementById('json-input').click()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-md transition border border-slate-700 shadow-sm" title="Wczytaj projekt z pliku JSON">
-                <i class="fa-solid fa-folder-open text-amber-400"></i>
-                <span>Otwórz JSON</span>
-            </button>
+            <button onclick="selectAllObjects()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded border border-slate-700">Zaznacz wszystko</button>
+            <button onclick="document.getElementById('json-input').click()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded border border-slate-700">Otwórz JSON</button>
             <input type="file" id="json-input" accept=".json" class="hidden" onchange="loadFromJson(event)">
-
-            <button onclick="saveToJson()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-md transition border border-slate-700 shadow-sm" title="Zapisz projekt do pliku JSON">
-                <i class="fa-solid fa-floppy-disk text-emerald-400"></i>
-                <span>Zapisz JSON</span>
-            </button>
-
-            <button onclick="exportToPng()" class="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm px-3 py-1.5 rounded-md transition shadow-sm" title="Eksportuj widok do pliku PNG">
-                <i class="fa-solid fa-image"></i>
-                <span>Eksport PNG</span>
-            </button>
-
-            <button onclick="togglePropertiesPanel()" class="flex items-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-md transition border border-slate-700 shadow-sm relative" title="Właściwości zaznaczonego elementu">
-                <i class="fa-solid fa-sliders text-purple-400"></i>
-                <span class="hidden sm:inline">Właściwości</span>
-            </button>
+            <button onclick="saveToJson()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-3 py-1.5 rounded border border-slate-700">Zapisz JSON</button>
+            <button onclick="exportToPng()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded">Eksport PNG</button>
         </div>
     </header>
 
-    <!-- Główna zawartość -->
     <div class="flex-1 flex overflow-hidden relative">
         
-        <!-- Panel boczny -->
-        <aside id="sidebar" class="absolute md:relative z-20 inset-y-0 left-0 w-80 bg-white border-r border-slate-200 flex flex-col shadow-lg transition-transform duration-300 -translate-x-full md:translate-x-0">
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                <h2 class="font-bold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-shapes text-blue-600"></i> Katalog Elementów
-                </h2>
-                <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-4 space-y-6">
-                <!-- Sekcja: Tło / Mapa -->
-                <div class="space-y-2">
-                    <label class="text-xs font-bold uppercase tracking-wider text-slate-500 block">Rzut Hali / Tło</label>
-                    <div class="flex items-center gap-2">
-                        <button onclick="document.getElementById('bg-image-input').click()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs py-2 px-3 rounded font-medium transition flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-map text-blue-600"></i> Dodaj / Zmień plan hali
-                        </button>
-                        <button onclick="removeBackground()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs p-2 rounded transition" title="Usuń tło">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                    <input type="file" id="bg-image-input" accept="image/*" class="hidden" onchange="loadBackgroundImage(event)">
-                </div>
-
-                <!-- Sekcja: Elementy stoiska -->
-                <div class="space-y-2">
-                    <label class="text-xs font-bold uppercase tracking-wider text-slate-500 block">Wyposażenie stoiska</label>
-                    <div id="catalogGrid" class="grid grid-cols-1 gap-2">
-                        <!-- Wypełniane przez JS -->
-                    </div>
-                </div>
-
-                <!-- Sekcja: Ustawienia siatki -->
-                <div class="space-y-3 pt-4 border-t border-slate-200">
-                    <label class="text-xs font-bold uppercase tracking-wider text-slate-500 block">Ustawienia siatki</label>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs text-slate-600">Widoczność siatki (1m = 100px)</span>
-                        <input type="checkbox" id="gridToggle" checked onchange="toggleGrid()" class="rounded text-blue-600 focus:ring-blue-500">
-                    </div>
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-xs text-slate-600">
-                            <span>Przyciąganie do siatki</span>
-                            <span id="snapValue">25 px (0.25m)</span>
+        <!-- Lewy panel boczny: Katalog i Narzędzia -->
+        <aside id="sidebar" class="w-80 bg-white border-r border-slate-200 flex flex-col shadow-lg z-20 shrink-0 overflow-y-auto">
+            <div class="p-4 space-y-6">
+                
+                <!-- Ruch klienta i kształty -->
+                <div class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Ruch klienta i kształty</h3>
+                    <button onclick="addArrow()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2 rounded font-medium transition shadow-sm">
+                        <i class="fa-solid fa-arrow-right mr-1.5"></i> Dodaj Strzałkę Ruchu
+                    </button>
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <div>
+                            <label class="text-[10px] text-slate-500 block">Długość (m)</label>
+                            <input type="number" id="arrowLen" value="2.0" step="0.5" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
                         </div>
-                        <input type="range" id="snapSlider" min="10" max="100" value="25" step="5" oninput="updateSnap(this.value)" class="w-full accent-blue-600">
+                        <div>
+                            <label class="text-[10px] text-slate-500 block">Przezroczystość</label>
+                            <input type="range" id="arrowOpacity" min="0.1" max="1" step="0.1" value="0.8" class="w-full mt-2 accent-indigo-600">
+                        </div>
                     </div>
                 </div>
+
+                <!-- Niestandardowy element -->
+                <div class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Niestandardowy element</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] text-slate-500 block">Szerokość (m)</label>
+                            <input type="number" id="customW" value="1.0" step="0.1" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-slate-500 block">Wysokość/Dł. (m)</label>
+                            <input type="number" id="customH" value="1.0" step="0.1" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-slate-500 block">Etykieta / Gatunek</label>
+                        <input type="text" id="customName" value="Element Stoiska" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                    </div>
+                    <button onclick="addCustomObject()" class="w-full bg-slate-800 hover:bg-slate-700 text-white text-xs py-2 rounded font-medium transition shadow-sm">
+                        + Przypnij Własny Obiekt
+                    </button>
+                </div>
+
+                <!-- Katalog elementów -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Katalog elementów</h3>
+                    <div id="catalogGrid" class="grid grid-cols-1 gap-2"></div>
+                </div>
+
+                <!-- Tło / Mapa przestrzeni -->
+                <div class="space-y-3 pt-4 border-t border-slate-200">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600">Tło / Mapa przestrzeni</h3>
+                    <button onclick="document.getElementById('bg-image-input').click()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-map text-blue-600"></i> Wybierz plik tła
+                    </button>
+                    <input type="file" id="bg-image-input" accept="image/*" class="hidden" onchange="loadBackgroundImage(event)">
+                    
+                    <div class="space-y-2 text-xs">
+                        <div>
+                            <div class="flex justify-between text-slate-500 mb-1"><span>Przezroczystość tła</span><span id="bgOpacityVal">20%</span></div>
+                            <input type="range" id="bgOpacityRange" min="0" max="100" value="20" oninput="updateBgProp()" class="w-full accent-blue-600">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-slate-500 mb-1"><span>Skala tła</span><span id="bgScaleVal">100%</span></div>
+                            <input type="range" id="bgScaleRange" min="10" max="500" value="100" oninput="updateBgProp()" class="w-full accent-blue-600">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-slate-500 mb-1"><span>Obrót tła</span><span id="bgRotVal">0°</span></div>
+                            <input type="range" id="bgRotRange" min="0" max="360" value="0" oninput="updateBgProp()" class="w-full accent-blue-600">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="resetBg()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 rounded border border-slate-300">Reset</button>
+                        <button onclick="removeBackground()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded border border-red-200">Usuń</button>
+                    </div>
+                </div>
+
             </div>
         </aside>
 
         <!-- Główny obszar roboczy -->
         <main id="viewport" class="flex-1 relative overflow-hidden bg-slate-200 cursor-grab active:cursor-grabbing">
-            <!-- Siatka: 100px = 1m (główna kratka 100x100, podziałka co 25px) -->
-            <div id="world" class="absolute origin-top-left w-[10000px] h-[10000px]" style="transform: translate(0px, 0px) scale(1); background-size: 100px 100px, 25px 25px; background-image: linear-gradient(to right, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);">
-                <div id="backgroundLayer" class="absolute inset-0 pointer-events-none z-0"></div>
+            <!-- Skala: 1 metr = 100 pikseli -->
+            <div id="world" class="absolute origin-top-left w-[15000px] h-[15000px]" style="transform: translate(0px, 0px) scale(1); background-size: 100px 100px, 25px 25px; background-image: linear-gradient(to right, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);">
+                <div id="backgroundLayer" class="absolute inset-0 pointer-events-none z-0 opacity-20"></div>
                 <div id="objectsLayer" class="absolute inset-0 z-10"></div>
             </div>
             <div id="marqueeBox"></div>
         </main>
 
-        <!-- Panel Właściwości -->
-        <div id="propertiesPanel" class="absolute right-0 top-0 bottom-0 w-80 bg-white border-l border-slate-200 shadow-2xl z-40 flex flex-col transform translate-x-full transition-transform duration-300">
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                <h3 class="font-bold text-slate-700 flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-purple-600"></i> Właściwości Elementu
+        <!-- Prawy panel: Właściwości -->
+        <aside id="propertiesPanel" class="w-80 bg-white border-l border-slate-200 shadow-2xl z-20 flex flex-col shrink-0">
+            <div class="p-4 border-b border-slate-200 bg-slate-50">
+                <h3 class="font-bold text-slate-700 text-xs uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-purple-600"></i> Właściwości
                 </h3>
-                <button onclick="togglePropertiesPanel()" class="text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
             </div>
             <div class="flex-1 overflow-y-auto p-4 space-y-4" id="propertiesContent">
                 <p class="text-xs text-slate-500 italic text-center py-8">Wybierz obiekt, aby edytować jego właściwości.</p>
             </div>
-        </div>
+        </aside>
 
     </div>
 
@@ -196,15 +195,13 @@
 
         let objects = [];
         let selectedIds = new Set();
-        let backgroundData = { url: '', x: 0, y: 0, scale: 1, width: 800, height: 600 };
+        let backgroundData = { url: '', x: 0, y: 0, scale: 1, rotation: 0, opacity: 20, width: 800, height: 600 };
         
-        let panX = 100, panY = 100, zoom = 1;
+        let panX = 300, panY = 300, zoom = 1;
         let isPanning = false, isMarqueeSelecting = false;
         let startPanX = 0, startPanY = 0;
         let marqueeStartX = 0, marqueeStartY = 0;
-        
-        let snapSize = 25;
-        let gridEnabled = true;
+        let gridRotation = 0;
 
         window.addEventListener('DOMContentLoaded', () => {
             renderCatalog();
@@ -241,7 +238,7 @@
                 e.preventDefault();
                 const zoomFactor = 1.1;
                 let newZoom = e.deltaY < 0 ? zoom * zoomFactor : zoom / zoomFactor;
-                newZoom = Math.max(0.1, Math.min(15, newZoom));
+                newZoom = Math.max(0.1, Math.min(3, newZoom));
 
                 const rect = viewport.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left;
@@ -251,6 +248,8 @@
                 panY = mouseY - (mouseY - panY) * (newZoom / zoom);
                 zoom = newZoom;
 
+                document.getElementById('zoomRange').value = Math.round(zoom * 100);
+                document.getElementById('zoomVal').textContent = Math.round(zoom * 100) + '%';
                 updateTransform();
             }, { passive: false });
 
@@ -286,24 +285,22 @@
             document.getElementById('world').style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
         }
 
-        function togglePropertiesPanel() {
-            document.getElementById('propertiesPanel').classList.toggle('translate-x-full');
-        }
-
-        function toggleMobileSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        function setZoomFromSlider(val) {
+            zoom = val / 100;
+            document.getElementById('zoomVal').textContent = val + '%';
+            updateTransform();
         }
 
         function toggleGrid() {
-            gridEnabled = document.getElementById('gridToggle').checked;
-            document.getElementById('world').style.backgroundImage = gridEnabled ? 
+            const enabled = document.getElementById('gridToggle').checked;
+            document.getElementById('world').style.backgroundImage = enabled ? 
                 'linear-gradient(to right, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.12) 1px, transparent 1px), linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px)' : 'none';
         }
 
-        function updateSnap(val) {
-            snapSize = parseInt(val);
-            const meters = (snapSize / 100).toFixed(2);
-            document.getElementById('snapValue').textContent = `${snapSize} px (${meters}m)`;
+        function updateGridRotation(val) {
+            gridRotation = parseInt(val);
+            document.getElementById('gridRotVal').textContent = gridRotation + '°';
+            document.getElementById('world').style.backgroundPosition = `0 0`;
         }
 
         function addNewObject(type, name, width, height, color) {
@@ -315,11 +312,13 @@
                 id: 'obj_' + Date.now() + Math.random().toString(36.substr(2, 5)),
                 type: type,
                 name: name + ' ' + (objects.length + 1),
+                note: '',
                 x: Math.round(centerX - width / 2),
                 y: Math.round(centerY - height / 2),
                 width: width,
                 height: height,
                 color: color,
+                opacity: 1,
                 rotation: 0
             };
 
@@ -328,7 +327,19 @@
             selectedIds.add(newObj.id);
             renderObjects();
             updatePropertiesPanel();
-            document.getElementById('propertiesPanel').classList.remove('translate-x-full');
+        }
+
+        function addCustomObject() {
+            const wM = parseFloat(document.getElementById('customW').value) || 1;
+            const hM = parseFloat(document.getElementById('customH').value) || 1;
+            const name = document.getElementById('customName').value || 'Element';
+            addNewObject('custom', name, Math.round(wM * 100), Math.round(hM * 100), '#475569');
+        }
+
+        function addArrow() {
+            const lengthM = parseFloat(document.getElementById('arrowLen').value) || 2;
+            const opacity = parseFloat(document.getElementById('arrowOpacity').value) || 0.8;
+            addNewObject('arrow', 'Kierunek ruchu', Math.round(lengthM * 100), 30, '#6366f1');
         }
 
         function renderObjects() {
@@ -343,6 +354,7 @@
                 el.style.width = obj.width + 'px';
                 el.style.height = obj.height + 'px';
                 el.style.backgroundColor = obj.color;
+                el.style.opacity = obj.opacity ?? 1;
                 el.style.transform = `rotate(${obj.rotation || 0}deg)`;
                 el.dataset.id = obj.id;
 
@@ -365,7 +377,7 @@
                         selectedIds.add(obj.id);
                         renderObjects();
                         updatePropertiesPanel();
-                        startDraggingObject(e, obj.id);
+                        startDraggingObject(e);
                     }
                 });
 
@@ -373,7 +385,7 @@
             });
         }
 
-        function startDraggingObject(e, objId) {
+        function startDraggingObject(e) {
             const startMouseX = e.clientX;
             const startMouseY = e.clientY;
             const initialPositions = {};
@@ -386,6 +398,8 @@
             function onMouseMove(moveEvent) {
                 const dx = (moveEvent.clientX - startMouseX) / zoom;
                 const dy = (moveEvent.clientY - startMouseY) / zoom;
+                const snapEnabled = document.getElementById('snapToggle').checked;
+                const snapSize = parseInt(document.getElementById('snapSelect').value);
 
                 selectedIds.forEach(id => {
                     const o = objects.find(item => item.id === id);
@@ -393,7 +407,7 @@
                         let newX = initialPositions[id].x + dx;
                         let newY = initialPositions[id].y + dy;
 
-                        if (gridEnabled) {
+                        if (snapEnabled) {
                             newX = Math.round(newX / snapSize) * snapSize;
                             newY = Math.round(newY / snapSize) * snapSize;
                         }
@@ -509,55 +523,51 @@
 
             const widthM = (obj.width / 100).toFixed(2);
             const heightM = (obj.height / 100).toFixed(2);
-            const posXm = (obj.x / 100).toFixed(2);
-            const posYm = (obj.y / 100).toFixed(2);
 
             container.innerHTML = `
-                <div class="space-y-4">
+                <div class="space-y-4 text-xs">
                     <div>
-                        <label class="text-xs font-semibold text-slate-600 block mb-1">Nazwa</label>
-                        <input type="text" value="${obj.name}" oninput="updateObjProp('${obj.id}', 'name', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500">
+                        <label class="font-semibold text-slate-600 block mb-1">Nazwa / Gatunek</label>
+                        <input type="text" value="${obj.name}" oninput="updateObjProp('${obj.id}', 'name', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Notatka przypisana do elementu</label>
+                        <textarea oninput="updateObjProp('${obj.id}', 'note', this.value)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 h-16 focus:outline-none focus:border-blue-500">${obj.note || ''}</textarea>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="text-xs font-semibold text-slate-600 block mb-1">Szerokość (px)</label>
-                            <input type="number" value="${obj.width}" oninput="updateObjProp('${obj.id}', 'width', parseInt(this.value) || 10)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500">
-                            <span class="text-[10px] text-slate-400">ok. ${widthM} m</span>
+                            <label class="font-semibold text-slate-600 block mb-1">Szerokość (m)</label>
+                            <input type="number" step="0.05" value="${widthM}" oninput="updateObjProp('${obj.id}', 'width', Math.round(parseFloat(this.value)*100) || 10)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5">
                         </div>
                         <div>
-                            <label class="text-xs font-semibold text-slate-600 block mb-1">Wysokość (px)</label>
-                            <input type="number" value="${obj.height}" oninput="updateObjProp('${obj.id}', 'height', parseInt(this.value) || 10)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500">
-                            <span class="text-[10px] text-slate-400">ok. ${heightM} m</span>
+                            <label class="font-semibold text-slate-600 block mb-1">Długość (m)</label>
+                            <input type="number" step="0.05" value="${heightM}" oninput="updateObjProp('${obj.id}', 'height', Math.round(parseFloat(this.value)*100) || 10)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5">
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-xs font-semibold text-slate-600 block mb-1">Pozycja X (px)</label>
-                            <input type="number" value="${obj.x}" oninput="updateObjProp('${obj.id}', 'x', parseInt(this.value) || 0)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500">
-                            <span class="text-[10px] text-slate-400">${posXm} m</span>
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-slate-600 block mb-1">Pozycja Y (px)</label>
-                            <input type="number" value="${obj.y}" oninput="updateObjProp('${obj.id}', 'y', parseInt(this.value) || 0)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500">
-                            <span class="text-[10px] text-slate-400">${posYm} m</span>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Obrót obiektu (°)</label>
+                        <input type="number" value="${obj.rotation || 0}" oninput="updateObjProp('${obj.id}', 'rotation', parseInt(this.value) || 0)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5">
+                        <div class="grid grid-cols-4 gap-1 mt-1.5">
+                            <button onclick="setObjRot('${obj.id}', 0)" class="bg-slate-100 hover:bg-slate-200 py-1 rounded">0°</button>
+                            <button onclick="setObjRot('${obj.id}', 90)" class="bg-slate-100 hover:bg-slate-200 py-1 rounded">90°</button>
+                            <button onclick="setObjRot('${obj.id}', 180)" class="bg-slate-100 hover:bg-slate-200 py-1 rounded">180°</button>
+                            <button onclick="setObjRot('${obj.id}', 270)" class="bg-slate-100 hover:bg-slate-200 py-1 rounded">270°</button>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-xs font-semibold text-slate-600 block mb-1">Obrót (°)</label>
-                            <input type="number" value="${obj.rotation || 0}" oninput="updateObjProp('${obj.id}', 'rotation', parseInt(this.value) || 0)" class="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-slate-600 block mb-1">Kolor</label>
-                            <input type="color" value="${obj.color}" oninput="updateObjProp('${obj.id}', 'color', this.value)" class="w-full h-8 bg-slate-50 border border-slate-300 rounded px-1 py-0.5 cursor-pointer">
-                        </div>
+                    <div>
+                        <label class="font-semibold text-slate-600 block mb-1">Kolor wypełnienia</label>
+                        <input type="color" value="${obj.color}" oninput="updateObjProp('${obj.id}', 'color', this.value)" class="w-full h-8 bg-slate-50 border border-slate-300 rounded px-1 cursor-pointer">
                     </div>
-                    <div class="pt-2 flex gap-2">
-                        <button onclick="duplicateObject('${obj.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs py-2 rounded font-medium transition cursor-pointer">
-                            <i class="fa-solid fa-copy mr-1"></i> Duplikuj
+                    <div>
+                        <div class="flex justify-between text-slate-600 mb-1"><span>Przezroczystość (Opacity)</span></div>
+                        <input type="range" min="0.1" max="1" step="0.1" value="${obj.opacity ?? 1}" oninput="updateObjProp('${obj.id}', 'opacity', parseFloat(this.value))" class="w-full accent-blue-600">
+                    </div>
+                    <div class="pt-2 flex flex-col gap-2">
+                        <button onclick="duplicateObject('${obj.id}')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 py-2 rounded font-medium">
+                            <i class="fa-solid fa-copy mr-1"></i> Duplikuj Zaznaczone
                         </button>
-                        <button onclick="deleteSelectedObjects()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs py-2 rounded font-medium transition cursor-pointer">
-                            <i class="fa-solid fa-trash-can mr-1"></i> Usuń
+                        <button onclick="deleteSelectedObjects()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-2 rounded font-medium">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Usuń Zaznaczone
                         </button>
                     </div>
                 </div>
@@ -572,14 +582,23 @@
             }
         }
 
+        function setObjRot(id, angle) {
+            const obj = objects.find(o => o.id === id);
+            if (obj) {
+                obj.rotation = angle;
+                renderObjects();
+                updatePropertiesPanel();
+            }
+        }
+
         function duplicateObject(id) {
             const obj = objects.find(o => o.id === id);
             if (!obj) return;
             const newObj = {
                 ...obj,
                 id: 'obj_' + Date.now() + Math.random().toString(36.substr(2, 5)),
-                x: obj.x + 20,
-                y: obj.y + 20,
+                x: obj.x + 30,
+                y: obj.y + 30,
                 name: obj.name + ' (kopia)'
             };
             objects.push(newObj);
@@ -613,6 +632,20 @@
             reader.readAsDataURL(file);
         }
 
+        function updateBgProp() {
+            backgroundData.opacity = parseInt(document.getElementById('bgOpacityRange').value);
+            backgroundData.scale = parseInt(document.getElementById('bgScaleRange').value) / 100;
+            backgroundData.rotation = parseInt(document.getElementById('bgRotRange').value);
+
+            document.getElementById('bgOpacityVal').textContent = backgroundData.opacity + '%';
+            document.getElementById('bgScaleVal').textContent = Math.round(backgroundData.scale * 100) + '%';
+            document.getElementById('bgRotVal').textContent = backgroundData.rotation + '°';
+
+            const layer = document.getElementById('backgroundLayer');
+            layer.style.opacity = backgroundData.opacity / 100;
+            renderBackground();
+        }
+
         function renderBackground() {
             const layer = document.getElementById('backgroundLayer');
             if (!backgroundData.url) {
@@ -620,10 +653,22 @@
                 return;
             }
             layer.innerHTML = `
-                <div style="position: absolute; left: ${backgroundData.x}px; top: ${backgroundData.y}px; width: ${backgroundData.width}px; height: ${backgroundData.height}px; transform: scale(${backgroundData.scale}); transform-origin: top left;">
+                <div style="position: absolute; left: ${backgroundData.x}px; top: ${backgroundData.y}px; width: ${backgroundData.width}px; height: ${backgroundData.height}px; transform: scale(${backgroundData.scale}) rotate(${backgroundData.rotation}deg); transform-origin: top left;">
                     <img src="${backgroundData.url}" class="w-full h-full object-contain pointer-events-none select-none">
                 </div>
             `;
+        }
+
+        function resetBg() {
+            backgroundData.x = 0;
+            backgroundData.y = 0;
+            backgroundData.scale = 1;
+            backgroundData.rotation = 0;
+            backgroundData.opacity = 20;
+            document.getElementById('bgOpacityRange').value = 20;
+            document.getElementById('bgScaleRange').value = 100;
+            document.getElementById('bgRotRange').value = 0;
+            updateBgProp();
         }
 
         function removeBackground() {
