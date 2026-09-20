@@ -302,8 +302,8 @@
             <!-- Okno przewijalne planszy (Viewport) -->
             <div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing">
                
-                <!-- Kontener roboczy planszy o rozmiarze 6000x10000px, transform-origin w punkcie (3000px, 5000px) -->
-                <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[6000px] min-h-[10000px]" style="transform-origin: 3000px 5000px;">
+                <!-- Kontener roboczy planszy o rozmiarze 6000x10000px, transform-origin w punkcie  -->
+               <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[20000px] min-h-[12000px]" style="transform-origin: 10000px 6000px;">
                   
                     <!-- Główna siatka co 1 metr (100px) -->
                     <div id="grid-bg" class="absolute inset-0 bg-white"
@@ -445,8 +445,8 @@
     <script>
         /* Stałe kalibracyjne i zmienne globalne stanu aplikacji dla przestrzeni 6000x10000px */
         const SCALE = 100; // Skala: 1 metr = 100 pikseli (1 px = 1 cm)
-        const CANVAS_WIDTH = 12000;   // Szerokość planszy roboczej w pikselach (60m)
-        const CANVAS_HEIGHT = 20000; // Wysokość planszy roboczej w pikselach (100m)
+        const CANVAS_WIDTH = 20000;   // Szerokość planszy roboczej w pikselach (60m)
+        const CANVAS_HEIGHT = 12000; // Wysokość planszy roboczej w pikselach (100m)
         let currentZoom = 1.0;
         let gridRotation = 0;
         let objects = [];
@@ -484,12 +484,12 @@
             centerViewport();
         });
  
-        /* Wyśrodkowanie okna roboczego na nowym środku planszy (3000px, 5000px) */
+        /* Wyśrodkowanie okna roboczego na nowym środku planszy */
         function centerViewport() {
-            const viewport = document.getElementById('viewport');
-            viewport.scrollLeft = (CANVAS_WIDTH - viewport.clientWidth) / 2;
-            viewport.scrollTop = (CANVAS_HEIGHT - viewport.clientHeight) / 2;
-        }
+    const viewport = document.getElementById('viewport');
+    viewport.scrollLeft = (CANVAS_WIDTH - viewport.clientWidth) / 2;
+    viewport.scrollTop = (CANVAS_HEIGHT - viewport.clientHeight) / 2;
+}
  
         /* Przełączanie widoczności panelu bocznego na urządzeniach mobilnych */
         function toggleMobileSidebar() {
