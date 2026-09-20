@@ -607,7 +607,7 @@
     renderObjects();
 }
  
-        /* Dodanie wybranego obiektu z katalogu na nowy środek planszy (3000, 5000) */
+        /* Dodanie wybranego obiektu z katalogu na nowy środek planszy */
         function addObjectFromPreset(type) {
             const preset = PRESETS.find(p => p.type === type);
             if (!preset) return;
@@ -628,8 +628,9 @@
             selectObject(newObj.id);
         }
  
+        
         /* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach na środek */
-       function addCustomItem() {
+function addCustomItem() {
     const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
     const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
     const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
@@ -645,11 +646,6 @@
     renderObjects();
     selectObject(newObj.id);
 }
-
-            objects.push(newObj);
-            renderObjects();
-            selectObject(newObj.id);
-        }
  
         /* Renderowanie wszystkich obiektów w warstwie HTML */
         function renderObjects() {
