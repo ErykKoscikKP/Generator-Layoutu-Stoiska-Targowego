@@ -315,9 +315,9 @@
                          style="background-size: 10px 10px; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);">
                     </div>
  
-                    <!-- Centralne linie osi symetrii dla planszy 20000x12000px (Środek: X: 10000px, Y: 6000px) -->
-                    <div class="absolute left-0 top-[6000px] right-0 h-0.5 bg-blue-400/40 pointer-events-none"></div>
-                    <div class="absolute top-0 left-[10000px] bottom-0 w-0.5 bg-blue-400/40 pointer-events-none"></div>
+                   <!-- Centralne linie osi symetrii dla planszy 20000x12000px (Środek: X: 10000px, Y: 6000px) -->
+<div class="absolute left-0 top-[6000px] right-0 h-0.5 bg-blue-400/40 pointer-events-none"></div>
+<div class="absolute top-0 left-[10000px] bottom-0 w-0.5 bg-blue-400/40 pointer-events-none"></div>
  
                     <!-- Warstwa graficzna tła / rzutu przestrzeni -->
                     <div id="bg-layer" class="absolute inset-0 pointer-events-none origin-center flex items-center justify-center">
@@ -516,7 +516,7 @@
         /* Dodanie domyślnego obiektu startowego na nowy środek planszy (3000, 5000) */
         function initPresetsOnCanvas() {
             objects = [
-                { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: 3000 - 90, y: 5000 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
+                { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: CANVAS_WIDTH / 2 - 90, y: CANVAS_HEIGHT / 2 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
             ];
             renderObjects();
         }
@@ -580,68 +580,72 @@
         }
 
 
-        /* Funkcja przenosząca wszystkie elementy w pobliże środka planszy (3000, 5000) */
+        /* Funkcja przenosząca wszystkie elementy w pobliże środka planszy */
         function centerAllObjects() {
-            if (objects.length === 0) return;
-            
-            // Oblicz aktualny środek geometryczny wszystkich obiektów (Bounding Box)
-            let minX = Math.min(...objects.map(o => o.x));
-            let maxX = Math.max(...objects.map(o => o.x + o.w * SCALE));
-            let minY = Math.min(...objects.map(o => o.y));
-            let maxY = Math.max(...objects.map(o => o.y + o.h * SCALE));
-            
-            let groupCenterX = (minX + maxX) / 2;
-            let groupCenterY = (minY + maxY) / 2;
-            
-            let targetX = 3000;
-            let targetY = 5000;
-            
-            let offsetX = targetX - groupCenterX;
-            let offsetY = targetY - groupCenterY;
-            
-            // Przesuń każdy obiekt zachowując jego pozycję względem pozostałych
-            objects.forEach(o => {
-                o.x += offsetX;
-                o.y += offsetY;
-            });
-            
-            renderObjects();
-        }
+    if (objects.length === 0) return;
+    
+    let minX = Math.min(...objects.map(o => o.x));
+    let maxX = Math.max(...objects.map(o => o.x + o.w * SCALE));
+    let minY = Math.min(...objects.map(o => o.y));
+    let maxY = Math.max(...objects.map(o => o.y + o.h * SCALE));
+    
+    let groupCenterX = (minX + maxX) / 2;
+    let groupCenterY = (minY + maxY) / 2;
+    
+    // Nowy środek planszy 20000x12000px
+    let targetX = CANVAS_WIDTH / 2;
+    let targetY = CANVAS_HEIGHT / 2;
+    
+    let offsetX = targetX - groupCenterX;
+    let offsetY = targetY - groupCenterY;
+    
+    objects.forEach(obj => {
+        obj.x += offsetX;
+        obj.y += offsetY;
+    });
+    
+    renderObjects();
+}
  
         /* Dodanie wybranego obiektu z katalogu na nowy środek planszy (3000, 5000) */
         function addObjectFromPreset(type) {
             const preset = PRESETS.find(p => p.type === type);
             if (!preset) return;
             const newObj = {
-                id: nextObjectId++,
-                name: preset.name,
-                type: preset.type,
-                x: 3000 - (preset.w * SCALE) / 2,
-                y: 5000 - (preset.h * SCALE) / 2,
-                w: preset.w,
-                h: preset.h,
-                rotation: 0,
-                color: preset.color,
-                zIndex: objects.length + 1
-            };
+    id: nextObjectId++,
+    name: preset.name,
+    type: preset.type,
+    x: CANVAS_WIDTH / 2 - (preset.w * SCALE) / 2,
+    y: CANVAS_HEIGHT / 2 - (preset.h * SCALE) / 2,
+    w: preset.w,
+    h: preset.h,
+    rotation: 0,
+    color: preset.color,
+    zIndex: objects.length + 1
+};
             objects.push(newObj);
             renderObjects();
             selectObject(newObj.id);
         }
  
-        /* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach na środek (3000, 5000) */
-        function addCustomItem() {
-            const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
-            const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
-            const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
-            const newObj = {
-                id: nextObjectId++,
-                name: name,
-                type: 'custom',
-                x: 3000 - (w * SCALE) / 2,
-                y: 5000 - (h * SCALE) / 2,
-                w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
-            };
+        /* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach na środek */
+       function addCustomItem() {
+    const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
+    const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
+    const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
+    const newObj = {
+        id: nextObjectId++,
+        name: name,
+        type: 'custom',
+        x: CANVAS_WIDTH / 2 - (w * SCALE) / 2,
+        y: CANVAS_HEIGHT / 2 - (h * SCALE) / 2,
+        w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
+    };
+    objects.push(newObj);
+    renderObjects();
+    selectObject(newObj.id);
+}
+
             objects.push(newObj);
             renderObjects();
             selectObject(newObj.id);
