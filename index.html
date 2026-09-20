@@ -856,7 +856,7 @@
  
         /* Regulacja powiększenia (Zoom) planszy */
         function adjustZoom(delta) {
-            currentZoom = Math.max(0.5, Math.min(10.0, currentZoom + delta));
+            currentZoom = Math.max(0.05, Math.min(10.0, currentZoom + delta));
             applyTransforms();
         }
  
