@@ -13,7 +13,6 @@
     
     <!-- html2canvas CDN do bezstratnego eksportu planszy do pliku PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
     <style>
         /* ==========================================================================
            SEKCJA STYLÓW GLOBALNYCH ORAZ EFEKTÓW MICA (WINDOWS 11 / CANVA STYLE)
@@ -21,7 +20,6 @@
         body {
             font-family: 'Segoe UI', Inter, system-ui, -apple-system, sans-serif;
         }
-
         /* Estetyczne, cienkie paski przewijania (scrollbary) */
         ::-webkit-scrollbar {
             width: 8px;
@@ -37,7 +35,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-
         /* Styl okien w stylu Windows 11 z efektem rozmycia tła (Glassmorphism / Mica) */
         .win11-mica {
             background: rgba(255, 255, 255, 0.88);
@@ -49,12 +46,10 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
-
         /* Płynne animacje dla elementów obrotowych kompasu */
         .compass-ring {
             transition: transform 0.1s ease-out;
         }
-
         /* Klasa reprezentująca pojedynczy mebel/obiekt na planszy projektu */
         .booth-object {
             position: absolute;
@@ -63,7 +58,6 @@
             user-select: none;
             touch-action: none;
         }
-
         /* Efekt zaznaczonego obiektu na planszy (niebieska ramka robocza Windows 11) */
         .booth-object.selected {
             outline: 2px solid #0067c0;
@@ -71,7 +65,6 @@
             z-index: 999 !important;
             box-shadow: 0 10px 25px -5px rgba(0, 103, 192, 0.3);
         }
-
         /* Style dla technicznych linii wymiarowych SVG w stylu CAD */
         .dimension-line {
             stroke: #0067c0;
@@ -233,12 +226,21 @@
                             </div>
                         </div>
 
+                        <!-- Zmienione: Rozdzielenie przesuwania X i Y na dwa suwaki -->
                         <div>
-                            <label class="block text-[10px] font-medium text-slate-600 mb-1">Przesunięcie tła (X / Y px)</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="bg-x" value="0" step="5" oninput="updateBgSettings()" placeholder="X" class="w-full text-xs px-2 py-1 bg-white border border-slate-300 rounded outline-none">
-                                <input type="number" id="bg-y" value="0" step="5" oninput="updateBgSettings()" placeholder="Y" class="w-full text-xs px-2 py-1 bg-white border border-slate-300 rounded outline-none">
+                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                                <span>Przesunięcie tła X</span>
+                                <span id="bg-x-val" class="font-mono">0 px</span>
                             </div>
+                            <input type="range" id="bg-x" min="-1500" max="1500" value="0" step="5" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                                <span>Przesunięcie tła Y</span>
+                                <span id="bg-y-val" class="font-mono">0 px</span>
+                            </div>
+                            <input type="range" id="bg-y" min="-1500" max="1500" value="0" step="5" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
  
                         <div class="flex gap-2 pt-1">
@@ -272,8 +274,7 @@
                         <option value="0.5" selected>co 50cm</option>
                         <option value="1.0">co 1m</option>
                     </select>
-
-                    <!-- Nowy przełącznik warstwy wymiarów CAD -->
+                    <!-- Przełącznik warstwy wymiarów CAD -->
                     <label class="inline-flex items-center cursor-pointer border-l border-slate-300 pl-3">
                         <input type="checkbox" id="dimensions-toggle" onchange="toggleDimensionsLayer()" class="sr-only peer">
                         <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
@@ -298,8 +299,8 @@
                 </div>
             </div>
  
-            <!-- Okno przewijalne planszy (Viewport) -->
-            <div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing">
+            <!-- Okno przewijalne planszy (Viewport) z obsługą Zaznaczania Wszystkich Prawym Przyciskiem Myszy -->
+            <div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing" oncontextmenu="selectAllObjects(event)">
                
                 <!-- Kontener roboczy planszy o stałym rozmiarze 3000x3000px -->
                 <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[3000px] min-h-[3000px]" style="transform-origin: 1500px 1500px;">
@@ -324,8 +325,7 @@
                     </div>
  
                     <!-- Warstwa zawierająca wszystkie obiekty / meble rozmieszczone na stoisku -->
-                    <div id="objects-layer" class="absolute inset-0" style="z-index: 30;"></div>
-
+                    <div id="objects-layer" class="absolute inset-0" style="z-index: 30;" onclick="deselectAll(event)"></div>
                     <!-- Profesjonalna Warstwa Wymiarowania SVG (CAD style) -->
                     <svg id="dimensions-layer" class="absolute inset-0 w-full h-full pointer-events-none hidden" style="z-index: 900; overflow: visible;">
                         <defs>
@@ -423,13 +423,12 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="pt-3 border-t border-slate-200/60 space-y-2">
                     <button onclick="duplicateSelected()" class="w-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 shadow-xs">
-                        <i class="fa-solid fa-copy text-blue-600"></i> Duplikuj element
+                        <i class="fa-solid fa-copy text-blue-600"></i> Duplikuj element(y)
                     </button>
                     <button onclick="deleteSelected()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-trash"></i> Usuń element
+                        <i class="fa-solid fa-trash"></i> Usuń element(y)
                     </button>
                 </div>
             </div>
@@ -443,16 +442,15 @@
         /* Stałe kalibracyjne i zmienne globalne stanu aplikacji */
         const SCALE = 100; // Skala: 1 metr = 100 pikseli (1 px = 1 cm)
         const CANVAS_SIZE = 3000; // Rozmiar siatki roboczej w pikselach
-
         let currentZoom = 1.0;
         let gridRotation = 0;
         let objects = [];
-        let selectedId = null;
+        let selectedIds = []; // Obsługa selekcji pojedynczej oraz wielokrotnej
         let nextObjectId = 1;
  
         let bgConfig = { url: '', opacity: 0.5, scale: 1, rotation: 0, x: 0, y: 0 };
  
-        /* Pełny, zatwierdzony katalog elementów wyposażenia stoiska targowego */
+        /* Pełny, oryginalny katalog wyposażenia stoiska targowego + Strzałka ruchu klientów */
         const PRESETS = [
             { type: 'kallax_1x4', name: 'Kallax 1x4', w: 0.42, h: 0.39, color: '#475569', icon: 'fa-cubes' },
             { type: 'kallax_2x4', name: 'Kallax 2x4', w: 0.77, h: 0.39, color: '#475569', icon: 'fa-cubes' },
@@ -468,7 +466,9 @@
             { type: 'cash_desk', name: 'Kasa / Stolik', w: 0.70, h: 0.50, color: '#059669', icon: 'fa-cash-register' },
             { type: 'chair', name: 'Krzesło / Hoker', w: 0.45, h: 0.45, color: '#475569', icon: 'fa-chair' },
             { type: 'table_round', name: 'Stolik okrągły', w: 0.80, h: 0.80, color: '#d97706', icon: 'fa-circle' },
-            { type: 'rollup', name: 'Roll-up banner', w: 0.85, h: 0.30, color: '#10b981', icon: 'fa-scroll' }
+            { type: 'rollup', name: 'Roll-up banner', w: 0.85, h: 0.30, color: '#10b981', icon: 'fa-scroll' },
+            /* Dodany element: Strzałka ruchu klientów */
+            { type: 'arrow_flow', name: 'Ruch klientów', w: 1.50, h: 0.40, color: '#f59e0b', icon: 'fa-route' }
         ];
  
         /* Inicjalizacja aplikacji po załadowaniu struktury DOM */
@@ -523,6 +523,7 @@
             let startX, startY;
  
             viewport.addEventListener('mousedown', (e) => {
+                if (e.button === 2) return; // Ignoruj prawy przycisk dla panningu
                 if (e.target.closest('.booth-object') || e.target.closest('aside') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input')) return;
                 isPanning = true;
                 startX = e.clientX;
@@ -542,6 +543,16 @@
                 isPanning = false;
                 viewport.style.cursor = 'grab';
             });
+        }
+
+        /* Dodatek 1: Zaznaczanie wszystkich elementów prawym przyciskiem myszy */
+        function selectAllObjects(e) {
+            if (e.target.closest('aside') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input')) return;
+            e.preventDefault(); // Zablokuj menu kontekstowe
+            if (objects.length === 0) return;
+            selectedIds = objects.map(o => o.id);
+            renderObjects();
+            updatePropertiesPanel();
         }
  
         /* Dodanie wybranego obiektu z katalogu na środek planszy */
@@ -583,19 +594,37 @@
             selectObject(newObj.id);
         }
  
-        /* Renderowanie wszystkich obiektów w warstwie HTML */
+        /* Renderowanie wszystkich obiektów w warstwie HTML (w tym podgląd Strzałki Ruchu Klientów) */
         function renderObjects() {
             const container = document.getElementById('objects-layer');
             container.innerHTML = objects.map(obj => {
                 const widthPx = obj.w * SCALE;
                 const heightPx = obj.h * SCALE;
-                const isSelected = obj.id === selectedId;
+                const isSelected = selectedIds.includes(obj.id);
+                
+                // Specjalne renderowanie dla strzałki ruchu klientów
+                if (obj.type === 'arrow_flow') {
+                    return `
+                        <div id="obj-${obj.id}"
+                             class="booth-object ${isSelected ? 'selected' : ''}"
+                             style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
+                             onpointerdown="startDragging(event, ${obj.id})"
+                             onclick="selectObject(${obj.id}, event)">
+                            <div class="w-full h-full rounded-xl shadow-md flex items-center justify-between px-3 text-white overflow-hidden border border-white/20 relative"
+                                 style="background-color: ${obj.color};">
+                                <span class="text-[10px] font-bold uppercase tracking-wider truncate">${obj.name}</span>
+                                <i class="fa-solid fa-arrow-right text-base animate-pulse"></i>
+                            </div>
+                        </div>
+                    `;
+                }
+
                 return `
                     <div id="obj-${obj.id}"
                          class="booth-object ${isSelected ? 'selected' : ''}"
                          style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
                          onpointerdown="startDragging(event, ${obj.id})"
-                         onclick="selectObject(${obj.id})">
+                         onclick="selectObject(${obj.id}, event)">
                         <div class="w-full h-full rounded-xl shadow-md flex flex-col items-center justify-center p-1 text-white overflow-hidden border border-white/20 relative"
                              style="background-color: ${obj.color};">
                             <span class="text-[10px] font-semibold leading-tight text-center truncate w-full">${obj.name}</span>
@@ -612,37 +641,45 @@
             }
         }
  
-        /* Płynne przeciąganie obiektów myszą lub dotykiem z opcją przyciągania (Snap) */
+        /* Płynne przeciąganie obiektów (również wielu naraz po zaznaczeniu PPM) z przyciąganiem */
         function startDragging(e, id) {
             if (e.target.closest('button')) return;
             e.stopPropagation();
-            selectObject(id);
-            const obj = objects.find(o => o.id === id);
-            if (!obj) return;
- 
+            if (!selectedIds.includes(id)) {
+                selectObject(id, e);
+            }
             const startX = e.clientX;
             const startY = e.clientY;
-            const initialX = obj.x;
-            const initialY = obj.y;
+            
+            // Zapis pozycji początkowych wszystkich zaznaczonych obiektów
+            const initialPositions = objects
+                .filter(o => selectedIds.includes(o.id))
+                .map(o => ({ id: o.id, x: o.x, y: o.y }));
  
             function onPointerMove(moveEvent) {
                 const dx = (moveEvent.clientX - startX) / currentZoom;
                 const dy = (moveEvent.clientY - startY) / currentZoom;
-                let newX = initialX + dx;
-                let newY = initialY + dy;
+
+                initialPositions.forEach(pos => {
+                    const obj = objects.find(o => o.id === pos.id);
+                    if (!obj) return;
+
+                    let newX = pos.x + dx;
+                    let newY = pos.y + dy;
  
-                if (document.getElementById('snap-toggle').checked) {
-                    const step = (parseFloat(document.getElementById('snap-step').value) || 0.5) * SCALE;
-                    newX = Math.round(newX / step) * step;
-                    newY = Math.round(newY / step) * step;
-                }
-                obj.x = newX;
-                obj.y = newY;
-                const el = document.getElementById(`obj-${obj.id}`);
-                if (el) {
-                    el.style.left = `${obj.x}px`;
-                    el.style.top = `${obj.y}px`;
-                }
+                    if (document.getElementById('snap-toggle').checked) {
+                        const step = (parseFloat(document.getElementById('snap-step').value) || 0.5) * SCALE;
+                        newX = Math.round(newX / step) * step;
+                        newY = Math.round(newY / step) * step;
+                    }
+                    obj.x = newX;
+                    obj.y = newY;
+                    const el = document.getElementById(`obj-${obj.id}`);
+                    if (el) {
+                        el.style.left = `${obj.x}px`;
+                        el.style.top = `${obj.y}px`;
+                    }
+                });
 
                 const svgLayer = document.getElementById('dimensions-layer');
                 if (svgLayer && !svgLayer.classList.contains('hidden')) {
@@ -660,36 +697,53 @@
         }
  
         /* Zaznaczanie obiektu i ładowanie jego właściwości do prawego panelu */
-        function selectObject(id) {
-            selectedId = id;
+        function selectObject(id, event) {
+            if (event) event.stopPropagation();
+            if (event && event.shiftKey) {
+                if (selectedIds.includes(id)) {
+                    selectedIds = selectedIds.filter(i => i !== id);
+                } else {
+                    selectedIds.push(id);
+                }
+            } else {
+                selectedIds = [id];
+            }
             renderObjects();
-            const obj = objects.find(o => o.id === id);
+            updatePropertiesPanel();
+        }
+
+        /* Aktualizacja panelu właściwości po zmianie zaznaczenia */
+        function updatePropertiesPanel() {
             const panel = document.getElementById('properties-panel');
-            if (obj) {
-                panel.classList.remove('hidden');
-                document.getElementById('prop-label').value = obj.name;
-                document.getElementById('prop-width').value = obj.w;
-                document.getElementById('prop-height').value = obj.h;
-                document.getElementById('prop-rotation').value = obj.rotation;
-                document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
-                document.getElementById('prop-color').value = obj.color;
-                document.getElementById('prop-color-hex').innerText = obj.color;
+            if (selectedIds.length === 1) {
+                const obj = objects.find(o => o.id === selectedIds[0]);
+                if (obj) {
+                    panel.classList.remove('hidden');
+                    document.getElementById('prop-label').value = obj.name;
+                    document.getElementById('prop-width').value = obj.w;
+                    document.getElementById('prop-height').value = obj.h;
+                    document.getElementById('prop-rotation').value = obj.rotation;
+                    document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
+                    document.getElementById('prop-color').value = obj.color;
+                    document.getElementById('prop-color-hex').innerText = obj.color;
+                }
             } else {
                 panel.classList.add('hidden');
             }
         }
  
         /* Odznaczenie wszystkich obiektów */
-        function deselectAll() {
-            selectedId = null;
+        function deselectAll(event) {
+            if (event && event.target.closest('.booth-object')) return;
+            selectedIds = [];
             renderObjects();
-            document.getElementById('properties-panel').classList.add('hidden');
+            updatePropertiesPanel();
         }
  
         /* Aktualizacja właściwości zaznaczonego obiektu na żywo */
         function updateSelectedObject() {
-            if (selectedId === null) return;
-            const obj = objects.find(o => o.id === selectedId);
+            if (selectedIds.length !== 1) return;
+            const obj = objects.find(o => o.id === selectedIds[0]);
             if (!obj) return;
             obj.name = document.getElementById('prop-label').value || 'Obiekt';
             obj.w = parseFloat(document.getElementById('prop-width').value) || 0.5;
@@ -703,8 +757,8 @@
  
         /* Szybki obrót zaznaczonego obiektu o zadany kąt */
         function rotateSelected(deg) {
-            if (selectedId === null) return;
-            const obj = objects.find(o => o.id === selectedId);
+            if (selectedIds.length !== 1) return;
+            const obj = objects.find(o => o.id === selectedIds[0]);
             if (!obj) return;
             obj.rotation = deg;
             document.getElementById('prop-rotation').value = deg;
@@ -714,28 +768,36 @@
 
         /* Zmiana kolejności warstwy (Z-Index) obiektu */
         function changeZIndex(direction) {
-            if (selectedId === null) return;
-            const obj = objects.find(o => o.id === selectedId);
-            if (!obj) return;
-            obj.zIndex = Math.max(1, obj.zIndex + direction);
+            selectedIds.forEach(id => {
+                const obj = objects.find(o => o.id === id);
+                if (obj) {
+                    obj.zIndex = Math.max(1, obj.zIndex + direction);
+                }
+            });
             renderObjects();
         }
  
-        /* Duplikowanie zaznaczonego obiektu z lekkim przesunięciem */
+        /* Duplikowanie zaznaczonych obiektów z lekkim przesunięciem */
         function duplicateSelected() {
-            if (selectedId === null) return;
-            const obj = objects.find(o => o.id === selectedId);
-            if (!obj) return;
-            const newObj = { ...obj, id: nextObjectId++, x: obj.x + 30, y: obj.y + 30, zIndex: objects.length + 1 };
-            objects.push(newObj);
+            if (selectedIds.length === 0) return;
+            const newSelected = [];
+            selectedIds.forEach(id => {
+                const obj = objects.find(o => o.id === id);
+                if (obj) {
+                    const newObj = { ...obj, id: nextObjectId++, x: obj.x + 30, y: obj.y + 30, zIndex: objects.length + 1 };
+                    objects.push(newObj);
+                    newSelected.push(newObj.id);
+                }
+            });
+            selectedIds = newSelected;
             renderObjects();
-            selectObject(newObj.id);
+            updatePropertiesPanel();
         }
  
-        /* Usuwanie zaznaczonego obiektu z planszy */
+        /* Usuwanie zaznaczonych obiektów z planszy */
         function deleteSelected() {
-            if (selectedId === null) return;
-            objects = objects.filter(o => o.id !== selectedId);
+            if (selectedIds.length === 0) return;
+            objects = objects.filter(o => !selectedIds.includes(o.id));
             deselectAll();
         }
  
@@ -783,17 +845,19 @@
             reader.readAsDataURL(file);
         }
  
-        /* Aktualizacja parametrów tła (przezroczystość, skala, obrót, pozycja X/Y) */
+        /* Zmieniona funkcja: Aktualizacja parametrów tła z suwakami X oraz Y */
         function updateBgSettings() {
             bgConfig.opacity = parseFloat(document.getElementById('bg-opacity').value);
             bgConfig.scale = parseFloat(document.getElementById('bg-scale').value);
             bgConfig.rotation = parseInt(document.getElementById('bg-rotation').value);
             bgConfig.x = parseInt(document.getElementById('bg-x').value) || 0;
             bgConfig.y = parseInt(document.getElementById('bg-y').value) || 0;
-
+            
             document.getElementById('bg-opacity-val').innerText = `${Math.round(bgConfig.opacity * 100)}%`;
             document.getElementById('bg-scale-val').innerText = `${Math.round(bgConfig.scale * 100)}%`;
             document.getElementById('bg-rotation-val').innerText = `${bgConfig.rotation}°`;
+            document.getElementById('bg-x-val').innerText = `${bgConfig.x} px`;
+            document.getElementById('bg-y-val').innerText = `${bgConfig.y} px`;
             
             const img = document.getElementById('bg-image');
             img.style.opacity = bgConfig.opacity;
@@ -851,7 +915,6 @@
             const rad = (obj.rotation * Math.PI) / 180;
             const cos = Math.cos(rad);
             const sin = Math.sin(rad);
-
             // Wyznaczanie 4 obróconych narożników mebla
             const corners = [
                 { x: -w/2, y: -h/2 },
@@ -862,10 +925,8 @@
                 x: cx + (p.x * cos - p.y * sin),
                 y: cy + (p.x * sin + p.y * cos)
             }));
-
             const xs = corners.map(c => c.x);
             const ys = corners.map(c => c.y);
-
             return {
                 cx, cy, corners,
                 minX: Math.min(...xs), maxX: Math.max(...xs),
@@ -876,24 +937,19 @@
         function updateDimensionsSVG() {
             const contentGroup = document.getElementById('dimensions-content');
             if (!contentGroup) return;
-
             if (objects.length === 0) {
                 contentGroup.innerHTML = '';
                 return;
             }
-
             let svgHTML = '';
             const geometries = objects.map(obj => ({ obj, geom: getObjectGeometry(obj) }));
-
             // 1. Ogólne obrysy (Bounding Box całości stoiska)
             const globalMinX = Math.min(...geometries.map(g => g.geom.minX));
             const globalMaxX = Math.max(...geometries.map(g => g.geom.maxX));
             const globalMinY = Math.min(...geometries.map(g => g.geom.minY));
             const globalMaxY = Math.max(...geometries.map(g => g.geom.maxY));
-
             const totalWidthM = ((globalMaxX - globalMinX) / SCALE).toFixed(2);
             const totalHeightM = ((globalMaxY - globalMinY) / SCALE).toFixed(2);
-
             // Obrys zewnętrzny całości
             svgHTML += `<rect x="${globalMinX}" y="${globalMinY}" width="${globalMaxX - globalMinX}" height="${globalMaxY - globalMinY}" class="dimension-boundary" />`;
             
@@ -906,7 +962,6 @@
                 <rect x="${(globalMinX + globalMaxX)/2 - 35}" y="${dimYTop - 11}" width="70" height="18" class="dimension-text-bg" />
                 <text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text">CAŁOŚĆ: ${totalWidthM}m</text>
             `;
-
             // Wymiar całkowity wysokości (po lewej stronie stoiska)
             const dimXLeft = globalMinX - 35;
             svgHTML += `
@@ -918,26 +973,22 @@
                     <text x="${(globalMinY + globalMaxY)/2}" y="${dimXLeft + 3}" class="dimension-text">${totalHeightM}m</text>
                 </g>
             `;
-
             // 2. Wymiary jednostkowe dla każdego obiektu
             geometries.forEach(({ obj, geom }) => {
                 const wM = obj.w.toFixed(2);
                 const hM = obj.h.toFixed(2);
-
                 // Oś symetrii obiektu (środek ciężkości)
                 svgHTML += `
                     <circle cx="${geom.cx}" cy="${geom.cy}" r="3" fill="#0067c0" />
                     <line x1="${geom.cx - 6}" y1="${geom.cy}" x2="${geom.cx + 6}" y2="${geom.cy}" stroke="#0067c0" stroke-width="1" />
                     <line x1="${geom.cx}" y1="${geom.cy - 6}" x2="${geom.cx}" y2="${geom.cy + 6}" stroke="#0067c0" stroke-width="1" />
                 `;
-
                 // Etykieta wymiaru bezpośrednio na obiekcie
                 svgHTML += `
                     <rect x="${geom.cx - 28}" y="${geom.cy - 10}" width="56" height="20" rx="4" fill="rgba(30, 41, 59, 0.85)" />
                     <text x="${geom.cx}" y="${geom.cy + 4}" fill="#ffffff" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">${wM}×${hM}m</text>
                 `;
             });
-
             contentGroup.innerHTML = svgHTML;
         }
  
