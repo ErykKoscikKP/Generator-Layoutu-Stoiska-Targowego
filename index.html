@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planer Layoutu Stoiska Targowego – Pełna Wersja CAD & Win 11</title>
+    <title>Planer Layoutu Stoiska Targowego – Pełna Wersja Zabezpieczona</title>
     
     <!-- Tailwind CSS CDN dla nowoczesnego stylowania interfejsu -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,12 +40,12 @@
 
         /* Styl okien w stylu Windows 11 z efektem rozmycia tła (Glassmorphism / Mica) */
         .win11-mica {
-            background: rgba(255, 255, 255, 0.88);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
         .win11-dark-mica {
-            background: rgba(30, 30, 30, 0.88);
+            background: rgba(30, 30, 30, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
@@ -64,36 +64,12 @@
             touch-action: none;
         }
 
-        /* Efekt zaznaczonego obiektu na planszy (niebieska ramka robocza Windows 11) */
+        /* Efekt zaznaczonego obiektu na planszy (niebieska ramka robocza) */
         .booth-object.selected {
             outline: 2px solid #0067c0;
             outline-offset: 2px;
             z-index: 999 !important;
             box-shadow: 0 10px 25px -5px rgba(0, 103, 192, 0.3);
-        }
-
-        /* Style dla technicznych linii wymiarowych SVG w stylu CAD */
-        .dimension-line {
-            stroke: #0067c0;
-            stroke-width: 1.5;
-            stroke-dasharray: 3 3;
-        }
-        .dimension-boundary {
-            stroke: #ef4444;
-            stroke-width: 1.5;
-            stroke-dasharray: 4 4;
-            fill: none;
-        }
-        .dimension-text {
-            font-family: 'Segoe UI', monospace;
-            font-size: 11px;
-            font-weight: 600;
-            fill: #1e293b;
-            text-anchor: middle;
-        }
-        .dimension-text-bg {
-            fill: rgba(255, 255, 255, 0.9);
-            rx: 3px;
         }
     </style>
 </head>
@@ -113,7 +89,7 @@
                 <i class="fa-solid fa-compass-drafting text-lg"></i>
             </div>
             <div>
-                <h1 class="font-semibold text-sm md:text-base leading-tight">Planer Stoisk Targowych CAD</h1>
+                <h1 class="font-semibold text-sm md:text-base leading-tight">Planer Stoisk Targowych</h1>
                 <p class="text-[11px] text-slate-400 hidden sm:block">Dokładność skali: 1 px = 1 cm (1 m = 100 px)</p>
             </div>
         </div>
@@ -255,11 +231,11 @@
            ========================================================================== -->
         <main class="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
            
-            <!-- Górny pasek narzędziowy siatki (przyciąganie, obrót 360, wymiary SVG, powiększenie) -->
+            <!-- Górny pasek narzędziowy siatki (przyciąganie, obrót 360, powiększenie) -->
             <div class="win11-mica border-b border-slate-200/80 px-4 py-2 flex flex-wrap justify-between items-center gap-3 z-10 shadow-xs">
                
-                <!-- Przełącznik przyciągania do siatki (Snap) oraz przełącznik wymiarów CAD -->
-                <div class="flex items-center space-x-3 flex-wrap gap-2">
+                <!-- Przełącznik przyciągania do siatki (Snap) -->
+                <div class="flex items-center space-x-3">
                     <label class="inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="snap-toggle" checked class="sr-only peer">
                         <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
@@ -272,13 +248,6 @@
                         <option value="0.5" selected>co 50cm</option>
                         <option value="1.0">co 1m</option>
                     </select>
-
-                    <!-- Nowy przełącznik warstwy wymiarów CAD -->
-                    <label class="inline-flex items-center cursor-pointer border-l border-slate-300 pl-3">
-                        <input type="checkbox" id="dimensions-toggle" onchange="toggleDimensionsLayer()" class="sr-only peer">
-                        <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span class="ml-2 text-xs font-semibold text-blue-700"><i class="fa-solid fa-ruler-combined"></i> Wymiary CAD</span>
-                    </label>
                 </div>
  
                 <!-- Obrót całej siatki o 360 stopni wraz z kompasem -->
@@ -324,20 +293,7 @@
                     </div>
  
                     <!-- Warstwa zawierająca wszystkie obiekty / meble rozmieszczone na stoisku -->
-                    <div id="objects-layer" class="absolute inset-0" style="z-index: 30;"></div>
-
-                    <!-- Profesjonalna Warstwa Wymiarowania SVG (CAD style) -->
-                    <svg id="dimensions-layer" class="absolute inset-0 w-full h-full pointer-events-none hidden" style="z-index: 900; overflow: visible;">
-                        <defs>
-                            <marker id="dim-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#0067c0"></path>
-                            </marker>
-                            <marker id="dist-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"></path>
-                            </marker>
-                        </defs>
-                        <g id="dimensions-content"></g>
-                    </svg>
+                    <div id="objects-layer" class="absolute inset-0"></div>
  
                 </div>
  
@@ -604,12 +560,6 @@
                     </div>
                 `;
             }).join('');
-
-            // Automatyczne odświeżenie warstwy wymiarów SVG, jeśli jest aktywna
-            const svgLayer = document.getElementById('dimensions-layer');
-            if (svgLayer && !svgLayer.classList.contains('hidden')) {
-                updateDimensionsSVG();
-            }
         }
  
         /* Płynne przeciąganie obiektów myszą lub dotykiem z opcją przyciągania (Snap) */
@@ -642,11 +592,6 @@
                 if (el) {
                     el.style.left = `${obj.x}px`;
                     el.style.top = `${obj.y}px`;
-                }
-
-                const svgLayer = document.getElementById('dimensions-layer');
-                if (svgLayer && !svgLayer.classList.contains('hidden')) {
-                    updateDimensionsSVG();
                 }
             }
  
@@ -825,120 +770,6 @@
             document.getElementById('bg-upload').value = '';
             bgConfig.url = '';
             resetBgTransform();
-        }
-
-        /* ==========================================================================
-           PROFESJONALNA WARSTWA WYMIAROWANIA SVG (CAD STYLE)
-           ========================================================================== */
-        function toggleDimensionsLayer() {
-            const svg = document.getElementById('dimensions-layer');
-            const isChecked = document.getElementById('dimensions-toggle').checked;
-            
-            if (isChecked) {
-                svg.classList.remove('hidden');
-                updateDimensionsSVG();
-            } else {
-                svg.classList.add('hidden');
-                document.getElementById('dimensions-content').innerHTML = '';
-            }
-        }
-
-        function getObjectGeometry(obj) {
-            const w = obj.w * SCALE;
-            const h = obj.h * SCALE;
-            const cx = obj.x + w / 2;
-            const cy = obj.y + h / 2;
-            const rad = (obj.rotation * Math.PI) / 180;
-            const cos = Math.cos(rad);
-            const sin = Math.sin(rad);
-
-            // Wyznaczanie 4 obróconych narożników mebla
-            const corners = [
-                { x: -w/2, y: -h/2 },
-                { x:  w/2, y: -h/2 },
-                { x:  w/2, y:  h/2 },
-                { x: -w/2, y:  h/2 }
-            ].map(p => ({
-                x: cx + (p.x * cos - p.y * sin),
-                y: cy + (p.x * sin + p.y * cos)
-            }));
-
-            const xs = corners.map(c => c.x);
-            const ys = corners.map(c => c.y);
-
-            return {
-                cx, cy, corners,
-                minX: Math.min(...xs), maxX: Math.max(...xs),
-                minY: Math.min(...ys), maxY: Math.max(...ys)
-            };
-        }
-
-        function updateDimensionsSVG() {
-            const contentGroup = document.getElementById('dimensions-content');
-            if (!contentGroup) return;
-
-            if (objects.length === 0) {
-                contentGroup.innerHTML = '';
-                return;
-            }
-
-            let svgHTML = '';
-            const geometries = objects.map(obj => ({ obj, geom: getObjectGeometry(obj) }));
-
-            // 1. Ogólne obrysy (Bounding Box całości stoiska)
-            const globalMinX = Math.min(...geometries.map(g => g.geom.minX));
-            const globalMaxX = Math.max(...geometries.map(g => g.geom.maxX));
-            const globalMinY = Math.min(...geometries.map(g => g.geom.minY));
-            const globalMaxY = Math.max(...geometries.map(g => g.geom.maxY));
-
-            const totalWidthM = ((globalMaxX - globalMinX) / SCALE).toFixed(2);
-            const totalHeightM = ((globalMaxY - globalMinY) / SCALE).toFixed(2);
-
-            // Obrys zewnętrzny całości
-            svgHTML += `<rect x="${globalMinX}" y="${globalMinY}" width="${globalMaxX - globalMinX}" height="${globalMaxY - globalMinY}" class="dimension-boundary" />`;
-            
-            // Wymiar całkowity szerokości (nad stoiskiem)
-            const dimYTop = globalMinY - 25;
-            svgHTML += `
-                <line x1="${globalMinX}" y1="${dimYTop}" x2="${globalMaxX}" y2="${dimYTop}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
-                <line x1="${globalMinX}" y1="${globalMinY}" x2="${globalMinX}" y2="${dimYTop - 5}" stroke="#0067c0" stroke-width="1" />
-                <line x1="${globalMaxX}" y1="${globalMinY}" x2="${globalMaxX}" y2="${dimYTop - 5}" stroke="#0067c0" stroke-width="1" />
-                <rect x="${(globalMinX + globalMaxX)/2 - 35}" y="${dimYTop - 11}" width="70" height="18" class="dimension-text-bg" />
-                <text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text">CAŁOŚĆ: ${totalWidthM}m</text>
-            `;
-
-            // Wymiar całkowity wysokości (po lewej stronie stoiska)
-            const dimXLeft = globalMinX - 35;
-            svgHTML += `
-                <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
-                <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
-                <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
-                <g transform="rotate(-90, ${(dimXLeft)}, ${(globalMinY + globalMaxY)/2})">
-                    <rect x="${(globalMinY + globalMaxY)/2 - 35}" y="${dimXLeft - 11}" width="70" height="18" class="dimension-text-bg" />
-                    <text x="${(globalMinY + globalMaxY)/2}" y="${dimXLeft + 3}" class="dimension-text">${totalHeightM}m</text>
-                </g>
-            `;
-
-            // 2. Wymiary jednostkowe dla każdego obiektu
-            geometries.forEach(({ obj, geom }) => {
-                const wM = obj.w.toFixed(2);
-                const hM = obj.h.toFixed(2);
-
-                // Oś symetrii obiektu (środek ciężkości)
-                svgHTML += `
-                    <circle cx="${geom.cx}" cy="${geom.cy}" r="3" fill="#0067c0" />
-                    <line x1="${geom.cx - 6}" y1="${geom.cy}" x2="${geom.cx + 6}" y2="${geom.cy}" stroke="#0067c0" stroke-width="1" />
-                    <line x1="${geom.cx}" y1="${geom.cy - 6}" x2="${geom.cx}" y2="${geom.cy + 6}" stroke="#0067c0" stroke-width="1" />
-                `;
-
-                // Etykieta wymiaru bezpośrednio na obiekcie
-                svgHTML += `
-                    <rect x="${geom.cx - 28}" y="${geom.cy - 10}" width="56" height="20" rx="4" fill="rgba(30, 41, 59, 0.85)" />
-                    <text x="${geom.cx}" y="${geom.cy + 4}" fill="#ffffff" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">${wM}×${hM}m</text>
-                `;
-            });
-
-            contentGroup.innerHTML = svgHTML;
         }
  
         /* Zapis stanu całego projektu do pliku JSON */
