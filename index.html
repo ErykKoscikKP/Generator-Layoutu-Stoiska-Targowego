@@ -1015,16 +1015,17 @@
                 <text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text">CAŁOŚĆ: ${totalWidthM}m</text>
             `;
             
-            const dimXLeft = globalMinX - 35;
-            svgHTML += `
-                <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
-                <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
-                <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
-                <g transform="rotate(-90, ${dimXLeft}, ${(globalMinY + globalMaxY) / 2})">
-                    <rect x="${(globalMinY + globalMaxY) / 2 - 45}" y="${dimXLeft - 11}" width="90" height="18" class="dimension-text-bg" />
-                    <text x="${(globalMinY + globalMaxY) / 2}" y="${dimXLeft + 3}" class="dimension-text">CAŁOŚĆ: ${totalHeightM}m</text>
-                </g>
-            `;
+           const dimXLeft = globalMinX - 35;
+const centerY = (globalMinY + globalMaxY) / 2;
+svgHTML += `
+    <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
+    <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
+    <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
+    <g transform="translate(${dimXLeft - 12}, ${centerY}) rotate(-90)">
+        <rect x="-45" y="-9" width="90" height="18" class="dimension-text-bg" />
+        <text x="0" y="4" class="dimension-text" text-anchor="middle">CAŁOŚĆ: ${totalHeightM}m</text>
+    </g>
+`;
 
             
             geometries.forEach(({ obj, geom }) => {
