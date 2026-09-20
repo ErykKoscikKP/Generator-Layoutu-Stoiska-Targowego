@@ -1,1057 +1,1058 @@
 <!DOCTYPE html>
 <html lang="pl" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planer Layoutu Stoiska Targowego – Pełna Wersja CAD & Win 11</title>
-    
-    <!-- Tailwind CSS CDN dla nowoczesnego stylowania interfejsu -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- FontAwesome CDN dla czytelnych ikon systemowych -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- html2canvas CDN do bezstratnego eksportu planszy do pliku PNG -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <style>
-        /* ==========================================================================
-           SEKCJA STYLÓW GLOBALNYCH ORAZ EFEKTÓW MICA (WINDOWS 11 / CANVA STYLE)
-           ========================================================================== */
-        body {
-            font-family: 'Segoe UI', Inter, system-ui, -apple-system, sans-serif;
-        }
-        /* Estetyczne, cienkie paski przewijania (scrollbary) */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(241, 245, 249, 0.5);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        /* Styl okien w stylu Windows 11 z efektem rozmycia tła (Glassmorphism / Mica) */
-        .win11-mica {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-        .win11-dark-mica {
-            background: rgba(30, 30, 30, 0.88);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-        /* Płynne animacje dla elementów obrotowych kompasu */
-        .compass-ring {
-            transition: transform 0.1s ease-out;
-        }
-        /* Klasa reprezentująca pojedynczy mebel/obiekt na planszy projektu */
-        .booth-object {
-            position: absolute;
-            box-sizing: border-box;
-            cursor: move;
-            user-select: none;
-            touch-action: none;
-        }
-        /* Efekt zaznaczonego obiektu na planszy (niebieska ramka robocza Windows 11) */
-        .booth-object.selected {
-            outline: 2px solid #0067c0;
-            outline-offset: 2px;
-            z-index: 999 !important;
-            box-shadow: 0 10px 25px -5px rgba(0, 103, 192, 0.3);
-        }
-        /* Style dla technicznych linii wymiarowych SVG w stylu CAD */
-        .dimension-line {
-            stroke: #0067c0;
-            stroke-width: 1.5;
-            stroke-dasharray: 3 3;
-        }
-        .dimension-boundary {
-            stroke: #ef4444;
-            stroke-width: 1.5;
-            stroke-dasharray: 4 4;
-            fill: none;
-        }
-        .dimension-text {
-            font-family: 'Segoe UI', monospace;
-            font-size: 11px;
-            font-weight: 600;
-            fill: #1e293b;
-            text-anchor: middle;
-        }
-        .dimension-text-bg {
-            fill: rgba(255, 255, 255, 0.9);
-            rx: 3px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planer Layoutu Stoiska Targowego - Wersja CAD</title>
+
+<!-- Tailwind CSS CDN dla nowoczesnego stylowania interfejsu -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- FontAwesome CDN dla czytelnych ikon systemowych -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- html2canvas CDN do bezstratnego eksportu planszy do pliku PNG -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ==========================================================================
+SEKCJA STYLÓW GLOBALNYCH ORAZ EFEKTÓW MICA (WINDOWS 11 / CANVA STYLE)
+========================================================================== */
+body {
+font-family: 'Segoe UI', Inter, system-ui, -apple-system, sans-serif;
+}
+/* Estetyczne, cienkie paski przewijania (scrollbary) */
+::-webkit-scrollbar {
+width: 8px;
+height: 8px;
+}
+::-webkit-scrollbar-track {
+background: rgba(241, 245, 249, 0.5);
+}
+::-webkit-scrollbar-thumb {
+background: #cbd5e1;
+border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+background: #94a3b8;
+}
+/* Styl okien w stylu Windows 11 z efektem rozmycia tła (Glassmorphism / Mica) */
+.win11-mica {
+background: rgba(255, 255, 255, 0.88);
+backdrop-filter: blur(20px);
+-webkit-backdrop-filter: blur(20px);
+}
+.win11-dark-mica {
+background: rgba(30, 30, 30, 0.88);
+backdrop-filter: blur(20px);
+-webkit-backdrop-filter: blur(20px);
+}
+/* Płynne animacje dla elementów obrotowych kompasu */
+.compass-ring {
+transition: transform 0.1s ease-out;
+}
+/* Klasa reprezentująca pojedynczy mebel/obiekt na planszy projektu */
+.booth-object {
+position: absolute;
+box-sizing: border-box;
+cursor: move;
+user-select: none;
+touch-action: none;
+}
+/* Efekt zaznaczonego obiektu na planszy (niebieska ramka robocza Windows 11) */
+.booth-object.selected {
+outline: 2px solid #0067c0;
+outline-offset: 2px;
+z-index: 999 !important;
+box-shadow: 0 10px 25px -5px rgba(0, 103, 192, 0.3);
+}
+/* Style dla technicznych linii wymiarowych SVG w stylu CAD */
+.dimension-line {
+stroke: #0067c0;
+stroke-width: 1.5;
+stroke-dasharray: 3 3;
+}
+.dimension-boundary {
+stroke: #ef4444;
+stroke-width: 1.5;
+stroke-dasharray: 4 4;
+fill: none;
+}
+.dimension-text {
+font-family: 'Segoe UI', monospace;
+font-size: 11px;
+font-weight: 600;
+fill: #1e293b;
+text-anchor: middle;
+}
+.dimension-text-bg {
+fill: rgba(255, 255, 255, 0.9);
+rx: 3px;
+}
+</style>
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none">
- 
-    <!-- ==========================================================================
-       GÓRNY PASEK NAWIGACYJNY (HEADER)
-       ========================================================================== -->
-    <header class="win11-dark-mica text-white px-4 py-2.5 flex justify-between items-center border-b border-white/10 z-30 shrink-0 shadow-sm">
-        
-        <!-- Lewa sekcja: Logo, wersja mobilna oraz tytuł -->
-        <div class="flex items-center space-x-3">
-            <button onclick="toggleMobileSidebar()" class="md:hidden bg-white/10 hover:bg-white/20 p-2 rounded-lg text-slate-200 transition" title="Menu mobilne">
-                <i class="fa-solid fa-bars text-lg"></i>
-            </button>
-            <div class="bg-blue-600 p-2 rounded-xl text-white shadow-md shadow-blue-500/20">
-                <i class="fa-solid fa-compass-drafting text-lg"></i>
-            </div>
-            <div>
-                <h1 class="font-semibold text-sm md:text-base leading-tight">Planer Stoisk Targowych CAD</h1>
-                <p class="text-[11px] text-slate-400 hidden sm:block">Dokładność skali: 1 px = 1 cm (1 m = 100 px)</p>
-            </div>
-        </div>
- 
-        <!-- Prawa sekcja: Przyciski operacji plikowych (Otwórz, Zapisz, Eksport PNG) -->
-        <div class="flex items-center space-x-2">
-            <!-- Wczytywanie pliku JSON projektu -->
-            <button onclick="document.getElementById('json-input').click()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2">
-                <i class="fa-solid fa-folder-open text-blue-400"></i> <span class="hidden sm:inline">Otwórz</span>
-            </button>
-            <input type="file" id="json-input" class="hidden" accept=".json" onchange="loadProjectJSON(event)">
- 
-            <!-- Zapisywanie stanu projektu do pliku JSON -->
-            <button onclick="saveProjectJSON()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2">
-                <i class="fa-solid fa-floppy-disk text-emerald-400"></i> <span class="hidden sm:inline">Zapisz</span>
-            </button>
- 
-            <!-- Eksport układu do wysokiej jakości pliku graficznego PNG -->
-            <button onclick="exportToPNG()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm px-3.5 py-1.5 rounded-lg shadow-md shadow-blue-600/30 font-medium transition flex items-center gap-2">
-                <i class="fa-solid fa-file-image"></i> <span>Eksportuj PNG</span>
-            </button>
-        </div>
-    </header>
- 
-    <!-- ==========================================================================
-       GŁÓWNY KONTENER APLIKACJI (UKŁAD TRZYKOLUMNOWY / PANELOWY)
-       ========================================================================== -->
-    <div class="flex-1 flex overflow-hidden relative">
- 
-        <!-- Nakładka przyciemniająca tło dla wersji mobilnych po wysunięciu panelu -->
-        <div id="mobile-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-20 hidden md:hidden"></div>
- 
-        <!-- ==========================================================================
-           LEWY PANEL: BIBLIOTEKA ELEMENTÓW ORAZ ZARZĄDZANIE TŁEM / RZUTEM
-           ========================================================================== -->
-        <aside id="left-sidebar" class="win11-mica w-80 border-r border-slate-200/80 flex flex-col shrink-0 z-30 shadow-2xl transition-transform duration-300 absolute md:relative h-full -translate-x-full md:translate-x-0 overflow-y-auto">
-           
-            <!-- Nagłówek lewego panelu -->
-            <div class="p-4 border-b border-slate-200/60 flex justify-between items-center">
-                <h2 class="font-semibold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-layer-group text-blue-600"></i> Biblioteka elementów
-                </h2>
-                <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-slate-600 p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
- 
-            <!-- Sekcja katalogu gotowych mebli i elementów stoiska -->
-            <div class="p-4 border-b border-slate-200/60">
-                <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Katalog wyposażenia</h3>
-                <div class="grid grid-cols-2 gap-2" id="preset-library"></div>
-            </div>
- 
-            <!-- Sekcja dodawania własnych obiektów o niestandardowych wymiarach -->
-            <div class="p-4 border-b border-slate-200/60">
-                <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Niestandardowy Wymiar</h3>
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <div>
-                        <label class="text-[10px] font-medium text-slate-600">Szerokość (m)</label>
-                        <input type="number" id="custom-w" value="1.0" step="0.05" min="0.1" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-medium text-slate-600">Długość (m)</label>
-                        <input type="number" id="custom-h" value="1.0" step="0.05" min="0.1" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                </div>
-                <div class="mb-2.5">
-                    <label class="text-[10px] font-medium text-slate-600">Nazwa etykiety</label>
-                    <input type="text" id="custom-name" value="Obiekt niestandardowy" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <button onclick="addCustomItem()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 rounded-lg font-medium transition shadow-sm flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-plus text-blue-400"></i> Dodaj obiekt do planszy
-                </button>
-            </div>
- 
-            <!-- Sekcja wgrywania i konfiguracji tła / rzutu przestrzeni -->
-            <div class="p-4 bg-slate-50/50">
-                <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
-                    <span><i class="fa-solid fa-image text-slate-600 mr-1"></i> Tło / Rzut przestrzeni</span>
-                </h3>
-               
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Wgraj plik graficzny planu</label>
-                        <input type="file" id="bg-upload" accept="image/*" onchange="handleBgUpload(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                    </div>
- 
-                    <!-- Zaawansowane kontrolki transformacji tła (ukryte dopóki nie wgrano obrazu) -->
-                    <div id="bg-controls" class="space-y-3 hidden pt-2 border-t border-slate-200">
-                        <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
-                                <span>Przezroczystość tła</span>
-                                <span id="bg-opacity-val" class="font-mono">50%</span>
-                            </div>
-                            <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.5" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                        </div>
- 
-                        <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
-                                <span>Skala tła (do 1500%)</span>
-                                <span id="bg-scale-val" class="font-mono">100%</span>
-                            </div>
-                            <input type="range" id="bg-scale" min="0.1" max="15.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                        </div>
- 
-                        <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
-                                <span>Obrót tła</span>
-                                <span id="bg-rotation-val" class="font-mono">0°</span>
-                            </div>
-                            <input type="range" id="bg-rotation" min="0" max="360" value="0" step="1" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                            <div class="grid grid-cols-4 gap-1 mt-1.5">
-                                <button onclick="setBgRotation(0)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">0°</button>
-                                <button onclick="setBgRotation(90)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">90°</button>
-                                <button onclick="setBgRotation(180)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">180°</button>
-                                <button onclick="setBgRotation(270)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">270°</button>
-                            </div>
-                        </div>
 
-                        <!-- Zmienione: Rozdzielenie przesuwania X i Y na dwa suwaki -->
-                        <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
-                                <span>Przesunięcie tła X</span>
-                                <span id="bg-x-val" class="font-mono">0 px</span>
-                            </div>
-                            <input type="range" id="bg-x" min="-3000" max="3000" value="0" step="2" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                        </div>
+<!-- ==========================================================================
+GÓRNY PASEK NAWIGACYJNY (HEADER)
+========================================================================== -->
+<header class="win11-dark-mica text-white px-4 py-2.5 flex justify-between items-center border-b border-white/10 z-30 shrink-0 shadow-sm">
 
-                        <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
-                                <span>Przesunięcie tła Y</span>
-                                <span id="bg-y-val" class="font-mono">0 px</span>
-                            </div>
-                            <input type="range" id="bg-y" min="-3000" max="3000" value="0" step="2" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                        </div>
- 
-                        <div class="flex gap-2 pt-1">
-                            <button onclick="resetBgTransform()" class="flex-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs py-1.5 rounded-lg transition font-medium">Reset tła</button>
-                            <button onclick="removeBackground()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded-lg transition font-medium">Usuń tło</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </aside>
- 
-        <!-- ==========================================================================
-           GŁÓWNY OBSZAR ROBOCZY: KANWA, SIATKA ORAZ NARZĘDZIA POMOCNICZE
-           ========================================================================== -->
-        <main class="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
-           
-            <!-- Górny pasek narzędziowy siatki (przyciąganie, obrót 360, wymiary SVG, powiększenie) -->
-            <div class="win11-mica border-b border-slate-200/80 px-4 py-2 flex flex-wrap justify-between items-center gap-3 z-10 shadow-xs">
-               
-                <!-- Przełącznik przyciągania do siatki (Snap) oraz przełącznik wymiarów CAD -->
-                <div class="flex items-center space-x-3 flex-wrap gap-2">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="snap-toggle" checked class="sr-only peer">
-                        <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span class="ml-2 text-xs font-medium text-slate-700">Przyciąganie</span>
-                    </label>
- 
-                    <select id="snap-step" class="text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white/80 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="0.1">co 10cm</option>
-                        <option value="0.25">co 25cm</option>
-                        <option value="0.5" selected>co 50cm</option>
-                        <option value="1.0">co 1m</option>
-                    </select>
-                    <!-- Przełącznik warstwy wymiarów CAD -->
-                    <label class="inline-flex items-center cursor-pointer border-l border-slate-300 pl-3">
-                        <input type="checkbox" id="dimensions-toggle" onchange="toggleDimensionsLayer()" class="sr-only peer">
-                        <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span class="ml-2 text-xs font-semibold text-blue-700"><i class="fa-solid fa-ruler-combined"></i> Wymiary CAD</span>
-                    </label>
-                </div>
- 
-                <!-- Obrót całej siatki o 360 stopni wraz z kompasem -->
-                <div class="flex items-center gap-2 bg-white/60 border border-slate-300/80 rounded-xl px-3 py-1 shadow-inner">
-                    <span class="text-xs font-semibold text-blue-600"><i class="fa-solid fa-rotate"></i> Obrót siatki:</span>
-                    <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-24 sm:w-28 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                    <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-11 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none">
-                    <span class="text-xs font-bold text-slate-500">°</span>
-                </div>
- 
-                <!-- Kontrola powiększenia (Zoom widoku) -->
-                <div class="flex items-center space-x-1 bg-white/60 rounded-xl p-1 border border-slate-300/80">
-                    <button onclick="adjustZoom(-0.1)" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition" title="Pomniejsz"><i class="fa-solid fa-minus text-xs"></i></button>
-                    <span id="zoom-level" class="text-xs font-mono px-2 font-bold text-slate-700">100%</span>
-                    <button onclick="adjustZoom(0.1)" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition" title="Powiększ"><i class="fa-solid fa-plus text-xs"></i></button>
-                    <button onclick="resetZoom()" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition border-l border-slate-300 ml-1" title="Resetuj zoom"><i class="fa-solid fa-rotate-left text-xs"></i></button>
-                </div>
-            </div>
- 
-            <!-- Okno przewijalne planszy (Viewport) z obsługą Zaznaczania Wszystkich Prawym Przyciskiem Myszy -->
-            <div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing" oncontextmenu="selectAllObjects(event)">
-               
-                <!-- Kontener roboczy planszy o stałym rozmiarze 3000x3000px -->
-                <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[3000px] min-h-[3000px]" style="transform-origin: 1500px 1500px;">
-                  
-                    <!-- Główna siatka co 1 metr (100px) -->
-                    <div id="grid-bg" class="absolute inset-0 bg-white"
-                         style="background-size: 100px 100px; background-image: linear-gradient(to right, rgba(203, 213, 225, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.6) 1px, transparent 1px);">
-                    </div>
- 
-                    <!-- Podsiatka pomocnicza co 10 cm (10px) -->
-                    <div id="subgrid-bg" class="absolute inset-0 pointer-events-none"
-                         style="background-size: 10px 10px; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);">
-                    </div>
- 
-                    <!-- Centralne linie osi symetrii -->
-                    <div class="absolute left-0 top-[1500px] right-0 h-0.5 bg-blue-400/40 pointer-events-none"></div>
-                    <div class="absolute top-0 left-[1500px] bottom-0 w-0.5 bg-blue-400/40 pointer-events-none"></div>
- 
-                    <!-- Warstwa graficzna tła / rzutu przestrzeni -->
-                    <div id="bg-layer" class="absolute inset-0 pointer-events-none origin-center flex items-center justify-center">
-                        <img id="bg-image" src="" class="hidden pointer-events-none max-w-none">
-                    </div>
- 
-                    <!-- Warstwa zawierająca wszystkie obiekty / meble rozmieszczone na stoisku -->
-                    <div id="objects-layer" class="absolute inset-0" style="z-index: 30;" onclick="deselectAll(event)"></div>
-                    <!-- Profesjonalna Warstwa Wymiarowania SVG (CAD style) -->
-                    <svg id="dimensions-layer" class="absolute inset-0 w-full h-full pointer-events-none hidden" style="z-index: 900; overflow: visible;">
-                        <defs>
-                            <marker id="dim-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#0067c0"></path>
-                            </marker>
-                            <marker id="dist-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"></path>
-                            </marker>
-                        </defs>
-                        <g id="dimensions-content"></g>
-                    </svg>
- 
-                </div>
- 
-                <!-- Widget kompasu wskazujący aktualny kąt obrotu siatki -->
-                <div class="fixed bottom-4 right-4 win11-dark-mica text-white text-xs p-2.5 rounded-2xl shadow-2xl pointer-events-none z-20 flex flex-col items-center gap-1 border border-white/10">
-                    <div class="relative w-10 h-10 flex items-center justify-center border border-white/20 rounded-full bg-black/40">
-                        <div id="compass-rose" class="compass-ring absolute inset-0 flex items-center justify-center">
-                            <span class="absolute top-0.5 text-[8px] font-extrabold text-red-400">N</span>
-                            <i class="fa-solid fa-location-arrow text-blue-400 text-xs transform -rotate-45"></i>
-                        </div>
-                    </div>
-                    <span id="compass-deg" class="font-mono font-bold text-[10px] text-blue-300">0°</span>
-                </div>
- 
-                <!-- Stały wskaźnik skali rysunku w rogu ekranu -->
-                <div class="fixed bottom-4 left-4 win11-dark-mica text-white text-xs px-3 py-1.5 rounded-full shadow-lg pointer-events-none z-20 flex items-center gap-2 border border-white/10">
-                    <span class="w-6 h-0.5 bg-blue-400 inline-block rounded-full"></span>
-                    <span class="font-medium text-slate-200 text-[11px]">Skala: 1 px = 1 cm</span>
-                </div>
-            </div>
-        </main>
- 
-        <!-- ==========================================================================
-           PRAWY PANEL: WŁAŚCIWOŚCI ZAZNACZONEGO OBIEKTU (EDYCJA WYMIARÓW I KOLORÓW)
-           ========================================================================== -->
-        <aside id="properties-panel" class="win11-mica w-72 border-l border-slate-200/80 p-4 flex flex-col shrink-0 z-20 shadow-2xl hidden">
-            <div class="flex justify-between items-center pb-3 mb-3 border-b border-slate-200/60">
-                <h2 class="font-semibold text-slate-800 text-xs flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-blue-600"></i> Właściwości obiektu
-                </h2>
-                <button onclick="deselectAll()" class="text-slate-400 hover:text-slate-600 p-1" title="Zamknij panel">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
- 
-            <div class="space-y-3.5 flex-1 overflow-y-auto pr-1">
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-600 mb-1">Etykieta elementu</label>
-                    <input type="text" id="prop-label" oninput="updateSelectedObject()" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
- 
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Szerokość (m)</label>
-                        <input type="number" id="prop-width" step="0.01" min="0.05" oninput="updateSelectedObject()" class="w-full text-xs px-2 py-1.5 bg-white/80 border border-slate-300 rounded-lg outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Długość (m)</label>
-                        <input type="number" id="prop-height" step="0.01" min="0.05" oninput="updateSelectedObject()" class="w-full text-xs px-2 py-1.5 bg-white/80 border border-slate-300 rounded-lg outline-none">
-                    </div>
-                </div>
- 
-                <div>
-                    <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
-                        <span>Obrót obiektu</span>
-                        <span id="prop-rotation-val" class="font-mono">0°</span>
-                    </div>
-                    <input type="range" id="prop-rotation" min="0" max="360" value="0" step="1" oninput="updateSelectedObject()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                    <div class="grid grid-cols-4 gap-1 mt-1.5">
-                        <button onclick="rotateSelected(0)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">0°</button>
-                        <button onclick="rotateSelected(90)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">90°</button>
-                        <button onclick="rotateSelected(180)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">180°</button>
-                        <button onclick="rotateSelected(270)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">270°</button>
-                    </div>
-                </div>
- 
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-600 mb-1">Kolor wypełnienia</label>
-                    <div class="flex items-center gap-2">
-                        <input type="color" id="prop-color" oninput="updateSelectedObject()" class="w-8 h-8 rounded-lg border border-slate-300 cursor-pointer bg-transparent">
-                        <span id="prop-color-hex" class="text-xs font-mono uppercase text-slate-500">#000000</span>
-                    </div>
-                </div>
- 
-                <div>
-                    <label class="block text-[10px] font-medium text-slate-600 mb-1">Kolejność warstw (Z-Index)</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="changeZIndex(1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-xs py-1.5 rounded-lg font-medium text-slate-700 flex items-center justify-center gap-1 shadow-xs">
-                            <i class="fa-solid fa-layer-group"></i> Na wierzch
-                        </button>
-                        <button onclick="changeZIndex(-1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-xs py-1.5 rounded-lg font-medium text-slate-700 flex items-center justify-center gap-1 shadow-xs">
-                            <i class="fa-solid fa-layer-group"></i> Pod spód
-                        </button>
-                    </div>
-                </div>
-                <div class="pt-3 border-t border-slate-200/60 space-y-2">
-                    <button onclick="duplicateSelected()" class="w-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 shadow-xs">
-                        <i class="fa-solid fa-copy text-blue-600"></i> Duplikuj element(y)
-                    </button>
-                    <button onclick="deleteSelected()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-trash"></i> Usuń element(y)
-                    </button>
-                </div>
-            </div>
-        </aside>
-    </div>
- 
-    <!-- ==========================================================================
-       SEKCJA LOGIKI JAVASCRIPT (OBSŁUGA ZDARZEŃ, INTERAKCJI I STANU PROJEKTU)
-       ========================================================================== -->
-    <script>
-        /* Stałe kalibracyjne i zmienne globalne stanu aplikacji */
-        const SCALE = 100; // Skala: 1 metr = 100 pikseli (1 px = 1 cm)
-        const CANVAS_SIZE = 3000; // Rozmiar siatki roboczej w pikselach
-        let currentZoom = 1.0;
-        let gridRotation = 0;
-        let objects = [];
-        let selectedIds = []; // Obsługa selekcji pojedynczej oraz wielokrotnej
-        let nextObjectId = 1;
- 
-        let bgConfig = { url: '', opacity: 0.5, scale: 1, rotation: 0, x: 0, y: 0 };
- 
-        /* Pełny, oryginalny katalog wyposażenia stoiska targowego + Strzałka ruchu klientów */
-        const PRESETS = [
-            { type: 'kallax_1x4', name: 'Kallax 1x4', w: 0.42, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'kallax_2x4', name: 'Kallax 2x4', w: 0.77, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'kallax_3x4', name: 'Kallax 3x4', w: 1.12, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'kallax_4x4', name: 'Kallax 4x4', w: 1.47, h: 0.39, color: '#475569', icon: 'fa-cubes' },
-            { type: 'billie', name: 'Regał Billie', w: 0.80, h: 0.20, color: '#64748b', icon: 'fa-book-open' },
-            { type: 'trolley', name: 'Wózek jezdny', w: 0.92, h: 0.58, color: '#d97706', icon: 'fa-truck-ramp-box' },
-            { type: 'rot_silver', name: 'Ekspozytor obrotowy (srebro)', w: 0.40, h: 0.40, color: '#94a3b8', icon: 'fa-arrows-spin' },
-            { type: 'rot_black', name: 'Ekspozytor obrotowy (czarny)', w: 0.45, h: 0.45, color: '#334155', icon: 'fa-arrows-spin' },
-            { type: 'disp_white', name: 'Ekspozytor biały', w: 0.845, h: 0.46, color: '#e2e8f0', icon: 'fa-box-open' },
-            { type: 'table_large', name: 'Stół duży', w: 1.80, h: 0.74, color: '#1e293b', icon: 'fa-table' },
-            { type: 'table_small', name: 'Stół mały', w: 1.50, h: 0.73, color: '#334155', icon: 'fa-table' },
-            { type: 'cash_desk', name: 'Kasa / Stolik', w: 0.70, h: 0.50, color: '#059669', icon: 'fa-cash-register' },
-            { type: 'chair', name: 'Krzesło / Hoker', w: 0.45, h: 0.45, color: '#475569', icon: 'fa-chair' },
-            { type: 'table_round', name: 'Stolik okrągły', w: 0.80, h: 0.80, color: '#d97706', icon: 'fa-circle' },
-            { type: 'rollup', name: 'Roll-up banner', w: 0.85, h: 0.30, color: '#10b981', icon: 'fa-scroll' },
-            /* Dodany element: Strzałka ruchu klientów */
-            { type: 'arrow_flow', name: 'Ruch klientów', w: 1.50, h: 0.40, color: '#f59e0b', icon: 'fa-route' }
-        ];
- 
-        /* Inicjalizacja aplikacji po załadowaniu struktury DOM */
-        window.addEventListener('DOMContentLoaded', () => {
-            renderPresetLibrary();
-            initPresetsOnCanvas();
-            initPanning();
-            centerViewport();
-        });
- 
-        /* Wyśrodkowanie okna roboczego na planszy */
-        function centerViewport() {
-            const viewport = document.getElementById('viewport');
-            viewport.scrollLeft = (CANVAS_SIZE - viewport.clientWidth) / 2;
-            viewport.scrollTop = (CANVAS_SIZE - viewport.clientHeight) / 2;
-        }
- 
-        /* Przełączanie widoczności panelu bocznego na urządzeniach mobilnych */
-        function toggleMobileSidebar() {
-            document.getElementById('left-sidebar').classList.toggle('-translate-x-full');
-            document.getElementById('mobile-overlay').classList.toggle('hidden');
-        }
- 
-        /* Renderowanie kafelków biblioteki elementów w lewym panelu */
-        function renderPresetLibrary() {
-            const container = document.getElementById('preset-library');
-            container.innerHTML = PRESETS.map(p => `
-                <button onclick="addObjectFromPreset('${p.type}')" class="bg-white/70 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-300 p-2.5 rounded-xl text-left transition flex flex-col justify-between group shadow-xs">
-                    <div class="flex justify-between items-center mb-1">
-                        <div class="w-6 h-6 rounded-lg bg-white shadow-xs border border-slate-200 flex items-center justify-center text-blue-600 group-hover:scale-110 transition">
-                            <i class="fa-solid ${p.icon} text-xs"></i>
-                        </div>
-                        <span class="text-[9px] font-mono text-slate-400 bg-white px-1 py-0.5 rounded">${p.w}x${p.h}m</span>
-                    </div>
-                    <span class="font-medium text-xs text-slate-700 group-hover:text-blue-700 truncate">${p.name}</span>
-                </button>
-            `).join('');
-        }
- 
-        /* Dodanie domyślnego obiektu startowego na środek planszy */
-        function initPresetsOnCanvas() {
-            objects = [
-                { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: 1500 - 90, y: 1500 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
-            ];
-            renderObjects();
-        }
- 
-        /* Obsługa przesuwania (panningu) całej planszy myszą */
-        function initPanning() {
-            const viewport = document.getElementById('viewport');
-            let isPanning = false;
-            let startX, startY;
- 
-            viewport.addEventListener('mousedown', (e) => {
-                if (e.button === 2) return; // Ignoruj prawy przycisk dla panningu
-                if (e.target.closest('.booth-object') || e.target.closest('aside') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input')) return;
-                isPanning = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                viewport.style.cursor = 'grabbing';
-            });
- 
-            window.addEventListener('mousemove', (e) => {
-                if (!isPanning) return;
-                viewport.scrollLeft -= (e.clientX - startX);
-                viewport.scrollTop -= (e.clientY - startY);
-                startX = e.clientX;
-                startY = e.clientY;
-            });
- 
-            window.addEventListener('mouseup', () => {
-                isPanning = false;
-                viewport.style.cursor = 'grab';
-            });
-        }
+<!-- Lewa sekcja: Logo, wersja mobilna oraz tytuł -->
+<div class="flex items-center space-x-3">
+<button onclick="toggleMobileSidebar()" class="md:hidden bg-white/10 hover:bg-white/20 p-2 rounded-lg text-slate-200 transition" title="Menu mobilne">
+<i class="fa-solid fa-bars text-lg"></i>
+</button>
+<div class="bg-blue-600 p-2 rounded-xl text-white shadow-md shadow-blue-500/20">
+<i class="fa-solid fa-compass-drafting text-lg"></i>
+</div>
+<div>
+<h1 class="font-semibold text-sm md:text-base leading-tight">Planer Stoisk Targowych CAD</h1>
+<p class="text-[11px] text-slate-400 hidden sm:block">Dokładność skali: 1 px = 1 cm (1 m = 100 px)</p>
+</div>
+</div>
 
-        /* Dodatek 1: Zaznaczanie wszystkich elementów prawym przyciskiem myszy */
-        function selectAllObjects(e) {
-            if (e.target.closest('aside') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input')) return;
-            e.preventDefault(); // Zablokuj menu kontekstowe
-            if (objects.length === 0) return;
-            selectedIds = objects.map(o => o.id);
-            renderObjects();
-            updatePropertiesPanel();
-        }
- 
-        /* Dodanie wybranego obiektu z katalogu na środek planszy */
-        function addObjectFromPreset(type) {
-            const preset = PRESETS.find(p => p.type === type);
-            if (!preset) return;
-            const newObj = {
-                id: nextObjectId++,
-                name: preset.name,
-                type: preset.type,
-                x: 1500 - (preset.w * SCALE) / 2,
-                y: 1500 - (preset.h * SCALE) / 2,
-                w: preset.w,
-                h: preset.h,
-                rotation: 0,
-                color: preset.color,
-                zIndex: objects.length + 1
-            };
-            objects.push(newObj);
-            renderObjects();
-            selectObject(newObj.id);
-        }
- 
-        /* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach */
-        function addCustomItem() {
-            const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
-            const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
-            const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
-            const newObj = {
-                id: nextObjectId++,
-                name: name,
-                type: 'custom',
-                x: 1500 - (w * SCALE) / 2,
-                y: 1500 - (h * SCALE) / 2,
-                w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
-            };
-            objects.push(newObj);
-            renderObjects();
-            selectObject(newObj.id);
-        }
- 
-        /* Renderowanie wszystkich obiektów w warstwie HTML (w tym podgląd Strzałki Ruchu Klientów) */
-        function renderObjects() {
-            const container = document.getElementById('objects-layer');
-            container.innerHTML = objects.map(obj => {
-                const widthPx = obj.w * SCALE;
-                const heightPx = obj.h * SCALE;
-                const isSelected = selectedIds.includes(obj.id);
-                
-                // Specjalne renderowanie dla strzałki ruchu klientów
-                if (obj.type === 'arrow_flow') {
-                    return `
-                        <div id="obj-${obj.id}"
-                             class="booth-object ${isSelected ? 'selected' : ''}"
-                             style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
-                             onpointerdown="startDragging(event, ${obj.id})"
-                             onclick="selectObject(${obj.id}, event)">
-                            <div class="w-full h-full rounded-xl shadow-md flex items-center justify-between px-3 text-white overflow-hidden border border-white/20 relative"
-                                 style="background-color: ${obj.color};">
-                                <span class="text-[10px] font-bold uppercase tracking-wider truncate">${obj.name}</span>
-                                <i class="fa-solid fa-arrow-right text-base animate-pulse"></i>
-                            </div>
-                        </div>
-                    `;
-                }
+<!-- Prawa sekcja: Przyciski operacji plikowych (Otwórz, Zapisz, Eksport PNG) -->
+<div class="flex items-center space-x-2">
+<!-- Wczytywanie pliku JSON projektu -->
+<button onclick="document.getElementById('json-input').click()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2">
+<i class="fa-solid fa-folder-open text-blue-400"></i> <span class="hidden sm:inline">Otwórz</span>
+</button>
+<input type="file" id="json-input" class="hidden" accept=".json" onchange="loadProjectJSON(event)">
 
-                return `
-                    <div id="obj-${obj.id}"
-                         class="booth-object ${isSelected ? 'selected' : ''}"
-                         style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
-                         onpointerdown="startDragging(event, ${obj.id})"
-                         onclick="selectObject(${obj.id}, event)">
-                        <div class="w-full h-full rounded-xl shadow-md flex flex-col items-center justify-center p-1 text-white overflow-hidden border border-white/20 relative"
-                             style="background-color: ${obj.color};">
-                            <span class="text-[10px] font-semibold leading-tight text-center truncate w-full">${obj.name}</span>
-                            <span class="text-[8px] font-mono opacity-80">${obj.w}m × ${obj.h}m</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+<!-- Zapisywanie stanu projektu do pliku JSON -->
+<button onclick="saveProjectJSON()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2">
+<i class="fa-solid fa-floppy-disk text-emerald-400"></i> <span class="hidden sm:inline">Zapisz</span>
+</button>
 
-            // Automatyczne odświeżenie warstwy wymiarów SVG, jeśli jest aktywna
-            const svgLayer = document.getElementById('dimensions-layer');
-            if (svgLayer && !svgLayer.classList.contains('hidden')) {
-                updateDimensionsSVG();
-            }
-        }
- 
-        /* Płynne przeciąganie obiektów (również wielu naraz po zaznaczeniu PPM) z przyciąganiem */
-        function startDragging(e, id) {
-            if (e.target.closest('button')) return;
-            e.stopPropagation();
-            if (!selectedIds.includes(id)) {
-                selectObject(id, e);
-            }
-            const startX = e.clientX;
-            const startY = e.clientY;
-            
-            // Zapis pozycji początkowych wszystkich zaznaczonych obiektów
-            const initialPositions = objects
-                .filter(o => selectedIds.includes(o.id))
-                .map(o => ({ id: o.id, x: o.x, y: o.y }));
- 
-            function onPointerMove(moveEvent) {
-                const dx = (moveEvent.clientX - startX) / currentZoom;
-                const dy = (moveEvent.clientY - startY) / currentZoom;
+<!-- Eksport układu do wysokiej jakości pliku graficznego PNG -->
+<button onclick="exportToPNG()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm px-3.5 py-1.5 rounded-lg shadow-md shadow-blue-600/30 font-medium transition flex items-center gap-2">
+<i class="fa-solid fa-file-image"></i> <span>Eksportuj PNG</span>
+</button>
+</div>
+</header>
 
-                initialPositions.forEach(pos => {
-                    const obj = objects.find(o => o.id === pos.id);
-                    if (!obj) return;
+<!-- ==========================================================================
+GŁÓWNY KONTENER APLIKACJI (UKŁAD TRZYKOLUMNOWY / PANELOWY)
+========================================================================== -->
+<div class="flex-1 flex overflow-hidden relative">
 
-                    let newX = pos.x + dx;
-                    let newY = pos.y + dy;
- 
-                    if (document.getElementById('snap-toggle').checked) {
-                        const step = (parseFloat(document.getElementById('snap-step').value) || 0.5) * SCALE;
-                        newX = Math.round(newX / step) * step;
-                        newY = Math.round(newY / step) * step;
-                    }
-                    obj.x = newX;
-                    obj.y = newY;
-                    const el = document.getElementById(`obj-${obj.id}`);
-                    if (el) {
-                        el.style.left = `${obj.x}px`;
-                        el.style.top = `${obj.y}px`;
-                    }
-                });
+<!-- Nakładka przyciemniająca tło dla wersji mobilnych po wysunięciu panelu -->
+<div id="mobile-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-20 hidden md:hidden"></div>
 
-                const svgLayer = document.getElementById('dimensions-layer');
-                if (svgLayer && !svgLayer.classList.contains('hidden')) {
-                    updateDimensionsSVG();
-                }
-            }
- 
-            function onPointerUp() {
-                window.removeEventListener('pointermove', onPointerMove);
-                window.removeEventListener('pointerup', onPointerUp);
-            }
- 
-            window.addEventListener('pointermove', onPointerMove);
-            window.addEventListener('pointerup', onPointerUp);
-        }
- 
-        /* Zaznaczanie obiektu i ładowanie jego właściwości do prawego panelu */
-        function selectObject(id, event) {
-            if (event) event.stopPropagation();
-            if (event && event.shiftKey) {
-                if (selectedIds.includes(id)) {
-                    selectedIds = selectedIds.filter(i => i !== id);
-                } else {
-                    selectedIds.push(id);
-                }
-            } else {
-                selectedIds = [id];
-            }
-            renderObjects();
-            updatePropertiesPanel();
-        }
+<!-- ==========================================================================
+LEWY PANEL: BIBLIOTEKA ELEMENTÓW ORAZ ZARZĄDZANIE TŁEM / RZUTEM
+========================================================================== -->
+<aside id="left-sidebar" class="win11-mica w-80 border-r border-slate-200/80 flex flex-col shrink-0 z-30 shadow-2xl transition-transform duration-300 absolute md:relative h-full -translate-x-full md:translate-x-0 overflow-y-auto">
 
-        /* Aktualizacja panelu właściwości po zmianie zaznaczenia */
-        function updatePropertiesPanel() {
-            const panel = document.getElementById('properties-panel');
-            if (selectedIds.length === 1) {
-                const obj = objects.find(o => o.id === selectedIds[0]);
-                if (obj) {
-                    panel.classList.remove('hidden');
-                    document.getElementById('prop-label').value = obj.name;
-                    document.getElementById('prop-width').value = obj.w;
-                    document.getElementById('prop-height').value = obj.h;
-                    document.getElementById('prop-rotation').value = obj.rotation;
-                    document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
-                    document.getElementById('prop-color').value = obj.color;
-                    document.getElementById('prop-color-hex').innerText = obj.color;
-                }
-            } else {
-                panel.classList.add('hidden');
-            }
-        }
- 
-        /* Odznaczenie wszystkich obiektów */
-        function deselectAll(event) {
-            if (event && event.target.closest('.booth-object')) return;
-            selectedIds = [];
-            renderObjects();
-            updatePropertiesPanel();
-        }
- 
-        /* Aktualizacja właściwości zaznaczonego obiektu na żywo */
-        function updateSelectedObject() {
-            if (selectedIds.length !== 1) return;
-            const obj = objects.find(o => o.id === selectedIds[0]);
-            if (!obj) return;
-            obj.name = document.getElementById('prop-label').value || 'Obiekt';
-            obj.w = parseFloat(document.getElementById('prop-width').value) || 0.5;
-            obj.h = parseFloat(document.getElementById('prop-height').value) || 0.5;
-            obj.rotation = parseInt(document.getElementById('prop-rotation').value) || 0;
-            obj.color = document.getElementById('prop-color').value;
-            document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
-            document.getElementById('prop-color-hex').innerText = obj.color;
-            renderObjects();
-        }
- 
-        /* Szybki obrót zaznaczonego obiektu o zadany kąt */
-        function rotateSelected(deg) {
-            if (selectedIds.length !== 1) return;
-            const obj = objects.find(o => o.id === selectedIds[0]);
-            if (!obj) return;
-            obj.rotation = deg;
-            document.getElementById('prop-rotation').value = deg;
-            document.getElementById('prop-rotation-val').innerText = `${deg}°`;
-            renderObjects();
-        }
+<!-- Nagłówek lewego panelu -->
+<div class="p-4 border-b border-slate-200/60 flex justify-between items-center">
+<h2 class="font-semibold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2">
+<i class="fa-solid fa-layer-group text-blue-600"></i> Biblioteka elementów
+</h2>
+<button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-slate-600 p-1">
+<i class="fa-solid fa-xmark text-lg"></i>
+</button>
+</div>
 
-        /* Zmiana kolejności warstwy (Z-Index) obiektu */
-        function changeZIndex(direction) {
-            selectedIds.forEach(id => {
-                const obj = objects.find(o => o.id === id);
-                if (obj) {
-                    obj.zIndex = Math.max(1, obj.zIndex + direction);
-                }
-            });
-            renderObjects();
-        }
- 
-        /* Duplikowanie zaznaczonych obiektów z lekkim przesunięciem */
-        function duplicateSelected() {
-            if (selectedIds.length === 0) return;
-            const newSelected = [];
-            selectedIds.forEach(id => {
-                const obj = objects.find(o => o.id === id);
-                if (obj) {
-                    const newObj = { ...obj, id: nextObjectId++, x: obj.x + 30, y: obj.y + 30, zIndex: objects.length + 1 };
-                    objects.push(newObj);
-                    newSelected.push(newObj.id);
-                }
-            });
-            selectedIds = newSelected;
-            renderObjects();
-            updatePropertiesPanel();
-        }
- 
-        /* Usuwanie zaznaczonych obiektów z planszy */
-        function deleteSelected() {
-            if (selectedIds.length === 0) return;
-            objects = objects.filter(o => !selectedIds.includes(o.id));
-            deselectAll();
-        }
- 
-        /* Regulacja powiększenia (Zoom) planszy */
-        function adjustZoom(delta) {
-            currentZoom = Math.max(0.3, Math.min(3.0, currentZoom + delta));
-            applyTransforms();
-        }
- 
-        /* Resetowanie powiększenia do domyślnego 100% */
-        function resetZoom() {
-            currentZoom = 1.0;
-            applyTransforms();
-        }
- 
-        /* Obrót całej siatki o zadany kąt z aktualizacją kompasu */
-        function setGridRotation(val) {
-            gridRotation = parseInt(val) || 0;
-            document.getElementById('grid-rotation-slider').value = gridRotation;
-            document.getElementById('grid-rotation-num').value = gridRotation;
-            document.getElementById('compass-rose').style.transform = `rotate(${-gridRotation}deg)`;
-            document.getElementById('compass-deg').innerText = `${gridRotation}°`;
-            applyTransforms();
-        }
- 
-        /* Aplikowanie transformacji skali i obrotu do kontenera planszy */
-        function applyTransforms() {
-            document.getElementById('zoom-level').innerText = `${Math.round(currentZoom * 100)}%`;
-            document.getElementById('canvas-wrapper').style.transform = `scale(${currentZoom}) rotate(${gridRotation}deg)`;
-        }
- 
-        /* Wgrywanie grafiki tła / rzutu przestrzeni targowej */
-        function handleBgUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = document.getElementById('bg-image');
-                img.src = e.target.result;
-                img.classList.remove('hidden');
-                document.getElementById('bg-controls').classList.remove('hidden');
-                bgConfig.url = e.target.result;
-                updateBgSettings();
-            };
-            reader.readAsDataURL(file);
-        }
- 
-        /* Zmieniona funkcja: Aktualizacja parametrów tła z suwakami X oraz Y */
-        function updateBgSettings() {
-            bgConfig.opacity = parseFloat(document.getElementById('bg-opacity').value);
-            bgConfig.scale = parseFloat(document.getElementById('bg-scale').value);
-            bgConfig.rotation = parseInt(document.getElementById('bg-rotation').value);
-            bgConfig.x = parseInt(document.getElementById('bg-x').value) || 0;
-            bgConfig.y = parseInt(document.getElementById('bg-y').value) || 0;
-            
-            document.getElementById('bg-opacity-val').innerText = `${Math.round(bgConfig.opacity * 100)}%`;
-            document.getElementById('bg-scale-val').innerText = `${Math.round(bgConfig.scale * 100)}%`;
-            document.getElementById('bg-rotation-val').innerText = `${bgConfig.rotation}°`;
-            document.getElementById('bg-x-val').innerText = `${bgConfig.x} px`;
-            document.getElementById('bg-y-val').innerText = `${bgConfig.y} px`;
-            
-            const img = document.getElementById('bg-image');
-            img.style.opacity = bgConfig.opacity;
-            img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
-        }
+<!-- Sekcja katalogu gotowych mebli i elementów stoiska -->
+<div class="p-4 border-b border-slate-200/60">
+<h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Katalog wyposażenia</h3>
+<div class="grid grid-cols-2 gap-2" id="preset-library"></div>
+</div>
 
-        /* Ustawienie precyzyjnego obrotu tła */
-        function setBgRotation(deg) {
-            document.getElementById('bg-rotation').value = deg;
-            updateBgSettings();
-        }
- 
-        /* Resetowanie transformacji tła do wartości domyślnych */
-        function resetBgTransform() {
-            document.getElementById('bg-opacity').value = 0.5;
-            document.getElementById('bg-scale').value = 1.0;
-            document.getElementById('bg-rotation').value = 0;
-            document.getElementById('bg-x').value = 0;
-            document.getElementById('bg-y').value = 0;
-            updateBgSettings();
-        }
- 
-        /* Całkowite usunięcie tła z projektu */
-        function removeBackground() {
-            const img = document.getElementById('bg-image');
-            img.src = '';
-            img.classList.add('hidden');
-            document.getElementById('bg-controls').classList.add('hidden');
-            document.getElementById('bg-upload').value = '';
-            bgConfig.url = '';
-            resetBgTransform();
-        }
+<!-- Sekcja dodawania własnych obiektów o niestandardowych wymiarach -->
+<div class="p-4 border-b border-slate-200/60">
+<h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Niestandardowy Wymiar</h3>
+<div class="grid grid-cols-2 gap-2 mb-2">
+<div>
+<label class="text-[10px] font-medium text-slate-600">Szerokość (m)</label>
+<input type="number" id="custom-w" value="1.0" step="0.05" min="0.1" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+<div>
+<label class="text-[10px] font-medium text-slate-600">Długość (m)</label>
+<input type="number" id="custom-h" value="1.0" step="0.05" min="0.1" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+</div>
+<div class="mb-2.5">
+<label class="text-[10px] font-medium text-slate-600">Nazwa etykiety</label>
+<input type="text" id="custom-name" value="Obiekt niestandardowy" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+</div>
+<button onclick="addCustomItem()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 rounded-lg font-medium transition shadow-sm flex items-center justify-center gap-2">
+<i class="fa-solid fa-plus text-blue-400"></i> Dodaj obiekt do planszy
+</button>
+</div>
 
-        /* ==========================================================================
-           PROFESJONALNA WARSTWA WYMIAROWANIA SVG (CAD STYLE)
-           ========================================================================== */
-        function toggleDimensionsLayer() {
-            const svg = document.getElementById('dimensions-layer');
-            const isChecked = document.getElementById('dimensions-toggle').checked;
-            
-            if (isChecked) {
-                svg.classList.remove('hidden');
-                updateDimensionsSVG();
-            } else {
-                svg.classList.add('hidden');
-                document.getElementById('dimensions-content').innerHTML = '';
-            }
-        }
+<!-- Sekcja wgrywania i konfiguracji tła / rzutu przestrzeni -->
+<div class="p-4 bg-slate-50/50">
+<h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
+<span><i class="fa-solid fa-image text-slate-600 mr-1"></i> Tło / Rzut przestrzeni</span>
+</h3>
 
-        function getObjectGeometry(obj) {
-            const w = obj.w * SCALE;
-            const h = obj.h * SCALE;
-            const cx = obj.x + w / 2;
-            const cy = obj.y + h / 2;
-            const rad = (obj.rotation * Math.PI) / 180;
-            const cos = Math.cos(rad);
-            const sin = Math.sin(rad);
-            // Wyznaczanie 4 obróconych narożników mebla
-            const corners = [
-                { x: -w/2, y: -h/2 },
-                { x:  w/2, y: -h/2 },
-                { x:  w/2, y:  h/2 },
-                { x: -w/2, y:  h/2 }
-            ].map(p => ({
-                x: cx + (p.x * cos - p.y * sin),
-                y: cy + (p.x * sin + p.y * cos)
-            }));
-            const xs = corners.map(c => c.x);
-            const ys = corners.map(c => c.y);
-            return {
-                cx, cy, corners,
-                minX: Math.min(...xs), maxX: Math.max(...xs),
-                minY: Math.min(...ys), maxY: Math.max(...ys)
-            };
-        }
+<div class="space-y-3">
+<div>
+<label class="block text-[10px] font-medium text-slate-600 mb-1">Wgraj plik graficzny planu</label>
+<input type="file" id="bg-upload" accept="image/*" onchange="handleBgUpload(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+</div>
 
-        function updateDimensionsSVG() {
-            const contentGroup = document.getElementById('dimensions-content');
-            if (!contentGroup) return;
-            if (objects.length === 0) {
-                contentGroup.innerHTML = '';
-                return;
-            }
-            let svgHTML = '';
-            const geometries = objects.map(obj => ({ obj, geom: getObjectGeometry(obj) }));
-            // 1. Ogólne obrysy (Bounding Box całości stoiska)
-            const globalMinX = Math.min(...geometries.map(g => g.geom.minX));
-            const globalMaxX = Math.max(...geometries.map(g => g.geom.maxX));
-            const globalMinY = Math.min(...geometries.map(g => g.geom.minY));
-            const globalMaxY = Math.max(...geometries.map(g => g.geom.maxY));
-            const totalWidthM = ((globalMaxX - globalMinX) / SCALE).toFixed(2);
-            const totalHeightM = ((globalMaxY - globalMinY) / SCALE).toFixed(2);
-            // Obrys zewnętrzny całości
-            svgHTML += `<rect x="${globalMinX}" y="${globalMinY}" width="${globalMaxX - globalMinX}" height="${globalMaxY - globalMinY}" class="dimension-boundary" />`;
-            
-            // Wymiar całkowity szerokości (nad stoiskiem)
-            const dimYTop = globalMinY - 25;
-            svgHTML += `
-                <line x1="${globalMinX}" y1="${dimYTop}" x2="${globalMaxX}" y2="${dimYTop}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
-                <line x1="${globalMinX}" y1="${globalMinY}" x2="${globalMinX}" y2="${dimYTop - 5}" stroke="#0067c0" stroke-width="1" />
-                <line x1="${globalMaxX}" y1="${globalMinY}" x2="${globalMaxX}" y2="${dimYTop - 5}" stroke="#0067c0" stroke-width="1" />
-                <rect x="${(globalMinX + globalMaxX)/2 - 35}" y="${dimYTop - 11}" width="70" height="18" class="dimension-text-bg" />
-                <text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text">CAŁOŚĆ: ${totalWidthM}m</text>
-            `;
-            // Wymiar całkowity wysokości (po lewej stronie stoiska)
-            const dimXLeft = globalMinX - 35;
-            svgHTML += `
-                <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
-                <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
-                <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
-                <g transform="rotate(-90, ${(dimXLeft)}, ${(globalMinY + globalMaxY)/2})">
-                    <rect x="${(globalMinY + globalMaxY)/2 - 35}" y="${dimXLeft - 11}" width="70" height="18" class="dimension-text-bg" />
-                    <text x="${(globalMinY + globalMaxY)/2}" y="${dimXLeft + 3}" class="dimension-text">${totalHeightM}m</text>
-                </g>
-            `;
-            // 2. Wymiary jednostkowe dla każdego obiektu
-            geometries.forEach(({ obj, geom }) => {
-                const wM = obj.w.toFixed(2);
-                const hM = obj.h.toFixed(2);
-                // Oś symetrii obiektu (środek ciężkości)
-                svgHTML += `
-                    <circle cx="${geom.cx}" cy="${geom.cy}" r="3" fill="#0067c0" />
-                    <line x1="${geom.cx - 6}" y1="${geom.cy}" x2="${geom.cx + 6}" y2="${geom.cy}" stroke="#0067c0" stroke-width="1" />
-                    <line x1="${geom.cx}" y1="${geom.cy - 6}" x2="${geom.cx}" y2="${geom.cy + 6}" stroke="#0067c0" stroke-width="1" />
-                `;
-                // Etykieta wymiaru bezpośrednio na obiekcie
-                svgHTML += `
-                    <rect x="${geom.cx - 28}" y="${geom.cy - 10}" width="56" height="20" rx="4" fill="rgba(30, 41, 59, 0.85)" />
-                    <text x="${geom.cx}" y="${geom.cy + 4}" fill="#ffffff" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">${wM}×${hM}m</text>
-                `;
-            });
-            contentGroup.innerHTML = svgHTML;
-        }
- 
-        /* Zapis stanu całego projektu do pliku JSON */
-        function saveProjectJSON() {
-            const data = { objects, bgConfig };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = 'stoisko-layout.json'; a.click();
-            URL.revokeObjectURL(url);
-        }
- 
-        /* Wczytywanie projektu z pliku JSON */
-        function loadProjectJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.objects) {
-                        objects = data.objects;
-                        nextObjectId = Math.max(...objects.map(o => o.id), 0) + 1;
-                    }
-                    if (data.bgConfig && data.bgConfig.url) {
-                        bgConfig = data.bgConfig;
-                        const img = document.getElementById('bg-image');
-                        img.src = bgConfig.url;
-                        img.classList.remove('hidden');
-                        document.getElementById('bg-controls').classList.remove('hidden');
-                        document.getElementById('bg-opacity').value = bgConfig.opacity;
-                        document.getElementById('bg-scale').value = bgConfig.scale;
-                        document.getElementById('bg-rotation').value = bgConfig.rotation;
-                        document.getElementById('bg-x').value = bgConfig.x || 0;
-                        document.getElementById('bg-y').value = bgConfig.y || 0;
-                        updateBgSettings();
-                    }
-                    deselectAll();
-                } catch (err) {
-                    alert('Błąd odczytu pliku JSON.');
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
- 
-        /* Eksport widoku planszy do wysokiej jakości pliku PNG */
-        function exportToPNG() {
-            deselectAll();
-            const wrapper = document.getElementById('canvas-wrapper');
-            const originalTransform = wrapper.style.transform;
-            wrapper.style.transform = 'scale(1) rotate(0deg)';
-            setTimeout(() => {
-                html2canvas(wrapper, { width: CANVAS_SIZE, height: CANVAS_SIZE, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
-                    const a = document.createElement('a');
-                    a.href = canvas.toDataURL('image/png');
-                    a.download = 'rzut-stoiska.png';
-                    a.click();
-                    wrapper.style.transform = originalTransform;
-                });
-            }, 150);
-        }
-    </script>
+<!-- Zaawansowane kontrolki transformacji tła (ukryte dopóki nie wgrano obrazu) -->
+<div id="bg-controls" class="space-y-3 hidden pt-2 border-t border-slate-200">
+<div>
+<div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+<span>Przezroczystość tła</span>
+<span id="bg-opacity-val" class="font-mono">50%</span>
+</div>
+<input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.5" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+</div>
+
+<div>
+<div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+<span>Skala tła (do 1500%)</span>
+<span id="bg-scale-val" class="font-mono">100%</span>
+</div>
+<input type="range" id="bg-scale" min="0.1" max="15.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+</div>
+
+<div>
+<div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+<span>Obrót tła</span>
+<span id="bg-rotation-val" class="font-mono">0°</span>
+</div>
+<input type="range" id="bg-rotation" min="0" max="360" value="0" step="1" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+<div class="grid grid-cols-4 gap-1 mt-1.5">
+<button onclick="setBgRotation(0)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">0°</button>
+<button onclick="setBgRotation(90)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">90°</button>
+<button onclick="setBgRotation(180)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">180°</button>
+<button onclick="setBgRotation(270)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">270°</button>
+</div>
+</div>
+
+<!-- Zmienione: Rozdzielenie przesuwania X i Y na dwa suwaki -->
+<div>
+<div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+<span>Przesunięcie tła X</span>
+<span id="bg-x-val" class="font-mono">0 px</span>
+</div>
+<input type="range" id="bg-x" min="-6000" max="6000" value="0" step="1" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+</div>
+
+<div>
+<div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+<span>Przesunięcie tła Y</span>
+<span id="bg-y-val" class="font-mono">0 px</span>
+</div>
+<input type="range" id="bg-y" min="-6000" max="6000" value="0" step="1" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+</div>
+
+<div class="flex gap-2 pt-1">
+<button onclick="resetBgTransform()" class="flex-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs py-1.5 rounded-lg transition font-medium">Reset tła</button>
+<button onclick="removeBackground()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded-lg transition font-medium">Usuń tło</button>
+</div>
+</div>
+</div>
+</div>
+</aside>
+
+<!-- ==========================================================================
+GŁÓWNY OBSZAR ROBOCZY: KANWA, SIATKA ORAZ NARZĘDZIA POMOCNICZE
+========================================================================== -->
+<main class="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
+
+<!-- Górny pasek narzędziowy siatki (przyciąganie, obrót 360, wymiary SVG, powiększenie) -->
+<div class="win11-mica border-b border-slate-200/80 px-4 py-2 flex flex-wrap justify-between items-center gap-3 z-10 shadow-xs">
+
+<!-- Przełącznik przyciągania do siatki (Snap) oraz przełącznik wymiarów CAD -->
+<div class="flex items-center space-x-3 flex-wrap gap-2">
+<label class="inline-flex items-center cursor-pointer">
+<input type="checkbox" id="snap-toggle" checked class="sr-only peer">
+<div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+<span class="ml-2 text-xs font-medium text-slate-700">Przyciąganie</span>
+</label>
+
+<select id="snap-step" class="text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white/80 outline-none focus:ring-2 focus:ring-blue-500">
+<option value="0.1">co 10cm</option>
+<option value="0.25">co 25cm</option>
+<option value="0.5" selected>co 50cm</option>
+<option value="1.0">co 1m</option>
+</select>
+<!-- Przełącznik warstwy wymiarów CAD -->
+<label class="inline-flex items-center cursor-pointer border-l border-slate-300 pl-3">
+<input type="checkbox" id="dimensions-toggle" onchange="toggleDimensionsLayer()" class="sr-only peer">
+<div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+<span class="ml-2 text-xs font-semibold text-blue-700"><i class="fa-solid fa-ruler-combined"></i> Wymiary CAD</span>
+</label>
+</div>
+
+<!-- Obrót całej siatki o 360 stopni wraz z kompasem -->
+<div class="flex items-center gap-2 bg-white/60 border border-slate-300/80 rounded-xl px-3 py-1 shadow-inner">
+<span class="text-xs font-semibold text-blue-600"><i class="fa-solid fa-rotate"></i> Obrót siatki:</span>
+<input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-24 sm:w-28 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+<input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-11 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none">
+<span class="text-xs font-bold text-slate-500">°</span>
+</div>
+
+<!-- Kontrola powiększenia (Zoom widoku) -->
+<div class="flex items-center space-x-1 bg-white/60 rounded-xl p-1 border border-slate-300/80">
+<button onclick="adjustZoom(-0.1)" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition" title="Pomniejsz"><i class="fa-solid fa-minus text-xs"></i></button>
+<span id="zoom-level" class="text-xs font-mono px-2 font-bold text-slate-700">100%</span>
+<button onclick="adjustZoom(0.1)" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition" title="Powiększ"><i class="fa-solid fa-plus text-xs"></i></button>
+<button onclick="resetZoom()" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition border-l border-slate-300 ml-1" title="Resetuj zoom"><i class="fa-solid fa-rotate-left text-xs"></i></button>
+</div>
+</div>
+
+<!-- Okno przewijalne planszy (Viewport) z obsługą Zaznaczania Wszystkich Prawym Przyciskiem Myszy -->
+<div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing" oncontextmenu="selectAllObjects(event)">
+
+<!-- Kontener planszy 6000x10000px (transform-origin w punkcie 3000px, 5000px) -->
+<div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[6000px] min-h-[10000px]" style="transform-origin: 3000px 5000px;">
+
+<!-- Osie symetrii (połowa wysokości = 5000px, połowa szerokości = 3000px) -->
+<div class="absolute left-0 top-[5000px] right-0 h-0.5 bg-blue-400/40 pointer-events-none"></div>
+<div class="absolute top-0 left-[3000px] bottom-0 w-0.5 bg-blue-400/40 pointer-events-none"></div>
+
+<!-- Główna siatka co 1 metr (100px) -->
+<div id="grid-bg" class="absolute inset-0 bg-white"
+style="background-size: 100px 100px; background-image: linear-gradient(to right, rgba(203, 213, 225, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.6) 1px, transparent 1px);">
+</div>
+
+<!-- Podsiatka pomocnicza co 5 cm (5px) -->
+<div id="subgrid-bg" class="absolute inset-0 pointer-events-none"
+style="background-size: 5px 5px; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);">
+</div>
+
+<!-- Warstwa graficzna tła / rzutu przestrzeni -->
+<div id="bg-layer" class="absolute inset-0 pointer-events-none origin-center flex items-center justify-center">
+<img id="bg-image" src="" class="hidden pointer-events-none max-w-none">
+</div>
+
+<!-- Warstwa zawierająca wszystkie obiekty / meble rozmieszczone na stoisku -->
+<div id="objects-layer" class="absolute inset-0" style="z-index: 30;" onclick="deselectAll(event)"></div>
+<!-- Profesjonalna Warstwa Wymiarowania SVG (CAD style) -->
+<svg id="dimensions-layer" class="absolute inset-0 w-full h-full pointer-events-none hidden" style="z-index: 900; overflow: visible;">
+<defs>
+<marker id="dim-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#0067c0"></path>
+</marker>
+<marker id="dist-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"></path>
+</marker>
+</defs>
+<g id="dimensions-content"></g>
+</svg>
+
+</div>
+
+<!-- Widget kompasu wskazujący aktualny kąt obrotu siatki -->
+<div class="fixed bottom-4 right-4 win11-dark-mica text-white text-xs p-2.5 rounded-2xl shadow-2xl pointer-events-none z-20 flex flex-col items-center gap-1 border border-white/10">
+<div class="relative w-10 h-10 flex items-center justify-center border border-white/20 rounded-full bg-black/40">
+<div id="compass-rose" class="compass-ring absolute inset-0 flex items-center justify-center">
+<span class="absolute top-0.5 text-[8px] font-extrabold text-red-400">N</span>
+<i class="fa-solid fa-location-arrow text-blue-400 text-xs transform -rotate-45"></i>
+</div>
+</div>
+<span id="compass-deg" class="font-mono font-bold text-[10px] text-blue-300">0°</span>
+</div>
+
+<!-- Stały wskaźnik skali rysunku w rogu ekranu -->
+<div class="fixed bottom-4 left-4 win11-dark-mica text-white text-xs px-3 py-1.5 rounded-full shadow-lg pointer-events-none z-20 flex items-center gap-2 border border-white/10">
+<span class="w-6 h-0.5 bg-blue-400 inline-block rounded-full"></span>
+<span class="font-medium text-slate-200 text-[11px]">Skala: 1 px = 1 cm</span>
+</div>
+</div>
+</main>
+
+<!-- ==========================================================================
+PRAWY PANEL: WŁAŚCIWOŚCI ZAZNACZONEGO OBIEKTU (EDYCJA WYMIARÓW I KOLORÓW)
+========================================================================== -->
+<aside id="properties-panel" class="win11-mica w-72 border-l border-slate-200/80 p-4 flex flex-col shrink-0 z-20 shadow-2xl hidden">
+<div class="flex justify-between items-center pb-3 mb-3 border-b border-slate-200/60">
+<h2 class="font-semibold text-slate-800 text-xs flex items-center gap-2">
+<i class="fa-solid fa-sliders text-blue-600"></i> Właściwości obiektu
+</h2>
+<button onclick="deselectAll()" class="text-slate-400 hover:text-slate-600 p-1" title="Zamknij panel">
+<i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+
+<div class="space-y-3.5 flex-1 overflow-y-auto pr-1">
+<div>
+<label class="block text-[10px] font-medium text-slate-600 mb-1">Etykieta elementu</label>
+<input type="text" id="prop-label" oninput="updateSelectedObject()" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+</div>
+
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-[10px] font-medium text-slate-600 mb-1">Szerokość (m)</label>
+<input type="number" id="prop-width" step="0.01" min="0.05" oninput="updateSelectedObject()" class="w-full text-xs px-2 py-1.5 bg-white/80 border border-slate-300 rounded-lg outline-none">
+</div>
+<div>
+<label class="block text-[10px] font-medium text-slate-600 mb-1">Długość (m)</label>
+<input type="number" id="prop-height" step="0.01" min="0.05" oninput="updateSelectedObject()" class="w-full text-xs px-2 py-1.5 bg-white/80 border border-slate-300 rounded-lg outline-none">
+</div>
+</div>
+
+<div>
+<div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+<span>Obrót obiektu</span>
+<span id="prop-rotation-val" class="font-mono">0°</span>
+</div>
+<input type="range" id="prop-rotation" min="0" max="360" value="0" step="1" oninput="updateSelectedObject()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+<div class="grid grid-cols-4 gap-1 mt-1.5">
+<button onclick="rotateSelected(0)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">0°</button>
+<button onclick="rotateSelected(90)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">90°</button>
+<button onclick="rotateSelected(180)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">180°</button>
+<button onclick="rotateSelected(270)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">270°</button>
+</div>
+</div>
+
+<div>
+<label class="block text-[10px] font-medium text-slate-600 mb-1">Kolor wypełnienia</label>
+<div class="flex items-center gap-2">
+<input type="color" id="prop-color" oninput="updateSelectedObject()" class="w-8 h-8 rounded-lg border border-slate-300 cursor-pointer bg-transparent">
+<span id="prop-color-hex" class="text-xs font-mono uppercase text-slate-500">#000000</span>
+</div>
+</div>
+
+<div>
+<label class="block text-[10px] font-medium text-slate-600 mb-1">Kolejność warstw (Z-Index)</label>
+<div class="grid grid-cols-2 gap-2">
+<button onclick="changeZIndex(1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-xs py-1.5 rounded-lg font-medium text-slate-700 flex items-center justify-center gap-1 shadow-xs">
+<i class="fa-solid fa-layer-group"></i> Na wierzch
+</button>
+<button onclick="changeZIndex(-1)" class="bg-white border border-slate-200 hover:bg-slate-100 text-xs py-1.5 rounded-lg font-medium text-slate-700 flex items-center justify-center gap-1 shadow-xs">
+<i class="fa-solid fa-layer-group"></i> Pod spód
+</button>
+</div>
+</div>
+<div class="pt-3 border-t border-slate-200/60 space-y-2">
+<button onclick="duplicateSelected()" class="w-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 shadow-xs">
+<i class="fa-solid fa-copy text-blue-600"></i> Duplikuj element(y)
+</button>
+<button onclick="deleteSelected()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2">
+<i class="fa-solid fa-trash"></i> Usuń element(y)
+</button>
+</div>
+</div>
+</aside>
+</div>
+
+<!-- ==========================================================================
+SEKCJA LOGIKI JAVASCRIPT (OBSŁUGA ZDARZEŃ, INTERAKCJI I STANU PROJEKTU)
+========================================================================== -->
+<script>
+/* Stałe kalibracyjne i zmienne globalne stanu aplikacji */
+const SCALE = 100; // Skala: 1 metr = 100 pikseli (1 px = 1 cm)
+const CANVAS_WIDTH = 6000;      // Szerokość  60 metrów
+const CANVAS_HEIGHT = 10000;  // Wysokość 100 metrów
+let currentZoom = 1.0;
+let gridRotation = 0;
+let objects = [];
+let selectedIds = []; // Obsługa selekcji pojedynczej oraz wielokrotnej
+let nextObjectId = 1;
+
+let bgConfig = { url: '', opacity: 0.5, scale: 1, rotation: 0, x: 0, y: 0 };
+
+/* Pełny, oryginalny katalog wyposażenia stoiska targowego + Strzałka ruchu klientów */
+const PRESETS = [
+{ type: 'kallax_1x4', name: 'Kallax 1x4', w: 0.42, h: 0.39, color: '#475569', icon: 'fa-cubes' },
+{ type: 'kallax_2x4', name: 'Kallax 2x4', w: 0.77, h: 0.39, color: '#475569', icon: 'fa-cubes' },
+{ type: 'kallax_3x4', name: 'Kallax 3x4', w: 1.12, h: 0.39, color: '#475569', icon: 'fa-cubes' },
+{ type: 'kallax_4x4', name: 'Kallax 4x4', w: 1.47, h: 0.39, color: '#475569', icon: 'fa-cubes' },
+{ type: 'billie', name: 'Regał Billie', w: 0.80, h: 0.20, color: '#64748b', icon: 'fa-book-open' },
+{ type: 'trolley', name: 'Wózek jezdny', w: 0.92, h: 0.58, color: '#d97706', icon: 'fa-truck-ramp-box' },
+{ type: 'rot_silver', name: 'Ekspozytor obrotowy (srebro)', w: 0.40, h: 0.40, color: '#94a3b8', icon: 'fa-arrows-spin' },
+{ type: 'rot_black', name: 'Ekspozytor obrotowy (czarny)', w: 0.45, h: 0.45, color: '#334155', icon: 'fa-arrows-spin' },
+{ type: 'disp_white', name: 'Ekspozytor biały', w: 0.845, h: 0.46, color: '#e2e8f0', icon: 'fa-box-open' },
+{ type: 'table_large', name: 'Stół duży', w: 1.80, h: 0.74, color: '#1e293b', icon: 'fa-table' },
+{ type: 'table_small', name: 'Stół mały', w: 1.50, h: 0.73, color: '#334155', icon: 'fa-table' },
+{ type: 'cash_desk', name: 'Kasa / Stolik', w: 0.70, h: 0.50, color: '#059669', icon: 'fa-cash-register' },
+{ type: 'chair', name: 'Krzesło / Hoker', w: 0.45, h: 0.45, color: '#475569', icon: 'fa-chair' },
+{ type: 'table_round', name: 'Stolik okrągły', w: 0.80, h: 0.80, color: '#d97706', icon: 'fa-circle' },
+{ type: 'rollup', name: 'Roll-up banner', w: 0.85, h: 0.30, color: '#10b981', icon: 'fa-scroll' },
+/* Dodany element: Strzałka ruchu klientów */
+{ type: 'arrow_flow', name: 'Ruch klientów', w: 1.50, h: 0.40, color: '#f59e0b', icon: 'fa-route' }
+];
+
+/* Inicjalizacja aplikacji po załadowaniu struktury DOM */
+window.addEventListener('DOMContentLoaded', () => {
+renderPresetLibrary();
+initPresetsOnCanvas();
+initPanning();
+centerViewport();
+});
+
+/* Wyśrodkowanie okna roboczego na planszy */
+function centerViewport() {
+function centerViewport() { const viewport = document.getElementById('viewport');
+viewport.scrollLeft = (CANVAS_WIDTH - viewport.clientWidth) / 2;
+viewport.scrollTop = (CANVAS_HEIGHT - viewport.clientHeight) / 2;
+}
+
+/* Przełączanie widoczności panelu bocznego na urządzeniach mobilnych */
+function toggleMobileSidebar() {
+document.getElementById('left-sidebar').classList.toggle('-translate-x-full');
+document.getElementById('mobile-overlay').classList.toggle('hidden');
+}
+
+/* Renderowanie kafelków biblioteki elementów w lewym panelu */
+function renderPresetLibrary() {
+const container = document.getElementById('preset-library');
+container.innerHTML = PRESETS.map(p => `
+<button onclick="addObjectFromPreset('${p.type}')" class="bg-white/70 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-300 p-2.5 rounded-xl text-left transition flex flex-col justify-between group shadow-xs">
+<div class="flex justify-between items-center mb-1">
+<div class="w-6 h-6 rounded-lg bg-white shadow-xs border border-slate-200 flex items-center justify-center text-blue-600 group-hover:scale-110 transition">
+<i class="fa-solid ${p.icon} text-xs"></i>
+</div>
+<span class="text-[9px] font-mono text-slate-400 bg-white px-1 py-0.5 rounded">${p.w}x${p.h}m</span>
+</div>
+<span class="font-medium text-xs text-slate-700 group-hover:text-blue-700 truncate">${p.name}</span>
+</button>
+`).join('');
+}
+
+/* Dodanie domyślnego obiektu startowego na środek planszy */
+function initPresetsOnCanvas() {
+objects = [
+{ id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: 3000 - 90, y: 5000 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
+];
+renderObjects();
+}
+
+/* Obsługa przesuwania (panningu) całej planszy myszą */
+function initPanning() {
+const viewport = document.getElementById('viewport');
+let isPanning = false;
+let startX, startY;
+
+viewport.addEventListener('mousedown', (e) => {
+if (e.button === 2) return; // Ignoruj prawy przycisk dla panningu
+if (e.target.closest('.booth-object') || e.target.closest('aside') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input')) return;
+isPanning = true;
+startX = e.clientX;
+startY = e.clientY;
+viewport.style.cursor = 'grabbing';
+});
+
+window.addEventListener('mousemove', (e) => {
+if (!isPanning) return;
+viewport.scrollLeft -= (e.clientX - startX);
+viewport.scrollTop -= (e.clientY - startY);
+startX = e.clientX;
+startY = e.clientY;
+});
+
+window.addEventListener('mouseup', () => {
+isPanning = false;
+viewport.style.cursor = 'grab';
+});
+}
+
+/* Dodatek 1: Zaznaczanie wszystkich elementów prawym przyciskiem myszy */
+function selectAllObjects(e) {
+if (e.target.closest('aside') || e.target.closest('header') || e.target.closest('button') || e.target.closest('input')) return;
+e.preventDefault(); // Zablokuj menu kontekstowe
+if (objects.length === 0) return;
+selectedIds = objects.map(o => o.id);
+renderObjects();
+updatePropertiesPanel();
+}
+
+/* Dodanie wybranego obiektu z katalogu na środek planszy */
+function addObjectFromPreset(type) {
+const preset = PRESETS.find(p => p.type === type);
+if (!preset) return;
+const newObj = {
+id: nextObjectId++,
+name: preset.name,
+type: preset.type,
+x: 3000 - (preset.w * SCALE) / 2, // połowa szerokości
+y: 5000 - (preset.h * SCALE) / 2, // połowa wysokości
+w: preset.w,
+h: preset.h,
+rotation: 0,
+color: preset.color,
+zIndex: objects.length + 1
+};
+objects.push(newObj);
+renderObjects();
+selectObject(newObj.id);
+}
+
+/* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach */
+function addCustomItem() {
+const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
+const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
+const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
+const newObj = {
+id: nextObjectId++,
+name: name,
+type: 'custom',
+x: 3000 - (w * SCALE) / 2,
+y: 5000 - (h * SCALE) / 2,
+w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
+};
+objects.push(newObj);
+renderObjects();
+selectObject(newObj.id);
+}
+
+/* Renderowanie wszystkich obiektów w warstwie HTML (w tym podgląd Strzałki Ruchu Klientów) */
+function renderObjects() {
+const container = document.getElementById('objects-layer');
+container.innerHTML = objects.map(obj => {
+const widthPx = obj.w * SCALE;
+const heightPx = obj.h * SCALE;
+const isSelected = selectedIds.includes(obj.id);
+
+// Specjalne renderowanie dla strzałki ruchu klientów
+if (obj.type === 'arrow_flow') {
+return `
+<div id="obj-${obj.id}"
+class="booth-object ${isSelected ? 'selected' : ''}"
+style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
+onpointerdown="startDragging(event, ${obj.id})"
+onclick="selectObject(${obj.id}, event)">
+<div class="w-full h-full rounded-xl shadow-md flex items-center justify-between px-3 text-white overflow-hidden border border-white/20 relative"
+style="background-color: ${obj.color};">
+<span class="text-[10px] font-bold uppercase tracking-wider truncate">${obj.name}</span>
+<i class="fa-solid fa-arrow-right text-base animate-pulse"></i>
+</div>
+</div>
+`;
+}
+
+return `
+<div id="obj-${obj.id}"
+class="booth-object ${isSelected ? 'selected' : ''}"
+style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
+onpointerdown="startDragging(event, ${obj.id})"
+onclick="selectObject(${obj.id}, event)">
+<div class="w-full h-full rounded-xl shadow-md flex flex-col items-center justify-center p-1 text-white overflow-hidden border border-white/20 relative"
+style="background-color: ${obj.color};">
+<span class="text-[10px] font-semibold leading-tight text-center truncate w-full">${obj.name}</span>
+<span class="text-[8px] font-mono opacity-80">${obj.w}m × ${obj.h}m</span>
+</div>
+</div>
+`;
+}).join('');
+
+// Automatyczne odświeżenie warstwy wymiarów SVG, jeśli jest aktywna
+const svgLayer = document.getElementById('dimensions-layer');
+if (svgLayer && !svgLayer.classList.contains('hidden')) {
+updateDimensionsSVG();
+}
+}
+
+/* Płynne przeciąganie obiektów (również wielu naraz po zaznaczeniu PPM) z przyciąganiem */
+function startDragging(e, id) {
+if (e.target.closest('button')) return;
+e.stopPropagation();
+if (!selectedIds.includes(id)) {
+selectObject(id, e);
+}
+const startX = e.clientX;
+const startY = e.clientY;
+
+// Zapis pozycji początkowych wszystkich zaznaczonych obiektów
+const initialPositions = objects
+.filter(o => selectedIds.includes(o.id))
+.map(o => ({ id: o.id, x: o.x, y: o.y }));
+
+function onPointerMove(moveEvent) {
+const dx = (moveEvent.clientX - startX) / currentZoom;
+const dy = (moveEvent.clientY - startY) / currentZoom;
+
+initialPositions.forEach(pos => {
+const obj = objects.find(o => o.id === pos.id);
+if (!obj) return;
+
+let newX = pos.x + dx;
+let newY = pos.y + dy;
+
+if (document.getElementById('snap-toggle').checked) {
+const step = (parseFloat(document.getElementById('snap-step').value) || 0.5) * SCALE;
+newX = Math.round(newX / step) * step;
+newY = Math.round(newY / step) * step;
+}
+obj.x = newX;
+obj.y = newY;
+const el = document.getElementById(`obj-${obj.id}`);
+if (el) {
+el.style.left = `${obj.x}px`;
+el.style.top = `${obj.y}px`;
+}
+});
+
+const svgLayer = document.getElementById('dimensions-layer');
+if (svgLayer && !svgLayer.classList.contains('hidden')) {
+updateDimensionsSVG();
+}
+}
+
+function onPointerUp() {
+window.removeEventListener('pointermove', onPointerMove);
+window.removeEventListener('pointerup', onPointerUp);
+}
+
+window.addEventListener('pointermove', onPointerMove);
+window.addEventListener('pointerup', onPointerUp);
+}
+
+/* Zaznaczanie obiektu i ładowanie jego właściwości do prawego panelu */
+function selectObject(id, event) {
+if (event) event.stopPropagation();
+if (event && event.shiftKey) {
+if (selectedIds.includes(id)) {
+selectedIds = selectedIds.filter(i => i !== id);
+} else {
+selectedIds.push(id);
+}
+} else {
+selectedIds = [id];
+}
+renderObjects();
+updatePropertiesPanel();
+}
+
+/* Aktualizacja panelu właściwości po zmianie zaznaczenia */
+function updatePropertiesPanel() {
+const panel = document.getElementById('properties-panel');
+if (selectedIds.length === 1) {
+const obj = objects.find(o => o.id === selectedIds[0]);
+if (obj) {
+panel.classList.remove('hidden');
+document.getElementById('prop-label').value = obj.name;
+document.getElementById('prop-width').value = obj.w;
+document.getElementById('prop-height').value = obj.h;
+document.getElementById('prop-rotation').value = obj.rotation;
+document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
+document.getElementById('prop-color').value = obj.color;
+document.getElementById('prop-color-hex').innerText = obj.color;
+}
+} else {
+panel.classList.add('hidden');
+}
+}
+
+/* Odznaczenie wszystkich obiektów */
+function deselectAll(event) {
+if (event && event.target.closest('.booth-object')) return;
+selectedIds = [];
+renderObjects();
+updatePropertiesPanel();
+}
+
+/* Aktualizacja właściwości zaznaczonego obiektu na żywo */
+function updateSelectedObject() {
+if (selectedIds.length !== 1) return;
+const obj = objects.find(o => o.id === selectedIds[0]);
+if (!obj) return;
+obj.name = document.getElementById('prop-label').value || 'Obiekt';
+obj.w = parseFloat(document.getElementById('prop-width').value) || 0.5;
+obj.h = parseFloat(document.getElementById('prop-height').value) || 0.5;
+obj.rotation = parseInt(document.getElementById('prop-rotation').value) || 0;
+obj.color = document.getElementById('prop-color').value;
+document.getElementById('prop-rotation-val').innerText = `${obj.rotation}°`;
+document.getElementById('prop-color-hex').innerText = obj.color;
+renderObjects();
+}
+
+/* Szybki obrót zaznaczonego obiektu o zadany kąt */
+function rotateSelected(deg) {
+if (selectedIds.length !== 1) return;
+const obj = objects.find(o => o.id === selectedIds[0]);
+if (!obj) return;
+obj.rotation = deg;
+document.getElementById('prop-rotation').value = deg;
+document.getElementById('prop-rotation-val').innerText = `${deg}°`;
+renderObjects();
+}
+
+/* Zmiana kolejności warstwy (Z-Index) obiektu */
+function changeZIndex(direction) {
+selectedIds.forEach(id => {
+const obj = objects.find(o => o.id === id);
+if (obj) {
+obj.zIndex = Math.max(1, obj.zIndex + direction);
+}
+});
+renderObjects();
+}
+
+/* Duplikowanie zaznaczonych obiektów z lekkim przesunięciem */
+function duplicateSelected() {
+if (selectedIds.length === 0) return;
+const newSelected = [];
+selectedIds.forEach(id => {
+const obj = objects.find(o => o.id === id);
+if (obj) {
+const newObj = { ...obj, id: nextObjectId++, x: obj.x + 30, y: obj.y + 30, zIndex: objects.length + 1 };
+objects.push(newObj);
+newSelected.push(newObj.id);
+}
+});
+selectedIds = newSelected;
+renderObjects();
+updatePropertiesPanel();
+}
+
+/* Usuwanie zaznaczonych obiektów z planszy */
+function deleteSelected() {
+if (selectedIds.length === 0) return;
+objects = objects.filter(o => !selectedIds.includes(o.id));
+deselectAll();
+}
+
+/* Regulacja powiększenia (Zoom) planszy */
+function adjustZoom(delta) {
+currentZoom = Math.max(0.3, Math.min(3.0, currentZoom + delta));
+applyTransforms();
+}
+
+/* Resetowanie powiększenia do domyślnego 100% */
+function resetZoom() {
+currentZoom = 1.0;
+applyTransforms();
+}
+
+/* Obrót całej siatki o zadany kąt z aktualizacją kompasu */
+function setGridRotation(val) {
+gridRotation = parseInt(val) || 0;
+document.getElementById('grid-rotation-slider').value = gridRotation;
+document.getElementById('grid-rotation-num').value = gridRotation;
+document.getElementById('compass-rose').style.transform = `rotate(${-gridRotation}deg)`;
+document.getElementById('compass-deg').innerText = `${gridRotation}°`;
+applyTransforms();
+}
+
+/* Aplikowanie transformacji skali i obrotu do kontenera planszy */
+function applyTransforms() {
+document.getElementById('zoom-level').innerText = `${Math.round(currentZoom * 100)}%`;
+document.getElementById('canvas-wrapper').style.transform = `scale(${currentZoom}) rotate(${gridRotation}deg)`;
+}
+
+/* Wgrywanie grafiki tła / rzutu przestrzeni targowej */
+function handleBgUpload(event) {
+const file = event.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = function(e) {
+const img = document.getElementById('bg-image');
+img.src = e.target.result;
+img.classList.remove('hidden');
+document.getElementById('bg-controls').classList.remove('hidden');
+bgConfig.url = e.target.result;
+updateBgSettings();
+};
+reader.readAsDataURL(file);
+}
+
+/* Zmieniona funkcja: Aktualizacja parametrów tła z suwakami X oraz Y */
+function updateBgSettings() {
+bgConfig.opacity = parseFloat(document.getElementById('bg-opacity').value);
+bgConfig.scale = parseFloat(document.getElementById('bg-scale').value);
+bgConfig.rotation = parseInt(document.getElementById('bg-rotation').value);
+bgConfig.x = parseInt(document.getElementById('bg-x').value) || 0;
+bgConfig.y = parseInt(document.getElementById('bg-y').value) || 0;
+
+document.getElementById('bg-opacity-val').innerText = `${Math.round(bgConfig.opacity * 100)}%`;
+document.getElementById('bg-scale-val').innerText = `${Math.round(bgConfig.scale * 100)}%`;
+document.getElementById('bg-rotation-val').innerText = `${bgConfig.rotation}°`;
+document.getElementById('bg-x-val').innerText = `${bgConfig.x} px`;
+document.getElementById('bg-y-val').innerText = `${bgConfig.y} px`;
+
+const img = document.getElementById('bg-image');
+img.style.opacity = bgConfig.opacity;
+img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
+}
+
+/* Ustawienie precyzyjnego obrotu tła */
+function setBgRotation(deg) {
+document.getElementById('bg-rotation').value = deg;
+updateBgSettings();
+}
+
+/* Resetowanie transformacji tła do wartości domyślnych */
+function resetBgTransform() {
+document.getElementById('bg-opacity').value = 0.5;
+document.getElementById('bg-scale').value = 1.0;
+document.getElementById('bg-rotation').value = 0;
+document.getElementById('bg-x').value = 0;
+document.getElementById('bg-y').value = 0;
+updateBgSettings();
+}
+
+/* Całkowite usunięcie tła z projektu */
+function removeBackground() {
+const img = document.getElementById('bg-image');
+img.src = '';
+img.classList.add('hidden');
+document.getElementById('bg-controls').classList.add('hidden');
+document.getElementById('bg-upload').value = '';
+bgConfig.url = '';
+resetBgTransform();
+}
+
+/* ==========================================================================
+PROFESJONALNA WARSTWA WYMIAROWANIA SVG (CAD STYLE)
+========================================================================== */
+function toggleDimensionsLayer() {
+const svg = document.getElementById('dimensions-layer');
+const isChecked = document.getElementById('dimensions-toggle').checked;
+
+if (isChecked) {
+svg.classList.remove('hidden');
+updateDimensionsSVG();
+} else {
+svg.classList.add('hidden');
+document.getElementById('dimensions-content').innerHTML = '';
+}
+}
+
+function getObjectGeometry(obj) {
+const w = obj.w * SCALE;
+const h = obj.h * SCALE;
+const cx = obj.x + w / 2;
+const cy = obj.y + h / 2;
+const rad = (obj.rotation * Math.PI) / 180;
+const cos = Math.cos(rad);
+const sin = Math.sin(rad);
+// Wyznaczanie 4 obróconych narożników mebla
+const corners = [
+{ x: -w/2, y: -h/2 },
+{ x:  w/2, y: -h/2 },
+{ x:  w/2, y:  h/2 },
+{ x: -w/2, y:  h/2 }
+].map(p => ({
+x: cx + (p.x * cos - p.y * sin),
+y: cy + (p.x * sin + p.y * cos)
+}));
+const xs = corners.map(c => c.x);
+const ys = corners.map(c => c.y);
+return {
+cx, cy, corners,
+minX: Math.min(...xs), maxX: Math.max(...xs),
+minY: Math.min(...ys), maxY: Math.max(...ys)
+};
+}
+
+function updateDimensionsSVG() {
+const contentGroup = document.getElementById('dimensions-content');
+if (!contentGroup) return;
+if (objects.length === 0) {
+contentGroup.innerHTML = '';
+return;
+}
+let svgHTML = '';
+const geometries = objects.map(obj => ({ obj, geom: getObjectGeometry(obj) }));
+// 1. Ogólne obrysy (Bounding Box całości stoiska)
+const globalMinX = Math.min(...geometries.map(g => g.geom.minX));
+const globalMaxX = Math.max(...geometries.map(g => g.geom.maxX));
+const globalMinY = Math.min(...geometries.map(g => g.geom.minY));
+const globalMaxY = Math.max(...geometries.map(g => g.geom.maxY));
+const totalWidthM = ((globalMaxX - globalMinX) / SCALE).toFixed(2);
+const totalHeightM = ((globalMaxY - globalMinY) / SCALE).toFixed(2);
+// Obrys zewnętrzny całości
+svgHTML += `<rect x="${globalMinX}" y="${globalMinY}" width="${globalMaxX - globalMinX}" height="${globalMaxY - globalMinY}" class="dimension-boundary" />`;
+
+// Wymiar całkowity szerokości (nad stoiskiem)
+const dimYTop = globalMinY - 25;
+svgHTML += `
+<line x1="${globalMinX}" y1="${dimYTop}" x2="${globalMaxX}" y2="${dimYTop}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
+<line x1="${globalMinX}" y1="${globalMinY}" x2="${globalMinX}" y2="${dimYTop - 5}" stroke="#0067c0" stroke-width="1" />
+<line x1="${globalMaxX}" y1="${globalMinY}" x2="${globalMaxX}" y2="${dimYTop - 5}" stroke="#0067c0" stroke-width="1" />
+<rect x="${(globalMinX + globalMaxX)/2 - 35}" y="${dimYTop - 11}" width="70" height="18" class="dimension-text-bg" />
+<text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text">CAŁOŚĆ: ${totalWidthM}m</text>
+`;
+// Wymiar całkowity wysokości (po lewej stronie stoiska)
+const dimXLeft = globalMinX - 35;
+svgHTML += `
+<line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
+<line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
+<line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
+<g transform="rotate(-90, ${(dimXLeft)}, ${(globalMinY + globalMaxY)/2})">
+<rect x="${(globalMinY + globalMaxY)/2 - 35}" y="${dimXLeft - 11}" width="70" height="18" class="dimension-text-bg" />
+<text x="${(globalMinY + globalMaxY)/2}" y="${dimXLeft + 3}" class="dimension-text">${totalHeightM}m</text>
+</g>
+`;
+// 2. Wymiary jednostkowe dla każdego obiektu
+geometries.forEach(({ obj, geom }) => {
+const wM = obj.w.toFixed(2);
+const hM = obj.h.toFixed(2);
+// Oś symetrii obiektu (środek ciężkości)
+svgHTML += `
+<circle cx="${geom.cx}" cy="${geom.cy}" r="3" fill="#0067c0" />
+<line x1="${geom.cx - 6}" y1="${geom.cy}" x2="${geom.cx + 6}" y2="${geom.cy}" stroke="#0067c0" stroke-width="1" />
+<line x1="${geom.cx}" y1="${geom.cy - 6}" x2="${geom.cx}" y2="${geom.cy + 6}" stroke="#0067c0" stroke-width="1" />
+`;
+// Etykieta wymiaru bezpośrednio na obiekcie
+svgHTML += `
+<rect x="${geom.cx - 28}" y="${geom.cy - 10}" width="56" height="20" rx="4" fill="rgba(30, 41, 59, 0.85)" />
+<text x="${geom.cx}" y="${geom.cy + 4}" fill="#ffffff" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">${wM}×${hM}m</text>
+`;
+});
+contentGroup.innerHTML = svgHTML;
+}
+
+/* Zapis stanu całego projektu do pliku JSON */
+function saveProjectJSON() {
+const data = { objects, bgConfig };
+const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url; a.download = 'stoisko-layout.json'; a.click();
+URL.revokeObjectURL(url);
+}
+
+/* Wczytywanie projektu z pliku JSON */
+function loadProjectJSON(event) {
+const file = event.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = function(e) {
+try {
+const data = JSON.parse(e.target.result);
+if (data.objects) {
+objects = data.objects;
+nextObjectId = Math.max(...objects.map(o => o.id), 0) + 1;
+}
+if (data.bgConfig && data.bgConfig.url) {
+bgConfig = data.bgConfig;
+const img = document.getElementById('bg-image');
+img.src = bgConfig.url;
+img.classList.remove('hidden');
+document.getElementById('bg-controls').classList.remove('hidden');
+document.getElementById('bg-opacity').value = bgConfig.opacity;
+document.getElementById('bg-scale').value = bgConfig.scale;
+document.getElementById('bg-rotation').value = bgConfig.rotation;
+document.getElementById('bg-x').value = bgConfig.x || 0;
+document.getElementById('bg-y').value = bgConfig.y || 0;
+updateBgSettings();
+}
+deselectAll();
+} catch (err) {
+alert('Błąd odczytu pliku JSON.');
+}
+};
+reader.readAsText(file);
+event.target.value = '';
+}
+
+/* Eksport widoku planszy do wysokiej jakości pliku PNG */
+function exportToPNG() {
+deselectAll();
+const wrapper = document.getElementById('canvas-wrapper');
+const originalTransform = wrapper.style.transform;
+wrapper.style.transform = 'scale(1) rotate(0deg)';
+setTimeout(() => {
+html2canvas(wrapper, { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+const a = document.createElement('a');
+a.href = canvas.toDataURL('image/png');
+a.download = 'rzut-stoiska.png';
+a.click();
+wrapper.style.transform = originalTransform;
+});
+}, 150);
+}
+</script>
 </body>
 </html>
