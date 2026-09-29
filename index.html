@@ -107,7 +107,7 @@
             </div>
             <div>
                 <h1 class="font-semibold text-sm md:text-base leading-tight">Planer Stoisk Targowych CAD</h1>
-                <p class="text-[11px] text-slate-400 hidden sm:block">Dokładność skali: 1 px = 1 cm (1 m = 100 px) | [C] Centruj obiekty | [Prawy klik] Zaznacz wszystkie</p>
+                <p class="text-[11px] text-slate-400 hidden sm:block">Dokładność skali: 1 px = 1 cm (1 m = 100 px) | [C] Centruj obiekty | [+ / -] Przesuń tło o 1px | [Prawy klik] Zaznacz wszystkie</p>
             </div>
         </div>
  
@@ -209,7 +209,7 @@
                                 <span>Skala tła (do 1500%)</span>
                                 <span id="bg-scale-val" class="font-mono">100%</span>
                             </div>
-                            <input type="range" id="bg-scale" min="0.1" max="60.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <input type="range" id="bg-scale" min="0.1" max="15.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
  
                         <div>
@@ -225,22 +225,21 @@
                                 <button onclick="setBgRotation(270)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-0.5 rounded font-medium">270°</button>
                             </div>
                         </div>
-
-
+  
                         <!-- Suwaki przesunięcia tła X (-6000 do 6000 px) oraz Y (-10000 do 10000 px) -->
                         <div>
                             <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Przesunięcie tła X</span>
                                 <span id="bg-x-val" class="font-mono">0 px</span>
                             </div>
-                            <input type="range" id="bg-x" min="-6000" max="6000" step="5" value="0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <input type="range" id="bg-x" min="-6000" max="6000" step="1" value="0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
                         <div>
                             <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Przesunięcie tła Y</span>
                                 <span id="bg-y-val" class="font-mono">0 px</span>
                             </div>
-                            <input type="range" id="bg-y" min="-10000" max="10000" step="5" value="0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <input type="range" id="bg-y" min="-10000" max="10000" step="1" value="0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
  
                         <div class="flex gap-2 pt-1">
@@ -302,8 +301,8 @@
             <!-- Okno przewijalne planszy (Viewport) -->
             <div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing">
                
-                <!-- Kontener roboczy planszy o rozmiarze 6000x10000px, transform-origin w punkcie  -->
-               <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[20000px] min-h-[12000px]" style="transform-origin: 10000px 6000px;">
+                <!-- Kontener roboczy planszy o rozmiarze 6000x10000px, transform-origin w punkcie (3000px, 5000px) -->
+                <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[6000px] min-h-[10000px]" style="transform-origin: 3000px 5000px;">
                   
                     <!-- Główna siatka co 1 metr (100px) -->
                     <div id="grid-bg" class="absolute inset-0 bg-white"
@@ -315,9 +314,9 @@
                          style="background-size: 10px 10px; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);">
                     </div>
  
-                   <!-- Centralne linie osi symetrii dla planszy 20000x12000px (Środek: X: 10000px, Y: 6000px) -->
-<div class="absolute left-0 top-[6000px] right-0 h-0.5 bg-blue-400/40 pointer-events-none"></div>
-<div class="absolute top-0 left-[10000px] bottom-0 w-0.5 bg-blue-400/40 pointer-events-none"></div>
+                    <!-- Centralne linie osi symetrii (przesunięte na środek 6000x10000px -> X: 3000px, Y: 5000px) -->
+                    <div class="absolute left-0 top-[5000px] right-0 h-0.5 bg-blue-400/40 pointer-events-none"></div>
+                    <div class="absolute top-0 left-[3000px] bottom-0 w-0.5 bg-blue-400/40 pointer-events-none"></div>
  
                     <!-- Warstwa graficzna tła / rzutu przestrzeni -->
                     <div id="bg-layer" class="absolute inset-0 pointer-events-none origin-center flex items-center justify-center">
@@ -425,8 +424,7 @@
                         </div>
                     </div>
                 </div>
-
-
+  
                 <div class="pt-3 border-t border-slate-200/60 space-y-2">
                     <button onclick="duplicateSelected()" class="w-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 shadow-xs">
                         <i class="fa-solid fa-copy text-blue-600"></i> Duplikuj element(y)
@@ -445,8 +443,8 @@
     <script>
         /* Stałe kalibracyjne i zmienne globalne stanu aplikacji dla przestrzeni 6000x10000px */
         const SCALE = 100; // Skala: 1 metr = 100 pikseli (1 px = 1 cm)
-        const CANVAS_WIDTH = 20000;   // Szerokość planszy roboczej w pikselach (60m)
-        const CANVAS_HEIGHT = 12000; // Wysokość planszy roboczej w pikselach (100m)
+        const CANVAS_WIDTH = 6000;   // Szerokość planszy roboczej w pikselach (60m)
+        const CANVAS_HEIGHT = 10000; // Wysokość planszy roboczej w pikselach (100m)
         let currentZoom = 1.0;
         let gridRotation = 0;
         let objects = [];
@@ -484,12 +482,12 @@
             centerViewport();
         });
  
-        /* Wyśrodkowanie okna roboczego na nowym środku planszy */
+        /* Wyśrodkowanie okna roboczego na nowym środku planszy (3000px, 5000px) */
         function centerViewport() {
-    const viewport = document.getElementById('viewport');
-    viewport.scrollLeft = (CANVAS_WIDTH - viewport.clientWidth) / 2;
-    viewport.scrollTop = (CANVAS_HEIGHT - viewport.clientHeight) / 2;
-}
+            const viewport = document.getElementById('viewport');
+            viewport.scrollLeft = (CANVAS_WIDTH - viewport.clientWidth) / 2;
+            viewport.scrollTop = (CANVAS_HEIGHT - viewport.clientHeight) / 2;
+        }
  
         /* Przełączanie widoczności panelu bocznego na urządzeniach mobilnych */
         function toggleMobileSidebar() {
@@ -516,7 +514,7 @@
         /* Dodanie domyślnego obiektu startowego na nowy środek planszy (3000, 5000) */
         function initPresetsOnCanvas() {
             objects = [
-                { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: CANVAS_WIDTH / 2 - 90, y: CANVAS_HEIGHT / 2 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
+                { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: 3000 - 90, y: 5000 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
             ];
             renderObjects();
         }
@@ -550,8 +548,7 @@
                 viewport.style.cursor = 'grab';
             });
         }
-
-
+  
         /* Kliknięcie prawym przyciskiem myszy zaznacza wszystkie elementy */
         function initRightClickSelectAll() {
             const viewport = document.getElementById('viewport');
@@ -564,9 +561,8 @@
                 }
             });
         }
-
-
-        /* Skróty klawiszowe (w tym 'C' = Center - przeniesienie wszystkich do środka) */
+  
+        /* Skróty klawiszowe (w tym 'C' = Center - przeniesienie wszystkich do środka oraz przesuwanie tła klawiszami + i - o 1 piksel w osiach X i Y) */
         function initKeyboardShortcuts() {
             window.addEventListener('keydown', (e) => {
                 // Ignoruj, gdy użytkownik wpisuje tekst w polach input
@@ -576,76 +572,102 @@
                     e.preventDefault();
                     centerAllObjects();
                 }
+
+                // Dodana funkcja: przesuwanie obrazu tła klawiszami plus i minus o 1 piksel (w osi X i Y)
+                if (bgConfig.url) {
+                    let step = e.shiftKey ? 10 : 1; // domyślnie 1 px, z Shiftem 10 px dla szybszego ruchu
+                    let bgMoved = false;
+
+                    if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') {
+                        bgConfig.x += step;
+                        bgConfig.y += step;
+                        bgMoved = true;
+                        e.preventDefault();
+                    } else if (e.key === '-' || e.key === '_' || e.code === 'NumpadSubtract') {
+                        bgConfig.x -= step;
+                        bgConfig.y -= step;
+                        bgMoved = true;
+                        e.preventDefault();
+                    }
+
+                    if (bgMoved) {
+                        // Synchronizacja wartości z suwakami w panelu bocznym
+                        const bgXInput = document.getElementById('bg-x');
+                        const bgYInput = document.getElementById('bg-y');
+                        if (bgXInput) bgXInput.value = bgConfig.x;
+                        if (bgYInput) bgYInput.value = bgConfig.y;
+                        updateBgSettings();
+                    }
+                }
             });
         }
-
-
-        /* Funkcja przenosząca wszystkie elementy w pobliże środka planszy */
+  
+        /* Funkcja przenosząca wszystkie elementy w pobliże środka planszy (3000, 5000) */
         function centerAllObjects() {
-    if (objects.length === 0) return;
-    
-    let minX = Math.min(...objects.map(o => o.x));
-    let maxX = Math.max(...objects.map(o => o.x + o.w * SCALE));
-    let minY = Math.min(...objects.map(o => o.y));
-    let maxY = Math.max(...objects.map(o => o.y + o.h * SCALE));
-    
-    let groupCenterX = (minX + maxX) / 2;
-    let groupCenterY = (minY + maxY) / 2;
-    
-    // Nowy środek planszy 20000x12000px
-    let targetX = CANVAS_WIDTH / 2;
-    let targetY = CANVAS_HEIGHT / 2;
-    
-    let offsetX = targetX - groupCenterX;
-    let offsetY = targetY - groupCenterY;
-    
-    objects.forEach(obj => {
-        obj.x += offsetX;
-        obj.y += offsetY;
-    });
-    
-    renderObjects();
-}
+            if (objects.length === 0) return;
+            
+            // Oblicz aktualny środek geometryczny wszystkich obiektów (Bounding Box)
+            let minX = Math.min(...objects.map(o => o.x));
+            let maxX = Math.max(...objects.map(o => o.x + o.w * SCALE));
+            let minY = Math.min(...objects.map(o => o.y));
+            let maxY = Math.max(...objects.map(o => o.y + o.h * SCALE));
+            
+            let groupCenterX = (minX + maxX) / 2;
+            let groupCenterY = (minY + maxY) / 2;
+            
+            let targetX = 3000;
+            let targetY = 5000;
+            
+            let offsetX = targetX - groupCenterX;
+            let offsetY = targetY - groupCenterY;
+            
+            // Przesuń każdy obiekt zachowując jego pozycję względem pozostałych
+            objects.forEach(o => {
+                o.x += offsetX;
+                o.y += offsetY;
+            });
+            
+            renderObjects();
+        }
  
-        /* Dodanie wybranego obiektu z katalogu na nowy środek planszy */
+        /* Dodanie wybranego obiektu z katalogu na nowy środek planszy (3000, 5000) */
         function addObjectFromPreset(type) {
             const preset = PRESETS.find(p => p.type === type);
             if (!preset) return;
             const newObj = {
-    id: nextObjectId++,
-    name: preset.name,
-    type: preset.type,
-    x: CANVAS_WIDTH / 2 - (preset.w * SCALE) / 2,
-    y: CANVAS_HEIGHT / 2 - (preset.h * SCALE) / 2,
-    w: preset.w,
-    h: preset.h,
-    rotation: 0,
-    color: preset.color,
-    zIndex: objects.length + 1
-};
+                id: nextObjectId++,
+                name: preset.name,
+                type: preset.type,
+                x: 3000 - (preset.w * SCALE) / 2,
+                y: 5000 - (preset.h * SCALE) / 2,
+                w: preset.w,
+                h: preset.h,
+                rotation: 0,
+                color: preset.color,
+                zIndex: objects.length + 1
+            };
             objects.push(newObj);
             renderObjects();
-            selectObject(newObj.id);
+            selectObject(null, newObj.id);
         }
  
-        
-        /* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach na środek */
-function addCustomItem() {
-    const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
-    const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
-    const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
-    const newObj = {
-        id: nextObjectId++,
-        name: name,
-        type: 'custom',
-        x: CANVAS_WIDTH / 2 - (w * SCALE) / 2,
-        y: CANVAS_HEIGHT / 2 - (h * SCALE) / 2,
-        w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
-    };
-    objects.push(newObj);
-    renderObjects();
-    selectObject(newObj.id);
-}
+        /* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach na środek (3000, 5000) */
+        function addCustomItem() {
+            const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
+            const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
+            const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
+            const newObj = {
+                id: nextObjectId++,
+                name: name,
+                type: 'custom',
+                x: 3000 - (w * SCALE) / 2,
+                y: 5000 - (h * SCALE) / 2,
+                w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
+            };
+            objects.push(newObj);
+            renderObjects();
+            selectObject(null, newObj.id);
+        }
  
         /* Renderowanie wszystkich obiektów w warstwie HTML */
         function renderObjects() {
@@ -722,8 +744,7 @@ function addCustomItem() {
                         }
                     }
                 });
-
-
+  
                 const svgLayer = document.getElementById('dimensions-layer');
                 if (svgLayer && !svgLayer.classList.contains('hidden')) {
                     updateDimensionsSVG();
@@ -760,8 +781,7 @@ function addCustomItem() {
             renderObjects();
             document.getElementById('properties-panel').classList.add('hidden');
         }
-
-
+  
         /* Aktualizacja widoku panelu właściwości (obsługa 1 lub wielu zaznaczonych) */
         function updatePropertiesPanel() {
             const panel = document.getElementById('properties-panel');
@@ -819,8 +839,7 @@ function addCustomItem() {
             document.getElementById('prop-rotation-val').innerText = `${deg}°`;
             renderObjects();
         }
-
-
+  
         /* Zmiana kolejności warstwy (Z-Index) obiektu */
         function changeZIndex(direction) {
             if (selectedIds.length !== 1) return;
@@ -856,8 +875,9 @@ function addCustomItem() {
  
         /* Regulacja powiększenia (Zoom) planszy */
         function adjustZoom(delta) {
-            currentZoom = Math.max(0.05, Math.min(60.0, currentZoom + delta));
+            currentZoom = Math.max(0.3, Math.min(3.0, currentZoom + delta));
             applyTransforms();
+        }
  
         /* Resetowanie powiększenia do domyślnego 100% */
         function resetZoom() {
@@ -914,8 +934,7 @@ function addCustomItem() {
             img.style.opacity = bgConfig.opacity;
             img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
         }
-
-
+  
         /* Ustawienie precyzyjnego obrotu tła */
         function setBgRotation(deg) {
             document.getElementById('bg-rotation').value = deg;
@@ -958,8 +977,7 @@ function addCustomItem() {
                 document.getElementById('dimensions-content').innerHTML = '';
             }
         }
-
-
+  
         function getObjectGeometry(obj) {
             const w = obj.w * SCALE;
             const h = obj.h * SCALE;
@@ -985,8 +1003,7 @@ function addCustomItem() {
                 minY: Math.min(...ys), maxY: Math.max(...ys)
             };
         }
-
-
+  
         function updateDimensionsSVG() {
             const contentGroup = document.getElementById('dimensions-content');
             if (!contentGroup) return;
@@ -1014,18 +1031,16 @@ function addCustomItem() {
                 <text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text">CAŁOŚĆ: ${totalWidthM}m</text>
             `;
             
-           const dimXLeft = globalMinX - 35;
-const centerY = (globalMinY + globalMaxY) / 2;
-svgHTML += `
-    <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
-    <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
-    <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
-    <g transform="translate(${dimXLeft - 12}, ${centerY}) rotate(-90)">
-        <rect x="-45" y="-9" width="90" height="18" class="dimension-text-bg" />
-        <text x="0" y="4" class="dimension-text" text-anchor="middle">CAŁOŚĆ: ${totalHeightM}m</text>
-    </g>
-`;
-
+            const dimXLeft = globalMinX - 35;
+            svgHTML += `
+                <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
+                <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
+                <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
+                <g transform="rotate(-90, ${(dimXLeft)}, ${(globalMinY + globalMaxY)/2})">
+                    <rect x="${(globalMinY + globalMaxY)/2 - 35}" y="${dimXLeft - 11}" width="70" height="18" class="dimension-text-bg" />
+                    <text x="${(globalMinY + globalMaxY)/2}" y="${dimXLeft + 3}" class="dimension-text">${totalHeightM}m</text>
+                </g>
+            `;
             
             geometries.forEach(({ obj, geom }) => {
                 const wM = obj.w.toFixed(2);
