@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Planer Stoisk Targowych CAD</title>
     
-    <!-- Tailwind CSS CDN dla nowoczesnego stylowania interfejsu -->
+    <!-- Tailwind CSS CDN dla nowoczesnego stylowania interfejsu[cite: 4] -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- FontAwesome CDN dla czytelnych ikon systemowych -->
+    <!-- FontAwesome CDN dla czytelnych ikon systemowych[cite: 4] -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- html2canvas CDN do bezstratnego eksportu planszy do pliku PNG -->
+    <!-- html2canvas CDN do bezstratnego eksportu planszy do pliku PNG[cite: 4] -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* ==========================================================================
-           SEKCJA STYLÓW GLOBALNYCH ORAZ EFEKTÓW MICA (WINDOWS 11 / CANVA STYLE)
+           SEKCJA STYLÓW GLOBALNYCH ORAZ EFEKTÓW MICA (WINDOWS 11 / CANVA STYLE)[cite: 4]
            ========================================================================== */
         body {
             font-family: 'Segoe UI', Inter, system-ui, -apple-system, sans-serif;
         }
-        /* Estetyczne, cienkie paski przewijania (scrollbary) */
+        /* Estetyczne, cienkie paski przewijania (scrollbary)[cite: 4] */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -35,7 +35,7 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-        /* Styl okien w stylu Windows 11 z efektem rozmycia tła (Glassmorphism / Mica) */
+        /* Styl okien w stylu Windows 11 z efektem rozmycia tła (Glassmorphism / Mica)[cite: 4] */
         .win11-mica {
             background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(20px);
@@ -46,11 +46,11 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
-        /* Płynne animacje dla elementów obrotowych kompasu */
+        /* Płynne animacje dla elementów obrotowych kompasu[cite: 4] */
         .compass-ring {
             transition: transform 0.1s ease-out;
         }
-        /* Klasa reprezentująca pojedynczy mebel/obiekt na planszy projektu */
+        /* Klasa reprezentująca pojedynczy mebel/obiekt na planszy projektu[cite: 4] */
         .booth-object {
             position: absolute;
             box-sizing: border-box;
@@ -58,14 +58,14 @@
             user-select: none;
             touch-action: none;
         }
-        /* Efekt zaznaczonego obiektu na planszy (niebieska ramka robocza Windows 11) */
+        /* Efekt zaznaczonego obiektu na planszy (niebieska ramka robocza Windows 11)[cite: 4] */
         .booth-object.selected {
             outline: 2px solid #0067c0;
             outline-offset: 2px;
             z-index: 999 !important;
             box-shadow: 0 10px 25px -5px rgba(0, 103, 192, 0.3);
         }
-        /* Style dla technicznych linii wymiarowych SVG w stylu CAD */
+        /* Style dla technicznych linii wymiarowych SVG w stylu CAD[cite: 4] */
         .dimension-line {
             stroke: #0067c0;
             stroke-width: 1.5;
@@ -93,11 +93,11 @@
 <body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden flex flex-col select-none">
  
     <!-- ==========================================================================
-       GÓRNY PASEK NAWIGACYJNY (HEADER)
-       ========================================================================== -->
+        GÓRNY PASEK NAWIGACYJNY (HEADER)[cite: 4]
+        ========================================================================== -->
     <header class="win11-dark-mica text-white px-4 py-2.5 flex justify-between items-center border-b border-white/10 z-30 shrink-0 shadow-sm">
         
-        <!-- Lewa sekcja: Logo, wersja mobilna oraz tytuł -->
+        <!-- Lewa sekcja: Logo, wersja mobilna oraz tytuł[cite: 4] -->
         <div class="flex items-center space-x-3">
             <button onclick="toggleMobileSidebar()" class="md:hidden bg-white/10 hover:bg-white/20 p-2 rounded-lg text-slate-200 transition" title="Menu mobilne">
                 <i class="fa-solid fa-bars text-lg"></i>
@@ -110,41 +110,41 @@
                 <p class="text-[11px] text-slate-400 hidden sm:block">Dokładność skali: 1 px = 1 cm (1 m = 100 px) | [C] Centruj obiekty | [Prawy klik] Zaznacz wszystkie</p>
             </div>
         </div>
- 
-        <!-- Prawa sekcja: Przyciski operacji plikowych (Otwórz, Zapisz, Eksport PNG) -->
+
+        <!-- Prawa sekcja: Przyciski operacji plikowych (Otwórz, Zapisz, Eksport PNG)[cite: 4] -->
         <div class="flex items-center space-x-2">
-            <!-- Wczytywanie pliku JSON projektu -->
+            <!-- Wczytywanie pliku JSON projektu[cite: 4] -->
             <button onclick="document.getElementById('json-input').click()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2">
                 <i class="fa-solid fa-folder-open text-blue-400"></i> <span class="hidden sm:inline">Otwórz</span>
             </button>
             <input type="file" id="json-input" class="hidden" accept=".json" onchange="loadProjectJSON(event)">
- 
-            <!-- Zapisywanie stanu projektu do pliku JSON -->
+
+            <!-- Zapisywanie stanu projektu do pliku JSON[cite: 4] -->
             <button onclick="saveProjectJSON()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2">
                 <i class="fa-solid fa-floppy-disk text-emerald-400"></i> <span class="hidden sm:inline">Zapisz</span>
             </button>
- 
-            <!-- Eksport układu do wysokiej jakości pliku graficznego PNG -->
+
+            <!-- Eksport układu do wysokiej jakości pliku graficznego PNG[cite: 4] -->
             <button onclick="exportToPNG()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm px-3.5 py-1.5 rounded-lg shadow-md shadow-blue-600/30 font-medium transition flex items-center gap-2">
                 <i class="fa-solid fa-file-image"></i> <span>Eksportuj PNG</span>
             </button>
         </div>
     </header>
- 
+
     <!-- ==========================================================================
-       GŁÓWNY KONTENER APLIKACJI (UKŁAD TRZYKOLUMNOWY / PANELOWY)
-       ========================================================================== -->
+        GŁÓWNY KONTENER APLIKACJI (UKŁAD TRZYKOLUMNOWY / PANELOWY)[cite: 4]
+        ========================================================================== -->
     <div class="flex-1 flex overflow-hidden relative">
- 
-        <!-- Nakładka przyciemniająca tło dla wersji mobilnych po wysunięciu panelu -->
+
+        <!-- Nakładka przyciemniająca tło dla wersji mobilnych po wysunięciu panelu[cite: 4] -->
         <div id="mobile-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-20 hidden md:hidden"></div>
- 
+
         <!-- ==========================================================================
-           LEWY PANEL: BIBLIOTEKA ELEMENTÓW ORAZ ZARZĄDZANIE TŁEM / RZUTEM
-           ========================================================================== -->
+            LEWY PANEL: BIBLIOTEKA ELEMENTÓW ORAZ ZARZĄDZANIE TŁEM / RZUTEM[cite: 4]
+            ========================================================================== -->
         <aside id="left-sidebar" class="win11-mica w-80 border-r border-slate-200/80 flex flex-col shrink-0 z-30 shadow-2xl transition-transform duration-300 absolute md:relative h-full -translate-x-full md:translate-x-0 overflow-y-auto">
            
-            <!-- Nagłówek lewego panelu -->
+            <!-- Nagłówek lewego panelu[cite: 4] -->
             <div class="p-4 border-b border-slate-200/60 flex justify-between items-center">
                 <h2 class="font-semibold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-layer-group text-blue-600"></i> Biblioteka elementów
@@ -153,14 +153,14 @@
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
- 
-            <!-- Sekcja katalogu gotowych mebli i elementów stoiska -->
+
+            <!-- Sekcja katalogu gotowych mebli i elementów stoiska[cite: 4] -->
             <div class="p-4 border-b border-slate-200/60">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Katalog wyposażenia</h3>
                 <div class="grid grid-cols-2 gap-2" id="preset-library"></div>
             </div>
- 
-            <!-- Sekcja dodawania własnych obiektów o niestandardowych wymiarach -->
+
+            <!-- Sekcja dodawania własnych obiektów o niestandardowych wymiarach[cite: 4] -->
             <div class="p-4 border-b border-slate-200/60">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Niestandardowy Wymiar</h3>
                 <div class="grid grid-cols-2 gap-2 mb-2">
@@ -181,20 +181,20 @@
                     <i class="fa-solid fa-plus text-blue-400"></i> Dodaj obiekt do planszy
                 </button>
             </div>
- 
-            <!-- Sekcja wgrywania i konfiguracji tła / rzutu przestrzeni -->
+
+            <!-- Sekcja wgrywania i konfiguracji tła / rzutu przestrzeni[cite: 4] -->
             <div class="p-4 bg-slate-50/50">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
                     <span><i class="fa-solid fa-image text-slate-600 mr-1"></i> Tło / Rzut przestrzeni</span>
                 </h3>
-               
+             
                 <div class="space-y-3">
                     <div>
                         <label class="block text-[10px] font-medium text-slate-600 mb-1">Wgraj plik graficzny planu</label>
                         <input type="file" id="bg-upload" accept="image/*" onchange="handleBgUpload(event)" class="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                     </div>
- 
-                    <!-- Zaawansowane kontrolki transformacji tła (ukryte dopóki nie wgrano obrazu) -->
+
+                    <!-- Zaawansowane kontrolki transformacji tła (ukryte dopóki nie wgrano obrazu)[cite: 4] -->
                     <div id="bg-controls" class="space-y-3 hidden pt-2 border-t border-slate-200">
                         <div>
                             <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
@@ -203,7 +203,7 @@
                             </div>
                             <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.5" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
- 
+
                         <div>
                             <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Skala tła (do 1500%)</span>
@@ -211,7 +211,7 @@
                             </div>
                             <input type="range" id="bg-scale" min="0.1" max="60.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
- 
+
                         <div>
                             <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Obrót tła</span>
@@ -227,22 +227,30 @@
                         </div>
 
 
-                        <!-- Suwaki przesunięcia tła X (-6000 do 6000 px) oraz Y (-10000 do 10000 px) -->
+                        <!-- Suwaki przesunięcia tła X (-6000 do 6000 px) oraz Y (-10000 do 10000 px) z dodanymi przyciskami plus i minus -->
                         <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                            <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Przesunięcie tła X</span>
-                                <span id="bg-x-val" class="font-mono">0 px</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustBgOffset('x', -10)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold" title="Przesuń w lewo (-10px)">-</button>
+                                    <button onclick="adjustBgOffset('x', 10)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold" title="Przesuń w prawo (+10px)">+</button>
+                                    <span id="bg-x-val" class="font-mono ml-1">0 px</span>
+                                </div>
                             </div>
                             <input type="range" id="bg-x" min="-6000" max="6000" step="5" value="0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
                         <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                            <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Przesunięcie tła Y</span>
-                                <span id="bg-y-val" class="font-mono">0 px</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustBgOffset('y', -10)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold" title="Przesuń w górę (-10px)">-</button>
+                                    <button onclick="adjustBgOffset('y', 10)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold" title="Przesuń w dół (+10px)">+</button>
+                                    <span id="bg-y-val" class="font-mono ml-1">0 px</span>
+                                </div>
                             </div>
                             <input type="range" id="bg-y" min="-10000" max="10000" step="5" value="0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
- 
+
                         <div class="flex gap-2 pt-1">
                             <button onclick="resetBgTransform()" class="flex-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs py-1.5 rounded-lg transition font-medium">Reset tła</button>
                             <button onclick="removeBackground()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded-lg transition font-medium">Usuń tło</button>
@@ -251,46 +259,46 @@
                 </div>
             </div>
         </aside>
- 
+
         <!-- ==========================================================================
-           GŁÓWNY OBSZAR ROBOCZY: KANWA, SIATKA ORAZ NARZĘDZIA POMOCNICZE
-           ========================================================================== -->
+            GŁÓWNY OBSZAR ROBOCZY: KANWA, SIATKA ORAZ NARZĘDZIA POMOCNICZE[cite: 4]
+            ========================================================================== -->
         <main class="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
            
-            <!-- Górny pasek narzędziowy siatki (przyciąganie, obrót 360, wymiary SVG, powiększenie) -->
+            <!-- Górny pasek narzędziowy siatki (przyciąganie, obrót 360, wymiary SVG, powiększenie)[cite: 4] -->
             <div class="win11-mica border-b border-slate-200/80 px-4 py-2 flex flex-wrap justify-between items-center gap-3 z-10 shadow-xs">
                
-                <!-- Przełącznik przyciągania do siatki (Snap) oraz przełącznik wymiarów CAD -->
+                <!-- Przełącznik przyciągania do siatki (Snap) oraz przełącznik wymiarów CAD[cite: 4] -->
                 <div class="flex items-center space-x-3 flex-wrap gap-2">
                     <label class="inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="snap-toggle" checked class="sr-only peer">
                         <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
                         <span class="ml-2 text-xs font-medium text-slate-700">Przyciąganie</span>
                     </label>
- 
+
                     <select id="snap-step" class="text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white/80 outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="0.01" selected>1 cm</option>
                         <option value="0.05">5 cm</option>
                         <option value="0.1">10 cm</option>
                         <option value="0.5">50 cm</option>
                     </select>
-                    <!-- Przełącznik warstwy wymiarów CAD -->
+                    <!-- Przełącznik warstwy wymiarów CAD[cite: 4] -->
                     <label class="inline-flex items-center cursor-pointer border-l border-slate-300 pl-3">
                         <input type="checkbox" id="dimensions-toggle" onchange="toggleDimensionsLayer()" class="sr-only peer">
                         <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
                         <span class="ml-2 text-xs font-semibold text-blue-700"><i class="fa-solid fa-ruler-combined"></i> Wymiary CAD</span>
                     </label>
                 </div>
- 
-                <!-- Obrót całej siatki o 360 stopni wraz z kompasem -->
+
+                <!-- Obrót całej siatki o 360 stopni wraz z kompasem[cite: 4] -->
                 <div class="flex items-center gap-2 bg-white/60 border border-slate-300/80 rounded-xl px-3 py-1 shadow-inner">
                     <span class="text-xs font-semibold text-blue-600"><i class="fa-solid fa-rotate"></i> Obrót siatki:</span>
                     <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-24 sm:w-28 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                     <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-11 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none">
                     <span class="text-xs font-bold text-slate-500">°</span>
                 </div>
- 
-                <!-- Kontrola powiększenia (Zoom widoku) -->
+
+                <!-- Kontrola powiększenia (Zoom widoku)[cite: 4] -->
                 <div class="flex items-center space-x-1 bg-white/60 rounded-xl p-1 border border-slate-300/80">
                     <button onclick="adjustZoom(-0.1)" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition" title="Pomniejsz"><i class="fa-solid fa-minus text-xs"></i></button>
                     <span id="zoom-level" class="text-xs font-mono px-2 font-bold text-slate-700">100%</span>
@@ -298,35 +306,35 @@
                     <button onclick="resetZoom()" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition border-l border-slate-300 ml-1" title="Resetuj zoom"><i class="fa-solid fa-rotate-left text-xs"></i></button>
                 </div>
             </div>
- 
-            <!-- Okno przewijalne planszy (Viewport) -->
+
+            <!-- Okno przewijalne planszy (Viewport)[cite: 4] -->
             <div id="viewport" class="flex-1 relative overflow-auto cursor-grab active:cursor-grabbing">
                
-                <!-- Kontener roboczy planszy o rozmiarze 6000x10000px, transform-origin w punkcie  -->
-               <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[20000px] min-h-[12000px]" style="transform-origin: 10000px 6000px;">
-                  
-                    <!-- Główna siatka co 1 metr (100px) -->
+                <!-- Kontener roboczy planszy o rozmiarze 6000x10000px, transform-origin w punkcie[cite: 4] -->
+                <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[20000px] min-h-[12000px]" style="transform-origin: 10000px 6000px;">
+                    
+                    <!-- Główna siatka co 1 metr (100px)[cite: 4] -->
                     <div id="grid-bg" class="absolute inset-0 bg-white"
-                         style="background-size: 100px 100px; background-image: linear-gradient(to right, rgba(203, 213, 225, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.6) 1px, transparent 1px);">
+                        style="background-size: 100px 100px; background-image: linear-gradient(to right, rgba(203, 213, 225, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.6) 1px, transparent 1px);">
                     </div>
- 
-                    <!-- Podsiatka pomocnicza co 10 cm (10px) -->
+
+                    <!-- Podsiatka pomocnicza co 10 cm (10px)[cite: 4] -->
                     <div id="subgrid-bg" class="absolute inset-0 pointer-events-none"
-                         style="background-size: 10px 10px; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);">
+                        style="background-size: 10px 10px; background-image: linear-gradient(to right, rgba(226, 232, 240, 0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(226, 232, 240, 0.4) 1px, transparent 1px);">
                     </div>
- 
-                   <!-- Centralne linie osi symetrii dla planszy 20000x12000px (Środek: X: 10000px, Y: 6000px) -->
-<div class="absolute left-0 top-[6000px] right-0 h-0.5 bg-blue-400/40 pointer-events-none"></div>
-<div class="absolute top-0 left-[10000px] bottom-0 w-0.5 bg-blue-400/40 pointer-events-none"></div>
- 
-                    <!-- Warstwa graficzna tła / rzutu przestrzeni -->
+
+                    <!-- Centralne linie osi symetrii dla planszy 20000x12000px (Środek: X: 10000px, Y: 6000px)[cite: 4] -->
+                    <div class="absolute left-0 top-[6000px] right-0 h-0.5 bg-blue-400/40 pointer-events-none"></div>
+                    <div class="absolute top-0 left-[10000px] bottom-0 w-0.5 bg-blue-400/40 pointer-events-none"></div>
+
+                    <!-- Warstwa graficzna tła / rzutu przestrzeni[cite: 4] -->
                     <div id="bg-layer" class="absolute inset-0 pointer-events-none origin-center flex items-center justify-center">
                         <img id="bg-image" src="" class="hidden pointer-events-none max-w-none">
                     </div>
- 
-                    <!-- Warstwa zawierająca wszystkie obiekty / meble rozmieszczone na stoisku -->
+
+                    <!-- Warstwa zawierająca wszystkie obiekty / meble rozmieszczone na stoisku[cite: 4] -->
                     <div id="objects-layer" class="absolute inset-0" style="z-index: 30;"></div>
-                    <!-- Profesjonalna Warstwa Wymiarowania SVG (CAD style) -->
+                    <!-- Profesjonalna Warstwa Wymiarowania SVG (CAD style)[cite: 4] -->
                     <svg id="dimensions-layer" class="absolute inset-0 w-full h-full pointer-events-none hidden" style="z-index: 900; overflow: visible;">
                         <defs>
                             <marker id="dim-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -338,10 +346,10 @@
                         </defs>
                         <g id="dimensions-content"></g>
                     </svg>
- 
+
                 </div>
- 
-                <!-- Widget kompasu wskazujący aktualny kąt obrotu siatki -->
+
+                <!-- Widget kompasu wskazujący aktualny kąt obrotu siatki[cite: 4] -->
                 <div class="fixed bottom-4 right-4 win11-dark-mica text-white text-xs p-2.5 rounded-2xl shadow-2xl pointer-events-none z-20 flex flex-col items-center gap-1 border border-white/10">
                     <div class="relative w-10 h-10 flex items-center justify-center border border-white/20 rounded-full bg-black/40">
                         <div id="compass-rose" class="compass-ring absolute inset-0 flex items-center justify-center">
@@ -351,18 +359,18 @@
                     </div>
                     <span id="compass-deg" class="font-mono font-bold text-[10px] text-blue-300">0°</span>
                 </div>
- 
-                <!-- Stały wskaźnik skali rysunku w rogu ekranu -->
+
+                <!-- Stały wskaźnik skali rysunku w rogu ekranu[cite: 4] -->
                 <div class="fixed bottom-4 left-4 win11-dark-mica text-white text-xs px-3 py-1.5 rounded-full shadow-lg pointer-events-none z-20 flex items-center gap-2 border border-white/10">
                     <span class="w-6 h-0.5 bg-blue-400 inline-block rounded-full"></span>
                     <span class="font-medium text-slate-200 text-[11px]">Skala: 1 px = 1 cm</span>
                 </div>
             </div>
         </main>
- 
+
         <!-- ==========================================================================
-           PRAWY PANEL: WŁAŚCIWOŚCI ZAZNACZONEGO OBIEKTU (EDYCJA WYMIARÓW I KOLORÓW)
-           ========================================================================== -->
+            PRAWY PANEL: WŁAŚCIWOŚCI ZAZNACZONEGO OBIEKTU (EDYCJA WYMIARÓW I KOLORÓW)[cite: 4]
+            ========================================================================== -->
         <aside id="properties-panel" class="win11-mica w-72 border-l border-slate-200/80 p-4 flex flex-col shrink-0 z-20 shadow-2xl hidden">
             <div class="flex justify-between items-center pb-3 mb-3 border-b border-slate-200/60">
                 <h2 id="prop-title" class="font-semibold text-slate-800 text-xs flex items-center gap-2">
@@ -372,13 +380,13 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
- 
+
             <div class="space-y-3.5 flex-1 overflow-y-auto pr-1">
                 <div>
                     <label class="block text-[10px] font-medium text-slate-600 mb-1">Etykieta elementu</label>
                     <input type="text" id="prop-label" oninput="updateSelectedObject()" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
- 
+
                 <div id="single-props" class="space-y-3.5">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -427,6 +435,7 @@
                 </div>
 
 
+
                 <div class="pt-3 border-t border-slate-200/60 space-y-2">
                     <button onclick="duplicateSelected()" class="w-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 shadow-xs">
                         <i class="fa-solid fa-copy text-blue-600"></i> Duplikuj element(y)
@@ -438,24 +447,24 @@
             </div>
         </aside>
     </div>
- 
+
     <!-- ==========================================================================
-       SEKCJA LOGIKI JAVASCRIPT (OBSŁUGA ZDARZEŃ, INTERAKCJI I STANU PROJEKTU)
-       ========================================================================== -->
+        SEKCJA LOGIKI JAVASCRIPT (OBSŁUGA ZDARZEŃ, INTERAKCJI I STANU PROJEKTU)[cite: 4]
+        ========================================================================== -->
     <script>
-        /* Stałe kalibracyjne i zmienne globalne stanu aplikacji dla przestrzeni 6000x10000px */
-        const SCALE = 100; // Skala: 1 metr = 100 pikseli (1 px = 1 cm)
-        const CANVAS_WIDTH = 20000;   // Szerokość planszy roboczej w pikselach (60m)
-        const CANVAS_HEIGHT = 12000; // Wysokość planszy roboczej w pikselach (100m)
+        /* Stałe kalibracyjne i zmienne globalne stanu aplikacji dla przestrzeni 6000x10000px[cite: 4] */
+        const SCALE = 100; // Skala: 1 metr = 100 pikseli (1 px = 1 cm)[cite: 4]
+        const CANVAS_WIDTH = 20000;   // Szerokość planszy roboczej w pikselach (60m)[cite: 4]
+        const CANVAS_HEIGHT = 12000; // Wysokość planszy roboczej w pikselach (100m)[cite: 4]
         let currentZoom = 1.0;
         let gridRotation = 0;
         let objects = [];
-        let selectedIds = []; // Zmiana na tablicę obsługującą wiele zaznaczonych obiektów
+        let selectedIds = []; // Zmiana na tablicę obsługującą wiele zaznaczonych obiektów[cite: 4]
         let nextObjectId = 1;
- 
+
         let bgConfig = { url: '', opacity: 0.5, scale: 1, rotation: 0, x: 0, y: 0 };
- 
-        /* Pełny, zatwierdzony katalog elementów wyposażenia stoiska targowego */
+
+        /* Pełny, zatwierdzony katalog elementów wyposażenia stoiska targowego[cite: 4] */
         const PRESETS = [
             { type: 'kallax_1x4', name: 'Kallax 1x4', w: 0.42, h: 0.39, color: '#475569', icon: 'fa-cubes' },
             { type: 'kallax_2x4', name: 'Kallax 2x4', w: 0.77, h: 0.39, color: '#475569', icon: 'fa-cubes' },
@@ -473,8 +482,8 @@
             { type: 'table_round', name: 'Stolik okrągły', w: 0.80, h: 0.80, color: '#d97706', icon: 'fa-circle' },
             { type: 'rollup', name: 'Roll-up banner', w: 0.85, h: 0.30, color: '#10b981', icon: 'fa-scroll' }
         ];
- 
-        /* Inicjalizacja aplikacji po załadowaniu struktury DOM */
+
+        /* Inicjalizacja aplikacji po załadowaniu struktury DOM[cite: 4] */
         window.addEventListener('DOMContentLoaded', () => {
             renderPresetLibrary();
             initPresetsOnCanvas();
@@ -483,21 +492,21 @@
             initRightClickSelectAll();
             centerViewport();
         });
- 
-        /* Wyśrodkowanie okna roboczego na nowym środku planszy */
+
+        /* Wyśrodkowanie okna roboczego na nowym środku planszy[cite: 4] */
         function centerViewport() {
-    const viewport = document.getElementById('viewport');
-    viewport.scrollLeft = (CANVAS_WIDTH - viewport.clientWidth) / 2;
-    viewport.scrollTop = (CANVAS_HEIGHT - viewport.clientHeight) / 2;
-}
- 
-        /* Przełączanie widoczności panelu bocznego na urządzeniach mobilnych */
+            const viewport = document.getElementById('viewport');
+            viewport.scrollLeft = (CANVAS_WIDTH - viewport.clientWidth) / 2;
+            viewport.scrollTop = (CANVAS_HEIGHT - viewport.clientHeight) / 2;
+        }
+
+        /* Przełączanie widoczności panelu bocznego na urządzeniach mobilnych[cite: 4] */
         function toggleMobileSidebar() {
             document.getElementById('left-sidebar').classList.toggle('-translate-x-full');
             document.getElementById('mobile-overlay').classList.toggle('hidden');
         }
- 
-        /* Renderowanie kafelków biblioteki elementów w lewym panelu */
+
+        /* Renderowanie kafelków biblioteki elementów w lewym panelu[cite: 4] */
         function renderPresetLibrary() {
             const container = document.getElementById('preset-library');
             container.innerHTML = PRESETS.map(p => `
@@ -512,23 +521,23 @@
                 </button>
             `).join('');
         }
- 
-        /* Dodanie domyślnego obiektu startowego na nowy środek planszy (3000, 5000) */
+
+        /* Dodanie domyślnego obiektu startowego na nowy środek planszy (3000, 5000)[cite: 4] */
         function initPresetsOnCanvas() {
             objects = [
                 { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: CANVAS_WIDTH / 2 - 90, y: CANVAS_HEIGHT / 2 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
             ];
             renderObjects();
         }
- 
-        /* Obsługa przesuwania (panningu) całej planszy myszą oraz prawego przycisku do zaznaczania */
+
+        /* Obsługa przesuwania (panningu) całej planszy myszą oraz prawego przycisku do zaznaczania[cite: 4] */
         function initPanning() {
             const viewport = document.getElementById('viewport');
             let isPanning = false;
             let startX, startY;
- 
+
             viewport.addEventListener('mousedown', (e) => {
-                // Lewy przycisk myszy na tle uruchamia przesuwanie planszy
+                // Lewy przycisk myszy na tle uruchamia przesuwanie planszy[cite: 4]
                 if (e.button === 0 && !e.target.closest('.booth-object') && !e.target.closest('aside') && !e.target.closest('header') && !e.target.closest('button') && !e.target.closest('input')) {
                     isPanning = true;
                     startX = e.clientX;
@@ -536,7 +545,7 @@
                     viewport.style.cursor = 'grabbing';
                 }
             });
- 
+
             window.addEventListener('mousemove', (e) => {
                 if (!isPanning) return;
                 viewport.scrollLeft -= (e.clientX - startX);
@@ -544,7 +553,7 @@
                 startX = e.clientX;
                 startY = e.clientY;
             });
- 
+
             window.addEventListener('mouseup', () => {
                 isPanning = false;
                 viewport.style.cursor = 'grab';
@@ -552,11 +561,11 @@
         }
 
 
-        /* Kliknięcie prawym przyciskiem myszy zaznacza wszystkie elementy */
+        /* Kliknięcie prawym przyciskiem myszy zaznacza wszystkie elementy[cite: 4] */
         function initRightClickSelectAll() {
             const viewport = document.getElementById('viewport');
             viewport.addEventListener('contextmenu', (e) => {
-                e.preventDefault(); // Blokuje domyślne menu kontekstowe przeglądarki
+                e.preventDefault(); // Blokuje domyślne menu kontekstowe przeglądarki[cite: 4]
                 if (objects.length > 0) {
                     selectedIds = objects.map(o => o.id);
                     renderObjects();
@@ -566,10 +575,10 @@
         }
 
 
-        /* Skróty klawiszowe (w tym 'C' = Center - przeniesienie wszystkich do środka) */
+        /* Skróty klawiszowe (w tym 'C' = Center - przeniesienie wszystkich do środka)[cite: 4] */
         function initKeyboardShortcuts() {
             window.addEventListener('keydown', (e) => {
-                // Ignoruj, gdy użytkownik wpisuje tekst w polach input
+                // Ignoruj, gdy użytkownik wpisuje tekst w polach input[cite: 4]
                 if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
                 
                 if (e.key.toLowerCase() === 'c') {
@@ -580,74 +589,74 @@
         }
 
 
-        /* Funkcja przenosząca wszystkie elementy w pobliże środka planszy */
+        /* Funkcja przenosząca wszystkie elementy w pobliże środka planszy[cite: 4] */
         function centerAllObjects() {
-    if (objects.length === 0) return;
-    
-    let minX = Math.min(...objects.map(o => o.x));
-    let maxX = Math.max(...objects.map(o => o.x + o.w * SCALE));
-    let minY = Math.min(...objects.map(o => o.y));
-    let maxY = Math.max(...objects.map(o => o.y + o.h * SCALE));
-    
-    let groupCenterX = (minX + maxX) / 2;
-    let groupCenterY = (minY + maxY) / 2;
-    
-    // Nowy środek planszy 20000x12000px
-    let targetX = CANVAS_WIDTH / 2;
-    let targetY = CANVAS_HEIGHT / 2;
-    
-    let offsetX = targetX - groupCenterX;
-    let offsetY = targetY - groupCenterY;
-    
-    objects.forEach(obj => {
-        obj.x += offsetX;
-        obj.y += offsetY;
-    });
-    
-    renderObjects();
-}
- 
-        /* Dodanie wybranego obiektu z katalogu na nowy środek planszy */
+            if (objects.length === 0) return;
+            
+            let minX = Math.min(...objects.map(o => o.x));
+            let maxX = Math.max(...objects.map(o => o.x + o.w * SCALE));
+            let minY = Math.min(...objects.map(o => o.y));
+            let maxY = Math.max(...objects.map(o => o.y + o.h * SCALE));
+            
+            let groupCenterX = (minX + maxX) / 2;
+            let groupCenterY = (minY + maxY) / 2;
+            
+            // Nowy środek planszy 20000x12000px[cite: 4]
+            let targetX = CANVAS_WIDTH / 2;
+            let targetY = CANVAS_HEIGHT / 2;
+            
+            let offsetX = targetX - groupCenterX;
+            let offsetY = targetY - groupCenterY;
+            
+            objects.forEach(obj => {
+                obj.x += offsetX;
+                obj.y += offsetY;
+            });
+            
+            renderObjects();
+        }
+
+        /* Dodanie wybranego obiektu z katalogu na nowy środek planszy[cite: 4] */
         function addObjectFromPreset(type) {
             const preset = PRESETS.find(p => p.type === type);
             if (!preset) return;
             const newObj = {
-    id: nextObjectId++,
-    name: preset.name,
-    type: preset.type,
-    x: CANVAS_WIDTH / 2 - (preset.w * SCALE) / 2,
-    y: CANVAS_HEIGHT / 2 - (preset.h * SCALE) / 2,
-    w: preset.w,
-    h: preset.h,
-    rotation: 0,
-    color: preset.color,
-    zIndex: objects.length + 1
-};
+                id: nextObjectId++,
+                name: preset.name,
+                type: preset.type,
+                x: CANVAS_WIDTH / 2 - (preset.w * SCALE) / 2,
+                y: CANVAS_HEIGHT / 2 - (preset.h * SCALE) / 2,
+                w: preset.w,
+                h: preset.h,
+                rotation: 0,
+                color: preset.color,
+                zIndex: objects.length + 1
+            };
             objects.push(newObj);
             renderObjects();
             selectObject(newObj.id);
         }
- 
+
         
-        /* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach na środek */
-function addCustomItem() {
-    const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
-    const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
-    const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
-    const newObj = {
-        id: nextObjectId++,
-        name: name,
-        type: 'custom',
-        x: CANVAS_WIDTH / 2 - (w * SCALE) / 2,
-        y: CANVAS_HEIGHT / 2 - (h * SCALE) / 2,
-        w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
-    };
-    objects.push(newObj);
-    renderObjects();
-    selectObject(newObj.id);
-}
- 
-        /* Renderowanie wszystkich obiektów w warstwie HTML */
+        /* Dodanie niestandardowego obiektu na podstawie podanych wymiarów w metrach na środek[cite: 4] */
+        function addCustomItem() {
+            const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
+            const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
+            const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
+            const newObj = {
+                id: nextObjectId++,
+                name: name,
+                type: 'custom',
+                x: CANVAS_WIDTH / 2 - (w * SCALE) / 2,
+                y: CANVAS_HEIGHT / 2 - (h * SCALE) / 2,
+                w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
+            };
+            objects.push(newObj);
+            renderObjects();
+            selectObject(newObj.id);
+        }
+
+        /* Renderowanie wszystkich obiektów w warstwie HTML[cite: 4] */
         function renderObjects() {
             const container = document.getElementById('objects-layer');
             container.innerHTML = objects.map(obj => {
@@ -656,12 +665,12 @@ function addCustomItem() {
                 const isSelected = selectedIds.includes(obj.id);
                 return `
                     <div id="obj-${obj.id}"
-                         class="booth-object ${isSelected ? 'selected' : ''}"
-                         style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
-                         onpointerdown="startDragging(event, ${obj.id})"
-                         onclick="selectObject(event, ${obj.id})">
+                        class="booth-object ${isSelected ? 'selected' : ''}"
+                        style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
+                        onpointerdown="startDragging(event, ${obj.id})"
+                        onclick="selectObject(event, ${obj.id})">
                         <div class="w-full h-full rounded-xl shadow-md flex flex-col items-center justify-center p-1 text-white overflow-hidden border border-white/20 relative"
-                             style="background-color: ${obj.color};">
+                            style="background-color: ${obj.color};">
                             <span class="text-[10px] font-semibold leading-tight text-center truncate w-full">${obj.name}</span>
                             <span class="text-[8px] font-mono opacity-80">${obj.w}m × ${obj.h}m</span>
                         </div>
@@ -674,39 +683,39 @@ function addCustomItem() {
                 updateDimensionsSVG();
             }
         }
- 
-        /* Przeciąganie pojedynczego lub wielu zaznaczonych obiektów jednocześnie */
+
+        /* Przeciąganie pojedynczego lub wielu zaznaczonych obiektów jednocześnie[cite: 4] */
         function startDragging(e, id) {
             if (e.target.closest('button')) return;
             e.stopPropagation();
             
-            // Jeśli kliknięty obiekt nie jest w obecnej grupie zaznaczeń, zaznacz tylko jego
+            // Jeśli kliknięty obiekt nie jest w obecnej grupie zaznaczeń, zaznacz tylko jego[cite: 4]
             if (!selectedIds.includes(id)) {
                 selectedIds = [id];
                 renderObjects();
                 updatePropertiesPanel();
             }
- 
+
             const startX = e.clientX;
             const startY = e.clientY;
-            
-            // Zapisz początkowe pozycje wszystkich aktualnie zaznaczonych obiektów
+
+            // Zapisz początkowe pozycje wszystkich aktualnie zaznaczonych obiektów[cite: 4]
             const initialPositions = {};
             selectedIds.forEach(selId => {
                 const o = objects.find(obj => obj.id === selId);
                 if (o) initialPositions[selId] = { x: o.x, y: o.y };
             });
- 
+
             function onPointerMove(moveEvent) {
                 const dx = (moveEvent.clientX - startX) / currentZoom;
                 const dy = (moveEvent.clientY - startY) / currentZoom;
-                
+
                 selectedIds.forEach(selId => {
                     const obj = objects.find(o => o.id === selId);
                     if (obj && initialPositions[selId]) {
                         let newX = initialPositions[selId].x + dx;
                         let newY = initialPositions[selId].y + dy;
-         
+     
                         if (document.getElementById('snap-toggle').checked) {
                             const step = (parseFloat(document.getElementById('snap-step').value) || 0.01) * SCALE;
                             newX = Math.round(newX / step) * step;
@@ -714,7 +723,7 @@ function addCustomItem() {
                         }
                         obj.x = newX;
                         obj.y = newY;
-                        
+     
                         const el = document.getElementById(`obj-${obj.id}`);
                         if (el) {
                             el.style.left = `${obj.x}px`;
@@ -729,17 +738,17 @@ function addCustomItem() {
                     updateDimensionsSVG();
                 }
             }
- 
+
             function onPointerUp() {
                 window.removeEventListener('pointermove', onPointerMove);
                 window.removeEventListener('pointerup', onPointerUp);
             }
- 
+
             window.addEventListener('pointermove', onPointerMove);
             window.addEventListener('pointerup', onPointerUp);
         }
- 
-        /* Zaznaczanie obiektu (obsługa klawisza Shift dla multi-select) */
+
+        /* Zaznaczanie obiektu (obsługa klawisza Shift dla multi-select)[cite: 4] */
         function selectObject(e, id) {
             if (e && e.shiftKey) {
                 if (selectedIds.includes(id)) {
@@ -753,8 +762,8 @@ function addCustomItem() {
             renderObjects();
             updatePropertiesPanel();
         }
- 
-        /* Odznaczenie wszystkich obiektów */
+
+        /* Odznaczenie wszystkich obiektów[cite: 4] */
         function deselectAll() {
             selectedIds = [];
             renderObjects();
@@ -762,19 +771,19 @@ function addCustomItem() {
         }
 
 
-        /* Aktualizacja widoku panelu właściwości (obsługa 1 lub wielu zaznaczonych) */
+        /* Aktualizacja widoku panelu właściwości (obsługa 1 lub wielu zaznaczonych)[cite: 4] */
         function updatePropertiesPanel() {
             const panel = document.getElementById('properties-panel');
             const singleProps = document.getElementById('single-props');
             const titleEl = document.getElementById('prop-title');
-            
+
             if (selectedIds.length === 0) {
                 panel.classList.add('hidden');
             } else if (selectedIds.length === 1) {
                 panel.classList.remove('hidden');
                 singleProps.classList.remove('hidden');
                 titleEl.innerHTML = `<i class="fa-solid fa-sliders text-blue-600"></i> Właściwości obiektu`;
-                
+
                 const obj = objects.find(o => o.id === selectedIds[0]);
                 if (obj) {
                     document.getElementById('prop-label').value = obj.name;
@@ -786,15 +795,15 @@ function addCustomItem() {
                     document.getElementById('prop-color-hex').innerText = obj.color;
                 }
             } else {
-                // Wiele obiektów zaznaczonych jednocześnie
+                // Wiele obiektów zaznaczonych jednocześnie[cite: 4]
                 panel.classList.remove('hidden');
-                singleProps.classList.add('hidden'); // Ukrywamy specyficzne parametry pojedynczego elementu
+                singleProps.classList.add('hidden'); // Ukrywamy specyficzne parametry pojedynczego elementu[cite: 4]
                 titleEl.innerHTML = `<i class="fa-solid fa-layer-group text-blue-600"></i> Zaznaczono (${selectedIds.length} szt.)`;
                 document.getElementById('prop-label').value = `Grupa elementów (${selectedIds.length})`;
             }
         }
- 
-        /* Aktualizacja właściwości zaznaczonego obiektu na żywo */
+
+        /* Aktualizacja właściwości zaznaczonego obiektu na żywo[cite: 4] */
         function updateSelectedObject() {
             if (selectedIds.length !== 1) return;
             const obj = objects.find(o => o.id === selectedIds[0]);
@@ -808,8 +817,8 @@ function addCustomItem() {
             document.getElementById('prop-color-hex').innerText = obj.color;
             renderObjects();
         }
- 
-        /* Szybki obrót zaznaczonego obiektu o zadany kąt */
+
+        /* Szybki obrót zaznaczonego obiektu o zadany kąt[cite: 4] */
         function rotateSelected(deg) {
             if (selectedIds.length !== 1) return;
             const obj = objects.find(o => o.id === selectedIds[0]);
@@ -821,7 +830,7 @@ function addCustomItem() {
         }
 
 
-        /* Zmiana kolejności warstwy (Z-Index) obiektu */
+        /* Zmiana kolejności warstwy (Z-Index) obiektu[cite: 4] */
         function changeZIndex(direction) {
             if (selectedIds.length !== 1) return;
             const obj = objects.find(o => o.id === selectedIds[0]);
@@ -829,8 +838,8 @@ function addCustomItem() {
             obj.zIndex = Math.max(1, obj.zIndex + direction);
             renderObjects();
         }
- 
-        /* Duplikowanie zaznaczonych obiektów z lekkim przesunięciem */
+
+        /* Duplikowanie zaznaczonych obiektów z lekkim przesunięciem[cite: 4] */
         function duplicateSelected() {
             if (selectedIds.length === 0) return;
             const newSelectedIds = [];
@@ -846,26 +855,27 @@ function addCustomItem() {
             renderObjects();
             updatePropertiesPanel();
         }
- 
-        /* Usuwanie zaznaczonych obiektów z planszy */
+
+        /* Usuwanie zaznaczonych obiektów z planszy[cite: 4] */
         function deleteSelected() {
             if (selectedIds.length === 0) return;
             objects = objects.filter(o => !selectedIds.includes(o.id));
             deselectAll();
         }
- 
-        /* Regulacja powiększenia (Zoom) planszy */
+
+        /* Regulacja powiększenia (Zoom) planszy[cite: 4] */
         function adjustZoom(delta) {
             currentZoom = Math.max(0.05, Math.min(60.0, currentZoom + delta));
             applyTransforms();
- 
-        /* Resetowanie powiększenia do domyślnego 100% */
+        }
+
+        /* Resetowanie powiększenia do domyślnego 100%[cite: 4] */
         function resetZoom() {
             currentZoom = 1.0;
             applyTransforms();
         }
- 
-        /* Obrót całej siatki o zadany kąt z aktualizacją kompasu */
+
+        /* Obrót całej siatki o zadany kąt z aktualizacją kompasu[cite: 4] */
         function setGridRotation(val) {
             gridRotation = parseInt(val) || 0;
             document.getElementById('grid-rotation-slider').value = gridRotation;
@@ -874,14 +884,14 @@ function addCustomItem() {
             document.getElementById('compass-deg').innerText = `${gridRotation}°`;
             applyTransforms();
         }
- 
-        /* Aplikowanie transformacji skali i obrotu do kontenera planszy */
+
+        /* Aplikowanie transformacji skali i obrotu do kontenera planszy[cite: 4] */
         function applyTransforms() {
             document.getElementById('zoom-level').innerText = `${Math.round(currentZoom * 100)}%`;
             document.getElementById('canvas-wrapper').style.transform = `scale(${currentZoom}) rotate(${gridRotation}deg)`;
         }
- 
-        /* Wgrywanie grafiki tła / rzutu przestrzeni targowej */
+
+        /* Wgrywanie grafiki tła / rzutu przestrzeni targowej[cite: 4] */
         function handleBgUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -896,8 +906,8 @@ function addCustomItem() {
             };
             reader.readAsDataURL(file);
         }
- 
-        /* Aktualizacja parametrów tła (przezroczystość, skala, obrót, pozycja X/Y za pomocą suwaków) */
+
+        /* Aktualizacja parametrów tła (przezroczystość, skala, obrót, pozycja X/Y za pomocą suwaków)[cite: 4] */
         function updateBgSettings() {
             bgConfig.opacity = parseFloat(document.getElementById('bg-opacity').value);
             bgConfig.scale = parseFloat(document.getElementById('bg-scale').value);
@@ -915,14 +925,27 @@ function addCustomItem() {
             img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
         }
 
+        /* Nowa funkcja obsługująca przyciski plus i minus dla osi X i Y tła */
+        function adjustBgOffset(axis, delta) {
+            const input = document.getElementById('bg-' + axis);
+            if (input) {
+                let currentVal = parseInt(input.value) || 0;
+                let minVal = parseInt(input.min) || -10000;
+                let maxVal = parseInt(input.max) || 10000;
+                let newVal = Math.max(minVal, Math.min(maxVal, currentVal + delta));
+                input.value = newVal;
+                updateBgSettings();
+            }
+        }
 
-        /* Ustawienie precyzyjnego obrotu tła */
+
+        /* Ustawienie precyzyjnego obrotu tła[cite: 4] */
         function setBgRotation(deg) {
             document.getElementById('bg-rotation').value = deg;
             updateBgSettings();
         }
- 
-        /* Resetowanie transformacji tła do wartości domyślnych */
+
+        /* Resetowanie transformacji tła do wartości domyślnych[cite: 4] */
         function resetBgTransform() {
             document.getElementById('bg-opacity').value = 0.5;
             document.getElementById('bg-scale').value = 1.0;
@@ -931,8 +954,8 @@ function addCustomItem() {
             document.getElementById('bg-y').value = 0;
             updateBgSettings();
         }
- 
-        /* Całkowite usunięcie tła z projektu */
+
+        /* Całkowite usunięcie tła z projektu[cite: 4] */
         function removeBackground() {
             const img = document.getElementById('bg-image');
             img.src = '';
@@ -944,7 +967,7 @@ function addCustomItem() {
         }
         
         /* ==========================================================================
-           PROFESJONALNA WARSTWA WYMIAROWANIA SVG (CAD STYLE)
+           PROFESJONALNA WARSTWA WYMIAROWANIA SVG (CAD STYLE)[cite: 4]
            ========================================================================== */
         function toggleDimensionsLayer() {
             const svg = document.getElementById('dimensions-layer');
@@ -1002,9 +1025,9 @@ function addCustomItem() {
             const globalMaxY = Math.max(...geometries.map(g => g.geom.maxY));
             const totalWidthM = ((globalMaxX - globalMinX) / SCALE).toFixed(2);
             const totalHeightM = ((globalMaxY - globalMinY) / SCALE).toFixed(2);
-            
+
             svgHTML += `<rect x="${globalMinX}" y="${globalMinY}" width="${globalMaxX - globalMinX}" height="${globalMaxY - globalMinY}" class="dimension-boundary" />`;
-            
+
             const dimYTop = globalMinY - 25;
             svgHTML += `
                 <line x1="${globalMinX}" y1="${dimYTop}" x2="${globalMaxX}" y2="${dimYTop}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
@@ -1013,20 +1036,19 @@ function addCustomItem() {
                 <rect x="${(globalMinX + globalMaxX)/2 - 35}" y="${dimYTop - 11}" width="70" height="18" class="dimension-text-bg" />
                 <text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text">CAŁOŚĆ: ${totalWidthM}m</text>
             `;
-            
-           const dimXLeft = globalMinX - 35;
-const centerY = (globalMinY + globalMaxY) / 2;
-svgHTML += `
-    <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
-    <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
-    <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
-    <g transform="translate(${dimXLeft - 12}, ${centerY}) rotate(-90)">
-        <rect x="-45" y="-9" width="90" height="18" class="dimension-text-bg" />
-        <text x="0" y="4" class="dimension-text" text-anchor="middle">CAŁOŚĆ: ${totalHeightM}m</text>
-    </g>
-`;
 
-            
+            const dimXLeft = globalMinX - 35;
+            const centerY = (globalMinY + globalMaxY) / 2;
+            svgHTML += `
+                <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
+                <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
+                <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
+                <g transform="translate(${dimXLeft - 12}, ${centerY}) rotate(-90)">
+                    <rect x="-45" y="-9" width="90" height="18" class="dimension-text-bg" />
+                    <text x="0" y="4" class="dimension-text" text-anchor="middle">CAŁOŚĆ: ${totalHeightM}m</text>
+                </g>
+            `;
+
             geometries.forEach(({ obj, geom }) => {
                 const wM = obj.w.toFixed(2);
                 const hM = obj.h.toFixed(2);
@@ -1040,8 +1062,8 @@ svgHTML += `
             });
             contentGroup.innerHTML = svgHTML;
         }
- 
-        /* Zapis stanu całego projektu do pliku JSON */
+
+        /* Zapis stanu całego projektu do pliku JSON[cite: 4] */
         function saveProjectJSON() {
             const data = { objects, bgConfig };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1050,8 +1072,8 @@ svgHTML += `
             a.href = url; a.download = 'stoisko-layout.json'; a.click();
             URL.revokeObjectURL(url);
         }
- 
-        /* Wczytywanie projektu z pliku JSON */
+
+        /* Wczytywanie projektu z pliku JSON[cite: 4] */
         function loadProjectJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1063,43 +1085,58 @@ svgHTML += `
                         objects = data.objects;
                         nextObjectId = Math.max(...objects.map(o => o.id), 0) + 1;
                     }
-                    if (data.bgConfig && data.bgConfig.url) {
+                    if (data.bgConfig) {
                         bgConfig = data.bgConfig;
-                        const img = document.getElementById('bg-image');
-                        img.src = bgConfig.url;
-                        img.classList.remove('hidden');
-                        document.getElementById('bg-controls').classList.remove('hidden');
-                        document.getElementById('bg-opacity').value = bgConfig.opacity;
-                        document.getElementById('bg-scale').value = bgConfig.scale;
-                        document.getElementById('bg-rotation').value = bgConfig.rotation;
-                        document.getElementById('bg-x').value = bgConfig.x || 0;
-                        document.getElementById('bg-y').value = bgConfig.y || 0;
-                        updateBgSettings();
+                        if (bgConfig.url) {
+                            const img = document.getElementById('bg-image');
+                            img.src = bgConfig.url;
+                            img.classList.remove('hidden');
+                            document.getElementById('bg-controls').classList.remove('hidden');
+                            document.getElementById('bg-opacity').value = bgConfig.opacity;
+                            document.getElementById('bg-scale').value = bgConfig.scale;
+                            document.getElementById('bg-rotation').value = bgConfig.rotation;
+                            document.getElementById('bg-x').value = bgConfig.x;
+                            document.getElementById('bg-y').value = bgConfig.y;
+                            updateBgSettings();
+                        }
                     }
                     deselectAll();
+                    renderObjects();
                 } catch (err) {
-                    alert('Błąd odczytu pliku JSON.');
+                    alert('Błąd odczytu pliku JSON projektu!');
                 }
             };
             reader.readAsText(file);
-            event.target.value = '';
         }
- 
-        /* Eksport widoku planszy do wysokiej jakości pliku PNG */
+
+        /* Eksport układu do wysokiej jakości pliku graficznego PNG[cite: 4] */
         function exportToPNG() {
-            deselectAll();
             const wrapper = document.getElementById('canvas-wrapper');
-            const originalTransform = wrapper.style.transform;
-            wrapper.style.transform = 'scale(1) rotate(0deg)';
-            setTimeout(() => {
-                html2canvas(wrapper, { width: CANVAS_WIDTH, height: CANVAS_HEIGHT, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
-                    const a = document.createElement('a');
-                    a.href = canvas.toDataURL('image/png');
-                    a.download = 'rzut-stoiska.png';
-                    a.click();
-                    wrapper.style.transform = originalTransform;
-                });
-            }, 150);
+            deselectAll();
+            
+            // Tymczasowe ukrycie siatek pomocniczych do czystego eksportu[cite: 4]
+            const gridBg = document.getElementById('grid-bg');
+            const subgridBg = document.getElementById('subgrid-bg');
+            gridBg.style.backgroundImage = 'none';
+            subgridBg.style.backgroundImage = 'none';
+
+            html2canvas(wrapper, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                gridBg.style.backgroundImage = '';
+                subgridBg.style.backgroundImage = '';
+                
+                const link = document.createElement('a');
+                link.download = 'stoisko-projekt.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                gridBg.style.backgroundImage = '';
+                subgridBg.style.backgroundImage = '';
+                alert('Błąd podczas generowania pliku PNG.');
+            });
         }
     </script>
 </body>
