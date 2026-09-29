@@ -1109,35 +1109,113 @@
             reader.readAsText(file);
         }
 
-        /* Eksport układu do wysokiej jakości pliku graficznego PNG[cite: 4] */
-        function exportToPNG() {
-            const wrapper = document.getElementById('canvas-wrapper');
-            deselectAll();
-            
-            // Tymczasowe ukrycie siatek pomocniczych do czystego eksportu[cite: 4]
-            const gridBg = document.getElementById('grid-bg');
-            const subgridBg = document.getElementById('subgrid-bg');
-            gridBg.style.backgroundImage = 'none';
-            subgridBg.style.backgroundImage = 'none';
+        /* Profesjonalny eksport do PNG z uwzględnieniem obiektów i mapy tła oraz wysoką rozdzielczością tekstów */
+function exportToPNG() {
+    deselectAll();
+    
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    // 1. Uwzględnij wszystkie obiekty meblowe na planszy
+    if (objects.length > 0) {
+        objects.forEach(obj => {
+            const geom = getObjectGeometry(obj);
+            minX = Math.min(minX, geom.minX);
+            minY = Math.min(minY, geom.minY);
+            maxX = Math.max(maxX, geom.maxX);
+            maxY = Math.max(maxY, geom.maxY);
+        });
+    }
+    
+    // 2. Uwzględnij wgrane tło (mapę przestrzeni) na podstawie jego skali i pozycji
+    const bgImgElement = document.getElementById('bg-image');
+    if (bgImgElement && !bgImgElement.classList.contains('hidden') && bgImgElement.naturalWidth) {
+        const bgW = bgImgElement.naturalWidth * bgConfig.scale;
+        const bgH = bgImgElement.naturalHeight * bgConfig.scale;
+        
+        // Środek tła uwzględniający przesunięcia X i Y względem środka planszy
+        const bgCenterX = (CANVAS_WIDTH / 2) + bgConfig.x;
+        const bgCenterY = (CANVAS_HEIGHT / 2) + bgConfig.y;
+        
+        const bgMinX = bgCenterX - (bgW / 2);
+        const bgMinY = bgCenterY - (bgH / 2);
+        const bgMaxX = bgCenterX + (bgW / 2);
+        const bgMaxY = bgCenterY + (bgH / 2);
+        
+        minX = Math.min(minX, bgMinX);
+        minY = Math.min(minY, bgMinY);
+        maxX = Math.max(maxX, bgMaxX);
+        maxY = Math.max(maxY, bgMaxY);
+    }
+    
+    // Zabezpieczenie przed pustym projektem
+    if (minX === Infinity) {
+        alert('Brak elementów lub tła do wyeksportowania!');
+        return;
+    }
+    
+    // Jeśli warstwa wymiarów CAD jest aktywna, uwzględnij dodatkowy zapas na linie wymiarowe
+    const dimensionsToggle = document.getElementById('dimensions-toggle');
+    if (dimensionsToggle && dimensionsToggle.checked) {
+        minX -= 80;
+        minY -= 80;
+        maxX += 80;
+        maxY += 80;
+    }
+    
+    // Dodaj elegancki, bezpieczny margines wokół całego projektu (np. 150 pikseli)
+    const padding = 150;
+    minX = Math.max(0, minX - padding);
+    minY = Math.max(0, minY - padding);
+    maxX = Math.min(CANVAS_WIDTH, maxX + padding);
+    maxY = Math.min(CANVAS_HEIGHT, maxY + padding);
+    
+    const exportWidth = maxX - minX;
+    const exportHeight = maxY - minY;
 
-            html2canvas(wrapper, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            }).then(canvas => {
-                gridBg.style.backgroundImage = '';
-                subgridBg.style.backgroundImage = '';
-                
-                const link = document.createElement('a');
-                link.download = 'stoisko-projekt.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            }).catch(err => {
-                gridBg.style.backgroundImage = '';
-                subgridBg.style.backgroundImage = '';
-                alert('Błąd podczas generowania pliku PNG.');
-            });
-        }
+    // 3. Tymczasowe ukrycie siatek pomocniczych oraz osi symetrii na czas renderowania
+    const gridBg = document.getElementById('grid-bg');
+    const subgridBg = document.getElementById('subgrid-bg');
+    gridBg.style.backgroundImage = 'none';
+    subgridBg.style.backgroundImage = 'none';
+    
+    const axisLines = document.querySelectorAll('#canvas-wrapper > div.bg-blue-400\\/40');
+    axisLines.forEach(l => l.style.display = 'none');
+
+    const wrapper = document.getElementById('canvas-wrapper');
+    const originalTransform = wrapper.style.transform;
+    wrapper.style.transform = 'scale(1) rotate(0deg)';
+
+    // 4. Renderowanie w wysokiej rozdzielczości (scale: 3 gwarantuje pełną ostrość czcionek i nazw)
+    setTimeout(() => {
+        html2canvas(wrapper, {
+            x: minX,
+            y: minY,
+            width: exportWidth,
+            height: exportHeight,
+            scale: 3, // Wysoka gęstość pikseli (Retina/HD) – nazwy i wymiary pozostają idealnie ostre
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        }).then(canvas => {
+            // Przywrócenie siatek oraz transformacji podglądu
+            gridBg.style.backgroundImage = '';
+            subgridBg.style.backgroundImage = '';
+            axisLines.forEach(l => l.style.display = '');
+            wrapper.style.transform = originalTransform;
+            
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL('image/png');
+            a.download = 'rzut-stoiska-hd.png';
+            a.click();
+        }).catch(err => {
+            gridBg.style.backgroundImage = '';
+            subgridBg.style.backgroundImage = '';
+            axisLines.forEach(l => l.style.display = '');
+            wrapper.style.transform = originalTransform;
+            alert('Błąd podczas generowania pliku PNG.');
+            console.error(err);
+        });
+    }, 150);
+}
     </script>
 </body>
 </html>
