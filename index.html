@@ -3,84 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sterowanie pozycją tła</title>
+    <title>Zaawansowany Edytor Pozycji Tła</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 dark:bg-zinc-900 text-gray-800 dark:text-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-lg w-96 space-y-4">
-        <h2 class="text-lg font-semibold text-center mb-2">Pozycja Tła (X / Y)</h2>
+    <div class="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-xl w-full max-w-md space-y-5">
+        <h2 class="text-xl font-bold text-center">Sterowanie Pozycją i Właściwościami Tła</h2>
 
-        <!-- Podgląd elementu z tłem -->
-        <div id="backgroundPreview" class="w-full h-40 rounded-lg border border-gray-300 dark:border-zinc-700 bg-repeat bg-gray-200 dark:bg-zinc-900 shadow-inner" style="background-image: radial-gradient(circle, #3b82f6 1px, transparent 1px); background-size: 20px 20px; background-position: 0px 0px;">
+        <!-- Panel Podglądu Tła -->
+        <div id="bgPreview" class="w-full h-48 rounded-lg border border-gray-300 dark:border-zinc-700 shadow-inner bg-gray-200 dark:bg-zinc-900 transition-all" style="background-image: radial-gradient(circle, #3b82f6 1.5px, transparent 1.5px); background-size: 20px 20px; background-position: 0px 0px; background-repeat: repeat;">
         </div>
 
-        <!-- Sekcja Osi X -->
+        <!-- Źródło / Styl Tła -->
+        <div class="space-y-1">
+            <label class="text-sm font-medium">Styl / Wzór tła (CSS):</label>
+            <input type="text" id="bgImageInput" value="radial-gradient(circle, #3b82f6 1.5px, transparent 1.5px)" class="w-full px-3 py-1.5 text-sm bg-gray-50 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <!-- Opcje: Powtarzalność i Rozmiar -->
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-xs text-gray-500 dark:text-gray-400">Powtarzanie:</label>
+                <select id="bgRepeatSelect" class="w-full mt-1 px-3 py-1.5 text-sm bg-gray-50 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-lg">
+                    <option value="repeat">Powtórz (repeat)</option>
+                    <option value="no-repeat">Brak (no-repeat)</option>
+                    <option value="repeat-x">Poziomo (repeat-x)</option>
+                    <option value="repeat-y">Pionowo (repeat-y)</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-gray-500 dark:text-gray-400">Rozmiar tła:</label>
+                <input type="text" id="bgSizeInput" value="20px 20px" class="w-full mt-1 px-3 py-1.5 text-sm bg-gray-50 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 rounded-lg">
+            </div>
+        </div>
+
+        <hr class="border-gray-200 dark:border-zinc-700">
+
+        <!-- Sekcja Osi X (Suwak + Przyciski ±1px) -->
         <div class="space-y-1">
             <div class="flex justify-between text-sm">
-                <span>Oś X:</span>
-                <span id="bgXValue">0px</span>
+                <span class="font-medium">Oś X:</span>
+                <span id="bgXValue" class="text-blue-500 font-semibold">0px</span>
             </div>
-            <input type="range" id="bgXSlider" min="-100" max="100" value="0" class="w-full accent-blue-500 cursor-pointer">
+            <input type="range" id="bgXSlider" min="-200" max="200" value="0" class="w-full accent-blue-500 cursor-pointer">
             
-            <!-- Przyciski +/- dla Osi X -->
             <div class="flex items-center justify-between mt-1 px-1">
                 <span class="text-xs text-gray-500">Krok X (1px):</span>
                 <div class="flex space-x-1">
-                    <button type="button" onclick="stepBackground('x', -1)" class="w-7 h-7 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 rounded text-sm font-bold flex items-center justify-center transition-colors" title="Przesuń w lewo o 1px">-</button>
-                    <button type="button" onclick="stepBackground('x', 1)" class="w-7 h-7 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 rounded text-sm font-bold flex items-center justify-center transition-colors" title="Przesuń w prawo o 1px">+</button>
+                    <button type="button" onclick="stepBackground('x', -1)" class="w-8 h-8 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 rounded text-sm font-bold flex items-center justify-center transition-colors" title="Przesuń w lewo o 1px">-</button>
+                    <button type="button" onclick="stepBackground('x', 1)" class="w-8 h-8 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 rounded text-sm font-bold flex items-center justify-center transition-colors" title="Przesuń w prawo o 1px">+</button>
                 </div>
             </div>
         </div>
 
-        <!-- Sekcja Osi Y -->
+        <!-- Sekcja Osi Y (Suwak + Przyciski ±1px) -->
         <div class="space-y-1 pt-2">
             <div class="flex justify-between text-sm">
-                <span>Oś Y:</span>
-                <span id="bgYValue">0px</span>
+                <span class="font-medium">Oś Y:</span>
+                <span id="bgYValue" class="text-blue-500 font-semibold">0px</span>
             </div>
-            <input type="range" id="bgYSlider" min="-100" max="100" value="0" class="w-full accent-blue-500 cursor-pointer">
+            <input type="range" id="bgYSlider" min="-200" max="200" value="0" class="w-full accent-blue-500 cursor-pointer">
             
-            <!-- Przyciski +/- dla Osi Y -->
             <div class="flex items-center justify-between mt-1 px-1">
                 <span class="text-xs text-gray-500">Krok Y (1px):</span>
                 <div class="flex space-x-1">
-                    <button type="button" onclick="stepBackground('y', -1)" class="w-7 h-7 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 rounded text-sm font-bold flex items-center justify-center transition-colors" title="Przesuń w górę o 1px">-</button>
-                    <button type="button" onclick="stepBackground('y', 1)" class="w-7 h-7 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 rounded text-sm font-bold flex items-center justify-center transition-colors" title="Przesuń w dół o 1px">+</button>
+                    <button type="button" onclick="stepBackground('y', -1)" class="w-8 h-8 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 rounded text-sm font-bold flex items-center justify-center transition-colors" title="Przesuń w górę o 1px">-</button>
+                    <button type="button" onclick="stepBackground('y', 1)" class="w-8 h-8 bg-gray-200 hover:bg-gray-300 dark:bg-zinc-700 dark:hover:bg-zinc-600 rounded text-sm font-bold flex items-center justify-center transition-colors" title="Przesuń w dół o 1px">+</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Pełny kod JavaScript obsługujący logikę -->
+    <!-- Pełna logika JavaScript bez skracania -->
     <script>
-        // Pobranie elementów DOM
-        const previewElement = document.getElementById('backgroundPreview');
+        // Pobranie wszystkich niezbędnych elementów DOM
+        const previewElement = document.getElementById('bgPreview');
         const bgXSlider = document.getElementById('bgXSlider');
         const bgYSlider = document.getElementById('bgYSlider');
         const bgXValue = document.getElementById('bgXValue');
         const bgYValue = document.getElementById('bgYValue');
+        const bgImageInput = document.getElementById('bgImageInput');
+        const bgRepeatSelect = document.getElementById('bgRepeatSelect');
+        const bgSizeInput = document.getElementById('bgSizeInput');
 
-        // Główna funkcja aktualizująca pozycję tła na podstawie suwaków
-        function updateBackgroundPosition() {
+        // Główna funkcja synchronizująca wszystkie ustawienia tła
+        function updateBackground() {
             const xVal = bgXSlider.value;
             const yVal = bgYSlider.value;
 
-            // Aktualizacja tekstu wyświetlającego wartości
+            // Aktualizacja tekstowych wskaźników wartości
             bgXValue.textContent = xVal + 'px';
             bgYValue.textContent = yVal + 'px';
 
-            // Zmiana stylu tła elementu podglądu
+            // Przypisanie stylów do elementu podglądu
+            previewElement.style.backgroundImage = bgImageInput.value;
+            previewElement.style.backgroundRepeat = bgRepeatSelect.value;
+            previewElement.style.backgroundSize = bgSizeInput.value;
             previewElement.style.backgroundPosition = xVal + 'px ' + yVal + 'px';
         }
 
-        // Funkcja obsługująca przyciski "+" oraz "-" z uwzględnieniem kroków o 1px
+        // Pełna funkcja obsługująca precyzyjne kroki ±1px dla przycisków
         function stepBackground(axis, delta) {
             let targetSlider = (axis === 'x') ? bgXSlider : bgYSlider;
 
             if (targetSlider) {
-                // Obliczenie nowej wartości z uwzględnieniem kroku 1px
                 let currentVal = parseInt(targetSlider.value, 10);
                 if (isNaN(currentVal)) {
                     currentVal = 0;
@@ -88,7 +116,7 @@
                 
                 let calculatedValue = currentVal + delta;
 
-                // Sprawdzenie ograniczeń min/max zdefiniowanych na elemencie input
+                // Sprawdzanie granic min/max suwaka
                 let minValue = parseInt(targetSlider.min, 10);
                 let maxValue = parseInt(targetSlider.max, 10);
 
@@ -99,20 +127,21 @@
                     calculatedValue = maxValue;
                 }
 
-                // Przypisanie nowej wartości do suwaka
+                // Ustawienie nowej wartości i odświeżenie widoku
                 targetSlider.value = calculatedValue;
-
-                // Wywołanie funkcji aktualizującej widok
-                updateBackgroundPosition();
+                updateBackground();
             }
         }
 
-        // Nasłuchiwanie zdarzeń zmiany pozycji na suwakach (zarówno myszką, jak i programowo)
-        bgXSlider.addEventListener('input', updateBackgroundPosition);
-        bgYSlider.addEventListener('input', updateBackgroundPosition);
+        // Nasłuchiwanie zdarzeń interakcji użytkownika
+        bgXSlider.addEventListener('input', updateBackground);
+        bgYSlider.addEventListener('input', updateBackground);
+        bgImageInput.addEventListener('input', updateBackground);
+        bgRepeatSelect.addEventListener('change', updateBackground);
+        bgSizeInput.addEventListener('input', updateBackground);
 
-        // Inicjalizacja stanu początkowego przy ładowaniu strony
-        updateBackgroundPosition();
+        // Wywołanie początkowe przy starcie strony
+        updateBackground();
     </script>
 </body>
 </html>
