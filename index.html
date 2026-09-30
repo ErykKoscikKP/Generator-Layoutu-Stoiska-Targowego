@@ -1003,6 +1003,74 @@
             if (rotValEl) rotValEl.innerText = `${deg}°`;
             renderObjects();
         }
+// Obliczanie szerokości całkowitej z pominięciem tekstów i wymiarów
+function calculateTotalWidth(elements, scaleFactor = 100) { 
+    // Filtrujemy obiekty: odrzucamy tekst, etykiety oraz linie wymiarowe
+    const geometricElements = elements.filter(el => 
+        el.type !== 'text' && 
+        el.type !== 'label' && 
+        el.type !== 'dimension'
+    );
+    
+    if (geometricElements.length === 0) return 0;
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+
+    geometricElements.forEach(el => {
+        // Pobieramy współrzędne (dostosuj do nazw własnych właściwości w swoim obiekcie, np. el.left, el.width)
+        const left = el.x !== undefined ? el.x : (el.left || 0);
+        const width = el.width || (el.x2 - el.x1) || 0;
+        
+        if (left < minX) minX = left;
+        if ((left + width) > maxX) maxX = left + width;
+    });
+
+    const widthInPixels = maxX - minX;
+    const widthInMeters = widthInPixels / scaleFactor;
+    
+    return widthInMeters.toFixed(2); // Zwraca np. "5.75"
+}
+
+// Obliczanie całkowitej powierzchni szkicu w m²
+function calculateTotalArea(elements, scaleFactor = 100) {
+    // Odfiltrowujemy elementy tekstowe i pomocnicze
+    const geometricElements = elements.filter(el => 
+        el.type !== 'text' && 
+        el.type !== 'label' && 
+        el.type !== 'dimension'
+    );
+    
+    let totalAreaInPixels2 = 0;
+
+    geometricElements.forEach(el => {
+        let area = 0;
+        const type = (el.type || '').toLowerCase();
+
+        if (type === 'rect' || type === 'box' || type === 'moduł') {
+            const w = el.width || (el.x2 - el.x1) || 0;
+            const h = el.height || (el.y2 - el.y1) || 0;
+            area = w * h;
+        } 
+        else if (type === 'circle' || type === 'krąg' || type === 'kolumna') {
+            const r = el.radius || ((el.width || 0) / 2) || 0;
+            area = Math.PI * r * r;
+        } 
+        else {
+            // Domyślne pole prostokąta dla innych kształtów lub obiektów niestandardowych
+            const w = el.width || 0;
+            const h = el.height || 0;
+            area = w * h;
+        }
+
+        totalAreaInPixels2 += area;
+    });
+
+    // Przeliczenie pikseli kwadratowych na metry kwadratowe (scaleFactor to np. ilość pikseli na 1 metr)
+    const areaInM2 = totalAreaInPixels2 / (scaleFactor * scaleFactor);
+    
+    return areaInM2.toFixed(2); // Zwraca np. "14.50"
+}
 
         function changeZIndex(direction) {
             if (selectedIds.length !== 1) return;
