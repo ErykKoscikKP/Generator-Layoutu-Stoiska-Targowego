@@ -190,7 +190,7 @@
                 </div>
             </div>
 
-            <!-- Niestandardowy wymiar (Naprawiony układ pionowy) -->
+            <!-- Niestandardowy wymiar -->
             <div class="p-4 border-b border-slate-200/60">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Niestandardowy Wymiar</h3>
                 <div class="space-y-2.5 mb-2.5">
@@ -226,25 +226,37 @@
 
                     <div id="bg-controls" class="space-y-3 hidden pt-2 border-t border-slate-200">
                         <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                            <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Przezroczystość tła</span>
-                                <span id="bg-opacity-val" class="font-mono">50%</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustGenericValue('bg-opacity', -0.05, 0, 1, true)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
+                                    <button onclick="adjustGenericValue('bg-opacity', 0.05, 0, 1, true)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
+                                    <span id="bg-opacity-val" class="font-mono ml-1">50%</span>
+                                </div>
                             </div>
                             <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.5" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
 
                         <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                            <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Skala tła</span>
-                                <span id="bg-scale-val" class="font-mono">100%</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustGenericValue('bg-scale', -0.05, 0.1, 60, true)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
+                                    <button onclick="adjustGenericValue('bg-scale', 0.05, 0.1, 60, true)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
+                                    <span id="bg-scale-val" class="font-mono ml-1">100%</span>
+                                </div>
                             </div>
                             <input type="range" id="bg-scale" min="0.1" max="60.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
 
                         <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                            <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Obrót tła</span>
-                                <span id="bg-rotation-val" class="font-mono">0°</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustGenericValue('bg-rotation', -1, 0, 360)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
+                                    <button onclick="adjustGenericValue('bg-rotation', 1, 0, 360)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
+                                    <span id="bg-rotation-val" class="font-mono ml-1">0°</span>
+                                </div>
                             </div>
                             <input type="range" id="bg-rotation" min="0" max="360" value="0" step="1" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                             <div class="grid grid-cols-4 gap-1 mt-1.5">
@@ -259,8 +271,8 @@
                             <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Przesunięcie tła X</span>
                                 <div class="flex items-center gap-1">
-                                    <button onclick="adjustBgOffset('x', -1)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
-                                    <button onclick="adjustBgOffset('x', 1)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
+                                    <button onclick="adjustGenericValue('bg-x', -1, -6000, 6000)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
+                                    <button onclick="adjustGenericValue('bg-x', 1, -6000, 6000)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
                                     <span id="bg-x-val" class="font-mono ml-1">0 px</span>
                                 </div>
                             </div>
@@ -271,8 +283,8 @@
                             <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Przesunięcie tła Y</span>
                                 <div class="flex items-center gap-1">
-                                    <button onclick="adjustBgOffset('y', -1)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
-                                    <button onclick="adjustBgOffset('y', 1)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
+                                    <button onclick="adjustGenericValue('bg-y', -1, -10000, 10000)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
+                                    <button onclick="adjustGenericValue('bg-y', 1, -10000, 10000)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
                                     <span id="bg-y-val" class="font-mono ml-1">0 px</span>
                                 </div>
                             </div>
@@ -317,7 +329,9 @@
 
                 <div class="flex items-center gap-2 bg-white/60 border border-slate-300/80 rounded-xl px-3 py-1 shadow-inner">
                     <span class="text-xs font-semibold text-blue-600"><i class="fa-solid fa-rotate"></i> Obrót siatki:</span>
-                    <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-24 sm:w-28 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <button onclick="adjustGenericValue('grid-rotation-slider', -1, 0, 360)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
+                    <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-20 sm:w-24 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    <button onclick="adjustGenericValue('grid-rotation-slider', 1, 0, 360)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
                     <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-11 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none">
                     <span class="text-xs font-bold text-slate-500">°</span>
                 </div>
@@ -410,9 +424,13 @@
                     </div>
             
                     <div>
-                        <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                        <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                             <span>Obrót obiektu</span>
-                            <span id="prop-rotation-val" class="font-mono">0°</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="adjustGenericValue('prop-rotation', -1, 0, 360)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
+                                <button onclick="adjustGenericValue('prop-rotation', 1, 0, 360)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
+                                <span id="prop-rotation-val" class="font-mono ml-1">0°</span>
+                            </div>
                         </div>
                         <input type="range" id="prop-rotation" min="0" max="360" value="0" step="1" oninput="updateSelectedObject()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         <div class="grid grid-cols-4 gap-1 mt-1.5">
@@ -430,9 +448,13 @@
                             <span id="prop-color-hex" class="text-xs font-mono uppercase text-slate-500">#000000</span>
                         </div>
                         <div>
-                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                            <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
                                 <span>Przezroczystość (Opacity)</span>
-                                <span id="prop-opacity-val" class="font-mono">100%</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="adjustGenericValue('prop-opacity', -0.05, 0.1, 1, true)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
+                                    <button onclick="adjustGenericValue('prop-opacity', 0.05, 0.1, 1, true)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
+                                    <span id="prop-opacity-val" class="font-mono ml-1">100%</span>
+                                </div>
                             </div>
                             <input type="range" id="prop-opacity" min="0.1" max="1" step="0.05" value="1" oninput="updateSelectedObject()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
@@ -1075,6 +1097,31 @@
             applyTransforms();
         }
 
+        function adjustGenericValue(id, delta, min, max, isFloat = false) {
+            const input = document.getElementById(id);
+            if (input) {
+                let currentVal = isFloat ? parseFloat(input.value) || 0 : parseInt(input.value) || 0;
+                let minVal = min !== undefined ? min : (parseFloat(input.min) || 0);
+                let maxVal = max !== undefined ? max : (parseFloat(input.max) || 100);
+                let newVal = currentVal + delta;
+                newVal = Math.max(minVal, Math.min(maxVal, newVal));
+                
+                if (isFloat) {
+                    input.value = Number(newVal.toFixed(2));
+                } else {
+                    input.value = Math.round(newVal);
+                }
+
+                if (id.startsWith('bg-')) {
+                    updateBgSettings();
+                } else if (id === 'grid-rotation-slider') {
+                    setGridRotation(input.value);
+                } else if (id === 'prop-rotation' || id === 'prop-opacity') {
+                    updateSelectedObject();
+                }
+            }
+        }
+
         function applyTransforms() {
             const zoomLevel = document.getElementById('zoom-level');
             const wrapper = document.getElementById('canvas-wrapper');
@@ -1128,17 +1175,6 @@
             if (img) {
                 img.style.opacity = bgConfig.opacity;
                 img.style.transform = `translate(${bgConfig.x}px, ${bgConfig.y}px) scale(${bgConfig.scale}) rotate(${bgConfig.rotation}deg)`;
-            }
-        }
-
-        function adjustBgOffset(axis, delta) {
-            const input = document.getElementById('bg-' + axis);
-            if (input) {
-                let currentVal = parseInt(input.value) || 0;
-                let minVal = parseInt(input.min) || -10000;
-                let maxVal = parseInt(input.max) || 10000;
-                input.value = Math.max(minVal, Math.min(maxVal, currentVal + delta));
-                updateBgSettings();
             }
         }
 
@@ -1338,7 +1374,6 @@
                         const img = document.getElementById('bg-image');
                         if (img) {
                             img.src = bgConfig.url;
-                            img.classList.add('hidden'); // keep hidden until src applied or toggle
                             img.classList.remove('hidden');
                         }
                         const bgControls = document.getElementById('bg-controls');
