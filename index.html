@@ -426,9 +426,16 @@
 
                     <div>
                         <label class="block text-[10px] font-medium text-slate-600 mb-1">Styl (Kolor i przezroczystość)</label>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 mb-2">
                             <input type="color" id="prop-color" oninput="updateSelectedObject()" class="w-8 h-8 rounded-lg border border-slate-300 cursor-pointer bg-transparent">
                             <span id="prop-color-hex" class="text-xs font-mono uppercase text-slate-500">#000000</span>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-medium text-slate-600 mb-1">
+                                <span>Przezroczystość (Opacity)</span>
+                                <span id="prop-opacity-val" class="font-mono">100%</span>
+                            </div>
+                            <input type="range" id="prop-opacity" min="0.1" max="1" step="0.05" value="1" oninput="updateSelectedObject()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
                     </div>
             
@@ -549,7 +556,7 @@
 
         function initPresetsOnCanvas() {
             objects = [
-                { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: CANVAS_WIDTH / 2 - 90, y: CANVAS_HEIGHT / 2 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
+                { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: CANVAS_WIDTH / 2 - 90, y: CANVAS_HEIGHT / 2 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', opacity: 1.0, zIndex: 1 }
             ];
             normalizeZIndices();
             renderObjects();
@@ -702,6 +709,7 @@
                 h: preset.h,
                 rotation: 0,
                 color: preset.color,
+                opacity: 1.0,
                 zIndex: objects.length + 1
             };
             objects.push(newObj);
@@ -722,6 +730,7 @@
                 h: 0.5,
                 rotation: 0,
                 color: '#0f172a',
+                opacity: 1.0,
                 zIndex: objects.length + 1
             };
             objects.push(newObj);
@@ -740,7 +749,7 @@
                 type: 'custom',
                 x: CANVAS_WIDTH / 2 - (w * SCALE) / 2,
                 y: CANVAS_HEIGHT / 2 - (h * SCALE) / 2,
-                w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
+                w: w, h: h, rotation: 0, color: '#475569', opacity: 1.0, zIndex: objects.length + 1
             };
             objects.push(newObj);
             normalizeZIndices();
@@ -752,22 +761,22 @@
             const container = document.getElementById('objects-layer');
             if (!container) return;
             
-            // Sortowanie obiektów według zIndex, aby DOM renderował w odpowiedniej kolejności
             const sorted = [...objects].sort((a, b) => a.zIndex - b.zIndex);
 
             container.innerHTML = sorted.map(obj => {
                 const widthPx = obj.w * SCALE;
                 const heightPx = obj.h * SCALE;
                 const isSelected = selectedIds.includes(obj.id);
+                const objOpacity = obj.opacity !== undefined ? obj.opacity : 1.0;
                 
                 if (obj.type === 'text') {
                     return `
                     <div id="obj-${obj.id}"
                          class="booth-object ${isSelected ? 'selected' : ''}"
-                         style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
+                         style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg); opacity: ${objOpacity};"
                          onpointerdown="startDragging(event, ${obj.id})"
                          onclick="selectObject(event, ${obj.id})">
-                        <div class="w-full h-full flex items-center justify-center p-1 text-slate-900 font-bold text-lg select-none truncate">
+                        <div class="w-full h-full flex items-center justify-center p-1 text-slate-900 font-bold text-lg select-none truncate" style="color: ${obj.color};">
                             ${obj.name}
                         </div>
                     </div>`;
@@ -776,7 +785,7 @@
                 return `
                 <div id="obj-${obj.id}"
                      class="booth-object ${isSelected ? 'selected' : ''}"
-                     style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg);"
+                     style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg); opacity: ${objOpacity};"
                      onpointerdown="startDragging(event, ${obj.id})"
                      onclick="selectObject(event, ${obj.id})">
                     <div class="w-full h-full rounded-xl shadow-md flex flex-col items-center justify-center p-1 text-white overflow-hidden border border-white/20 relative"
@@ -897,6 +906,8 @@
                     const rotValEl = document.getElementById('prop-rotation-val');
                     const colorEl = document.getElementById('prop-color');
                     const colorHexEl = document.getElementById('prop-color-hex');
+                    const opacityEl = document.getElementById('prop-opacity');
+                    const opacityValEl = document.getElementById('prop-opacity-val');
 
                     if (labelEl) labelEl.value = obj.name;
                     if (widthEl) widthEl.value = obj.w;
@@ -905,6 +916,10 @@
                     if (rotValEl) rotValEl.innerText = `${obj.rotation}°`;
                     if (colorEl) colorEl.value = obj.color;
                     if (colorHexEl) colorHexEl.innerText = obj.color;
+                    
+                    const currentOpacity = obj.opacity !== undefined ? obj.opacity : 1.0;
+                    if (opacityEl) opacityEl.value = currentOpacity;
+                    if (opacityValEl) opacityValEl.innerText = `${Math.round(currentOpacity * 100)}%`;
                 }
             } else {
                 if (singleProps) singleProps.classList.add('hidden');
@@ -925,8 +940,10 @@
             const heightEl = document.getElementById('prop-height');
             const rotEl = document.getElementById('prop-rotation');
             const colorEl = document.getElementById('prop-color');
+            const opacityEl = document.getElementById('prop-opacity');
             const rotValEl = document.getElementById('prop-rotation-val');
             const colorHexEl = document.getElementById('prop-color-hex');
+            const opacityValEl = document.getElementById('prop-opacity-val');
 
             if (labelEl) obj.name = labelEl.value;
             
@@ -943,9 +960,13 @@
                 if (!isNaN(rVal)) obj.rotation = rVal;
             }
             if (colorEl) obj.color = colorEl.value;
+            if (opacityEl && opacityEl.value !== '') {
+                obj.opacity = parseFloat(opacityEl.value);
+            }
 
             if (rotValEl) rotValEl.innerText = `${obj.rotation}°`;
             if (colorHexEl) colorHexEl.innerText = obj.color;
+            if (opacityValEl) opacityValEl.innerText = `${Math.round((obj.opacity !== undefined ? obj.opacity : 1.0) * 100)}%`;
             
             renderObjects();
         }
@@ -967,19 +988,16 @@
             const obj = objects.find(o => o.id === selectedIds[0]);
             if (!obj) return;
             
-            // Sortowanie po zIndex rosnąco
             objects.sort((a, b) => a.zIndex - b.zIndex);
             const index = objects.findIndex(o => o.id === obj.id);
 
             if (direction > 0) {
-                // Na wierzch: zamiana miejscami z wyższym lub przesunięcie na sam koniec
                 if (index < objects.length - 1) {
                     const temp = objects[index].zIndex;
                     objects[index].zIndex = objects[index + 1].zIndex;
                     objects[index + 1].zIndex = temp;
                 }
             } else {
-                // Pod spód: zamiana miejscami z niższym
                 if (index > 0) {
                     const temp = objects[index].zIndex;
                     objects[index].zIndex = objects[index - 1].zIndex;
