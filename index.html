@@ -56,7 +56,6 @@
         .booth-object.selected {
             outline: 2px solid #0067c0;
             outline-offset: 2px;
-            z-index: 999 !important;
             box-shadow: 0 10px 25px -5px rgba(0, 103, 192, 0.3);
         }
         .dimension-line {
@@ -89,22 +88,31 @@
             z-index: 9999;
             display: none;
         }
-        /* Responsywne chowanie lewego panelu */
+        /* Płynne chowanie i rozszerzanie lewego panelu na desktopie oraz obsługa mobilna */
         #left-sidebar {
-            transform: translateX(0);
-            transition: transform 0.3s ease-in-out;
+            width: 20rem;
+            transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
+            flex-shrink: 0;
+            overflow-x: hidden;
+        }
+        #left-sidebar.collapsed {
+            width: 0 !important;
+            min-width: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
         }
         @media (max-width: 767px) {
             #left-sidebar {
+                position: absolute;
+                height: 100%;
+                z-index: 40;
                 transform: translateX(-100%);
+                width: 20rem !important;
             }
-            #left-sidebar.sidebar-visible {
+            #left-sidebar.mobile-open {
                 transform: translateX(0);
-            }
-        }
-        @media (min-width: 768px) {
-            #left-sidebar.sidebar-hidden {
-                transform: translateX(-100%);
             }
         }
     </style>
@@ -156,8 +164,8 @@
         <div id="mobile-overlay" onclick="toggleLeftSidebar()" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-20 hidden md:hidden"></div>
 
         <!-- LEWY PANEL: BIBLIOTEKA I TŁO -->
-        <aside id="left-sidebar" class="win11-mica w-80 border-r border-slate-200/80 flex flex-col shrink-0 z-30 shadow-2xl absolute md:relative h-full overflow-y-auto">
-            <div class="p-4 border-b border-slate-200/60 flex justify-between items-center">
+        <aside id="left-sidebar" class="win11-mica border-r border-slate-200/80 flex flex-col shrink-0 z-30 shadow-2xl overflow-y-auto">
+            <div class="p-4 border-b border-slate-200/60 flex justify-between items-center whitespace-nowrap">
                 <h2 class="font-semibold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-layer-group text-blue-600"></i> Biblioteka elementów
                 </h2>
@@ -167,13 +175,13 @@
             </div>
 
             <!-- Katalog wyposażenia -->
-            <div class="p-4 border-b border-slate-200/60">
+            <div class="p-4 border-b border-slate-200/60 whitespace-nowrap">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Katalog wyposażenia</h3>
                 <div class="grid grid-cols-2 gap-2" id="preset-library"></div>
             </div>
 
             <!-- Pola tekstowe wolnostojące -->
-            <div class="p-4 border-b border-slate-200/60">
+            <div class="p-4 border-b border-slate-200/60 whitespace-nowrap">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Napis / Pole tekstowe</h3>
                 <div class="mb-2">
                     <input type="text" id="custom-text-input" value="Napis reklamowy" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-2">
@@ -184,7 +192,7 @@
             </div>
 
             <!-- Niestandardowy wymiar -->
-            <div class="p-4 border-b border-slate-200/60">
+            <div class="p-4 border-b border-slate-200/60 whitespace-nowrap">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Niestandardowy Wymiar</h3>
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <div>
@@ -206,7 +214,7 @@
             </div>
 
             <!-- Tło / Rzut przestrzeni -->
-            <div class="p-4 bg-slate-50/50 pb-12">
+            <div class="p-4 bg-slate-50/50 pb-12 whitespace-nowrap">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
                     <span><i class="fa-solid fa-image text-slate-600 mr-1"></i> Tło / Rzut przestrzeni</span>
                 </h3>
@@ -492,6 +500,7 @@
             if (objects.length === 0) {
                 initPresetsOnCanvas();
             } else {
+                normalizeZIndices();
                 renderObjects();
             }
             initInteractions();
@@ -508,12 +517,13 @@
 
         function toggleLeftSidebar() {
             const sidebar = document.getElementById('left-sidebar');
+            const overlay = document.getElementById('mobile-overlay');
             if (window.innerWidth < 768) {
-                sidebar.classList.toggle('sidebar-visible');
+                sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('hidden');
             } else {
-                sidebar.classList.toggle('sidebar-hidden');
+                sidebar.classList.toggle('collapsed');
             }
-            document.getElementById('mobile-overlay').classList.toggle('hidden');
         }
 
         function toggleRightSidebar() {
@@ -541,6 +551,7 @@
             objects = [
                 { id: nextObjectId++, name: 'Stół duży', type: 'table_large', x: CANVAS_WIDTH / 2 - 90, y: CANVAS_HEIGHT / 2 - 37, w: 1.80, h: 0.74, rotation: 0, color: '#1e293b', zIndex: 1 }
             ];
+            normalizeZIndices();
             renderObjects();
         }
 
@@ -608,8 +619,6 @@
 
                 if (isMarquee) {
                     isMarquee = false;
-
-                    // POPRAWKA: Pobieramy rect ZANIM schowamy ramkę!
                     const rect = marquee.getBoundingClientRect();
                     marquee.style.display = 'none';
 
@@ -696,6 +705,7 @@
                 zIndex: objects.length + 1
             };
             objects.push(newObj);
+            normalizeZIndices();
             renderObjects();
             selectObject(null, newObj.id);
         }
@@ -715,6 +725,7 @@
                 zIndex: objects.length + 1
             };
             objects.push(newObj);
+            normalizeZIndices();
             renderObjects();
             selectObject(null, newObj.id);
         }
@@ -732,6 +743,7 @@
                 w: w, h: h, rotation: 0, color: '#475569', zIndex: objects.length + 1
             };
             objects.push(newObj);
+            normalizeZIndices();
             renderObjects();
             selectObject(null, newObj.id);
         }
@@ -739,7 +751,11 @@
         function renderObjects() {
             const container = document.getElementById('objects-layer');
             if (!container) return;
-            container.innerHTML = objects.map(obj => {
+            
+            // Sortowanie obiektów według zIndex, aby DOM renderował w odpowiedniej kolejności
+            const sorted = [...objects].sort((a, b) => a.zIndex - b.zIndex);
+
+            container.innerHTML = sorted.map(obj => {
                 const widthPx = obj.w * SCALE;
                 const heightPx = obj.h * SCALE;
                 const isSelected = selectedIds.includes(obj.id);
@@ -914,7 +930,6 @@
 
             if (labelEl) obj.name = labelEl.value;
             
-            // POPRAWKA: Zabezpieczenie przed NaN podczas wpisywania liczb w polach tekstowych
             if (widthEl && widthEl.value !== '') {
                 const wVal = parseFloat(widthEl.value);
                 if (!isNaN(wVal)) obj.w = wVal;
@@ -952,12 +967,34 @@
             const obj = objects.find(o => o.id === selectedIds[0]);
             if (!obj) return;
             
+            // Sortowanie po zIndex rosnąco
+            objects.sort((a, b) => a.zIndex - b.zIndex);
+            const index = objects.findIndex(o => o.id === obj.id);
+
             if (direction > 0) {
-                obj.zIndex = Math.max(...objects.map(o => o.zIndex)) + 1;
+                // Na wierzch: zamiana miejscami z wyższym lub przesunięcie na sam koniec
+                if (index < objects.length - 1) {
+                    const temp = objects[index].zIndex;
+                    objects[index].zIndex = objects[index + 1].zIndex;
+                    objects[index + 1].zIndex = temp;
+                }
             } else {
-                obj.zIndex = Math.max(1, Math.min(...objects.map(o => o.zIndex)) - 1);
+                // Pod spód: zamiana miejscami z niższym
+                if (index > 0) {
+                    const temp = objects[index].zIndex;
+                    objects[index].zIndex = objects[index - 1].zIndex;
+                    objects[index - 1].zIndex = temp;
+                }
             }
+            normalizeZIndices();
             renderObjects();
+        }
+
+        function normalizeZIndices() {
+            objects.sort((a, b) => a.zIndex - b.zIndex);
+            objects.forEach((o, idx) => {
+                o.zIndex = idx + 1;
+            });
         }
 
         function updateLayerStructurePreview() {
@@ -985,6 +1022,7 @@
                 }
             });
             selectedIds = newSelectedIds;
+            normalizeZIndices();
             renderObjects();
             updatePropertiesPanel();
         }
@@ -992,6 +1030,7 @@
         function deleteSelected() {
             if (selectedIds.length === 0) return;
             objects = objects.filter(o => !selectedIds.includes(o.id));
+            normalizeZIndices();
             deselectAll();
         }
 
@@ -1229,6 +1268,7 @@
                     if (data.objects) {
                         objects = data.objects;
                         nextObjectId = Math.max(...objects.map(o => o.id), 0) + 1;
+                        normalizeZIndices();
                     }
                     if (data.bgConfig) {
                         bgConfig = data.bgConfig;
@@ -1274,6 +1314,7 @@
                     if (data.objects && data.objects.length > 0) {
                         objects = data.objects;
                         nextObjectId = Math.max(...objects.map(o => o.id), 0) + 1;
+                        normalizeZIndices();
                     }
                     if (data.bgConfig && data.bgConfig.url) {
                         bgConfig = data.bgConfig;
