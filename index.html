@@ -88,7 +88,6 @@
             z-index: 9999;
             display: none;
         }
-        /* Płynne chowanie i rozszerzanie lewego panelu na desktopie oraz obsługa mobilna */
         #left-sidebar {
             width: 20rem;
             transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
@@ -191,21 +190,21 @@
                 </div>
             </div>
 
-            <!-- Niestandardowy wymiar -->
-            <div class="p-4 border-b border-slate-200/60 whitespace-nowrap">
+            <!-- Niestandardowy wymiar (Naprawiony układ pionowy) -->
+            <div class="p-4 border-b border-slate-200/60">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Niestandardowy Wymiar</h3>
-                <div class="grid grid-cols-2 gap-2 mb-2">
+                <div class="space-y-2.5 mb-2.5">
                     <div>
-                        <label class="text-[10px] font-medium text-slate-600">Szerokość (m)</label>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Szerokość (m)</label>
                         <input type="number" id="custom-w" value="1.0" step="0.05" min="0.1" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
-                        <label class="text-[10px] font-medium text-slate-600">Długość (m)</label>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Długość (m)</label>
                         <input type="number" id="custom-h" value="1.0" step="0.05" min="0.1" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                 </div>
                 <div class="mb-2.5">
-                    <label class="text-[10px] font-medium text-slate-600">Nazwa etykiety</label>
+                    <label class="block text-[10px] font-medium text-slate-600 mb-1">Nazwa etykiety</label>
                     <input type="text" id="custom-name" value="Obiekt niestandardowy" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
                 <button onclick="addCustomItem()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 rounded-lg font-medium transition shadow-sm flex items-center justify-center gap-2">
@@ -1339,6 +1338,7 @@
                         const img = document.getElementById('bg-image');
                         if (img) {
                             img.src = bgConfig.url;
+                            img.classList.add('hidden'); // keep hidden until src applied or toggle
                             img.classList.remove('hidden');
                         }
                         const bgControls = document.getElementById('bg-controls');
