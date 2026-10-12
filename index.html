@@ -13,6 +13,9 @@
     
     <!-- html2canvas CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- jsPDF CDN (eksport do PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         body {
@@ -114,6 +117,16 @@
                 transform: translateX(0);
             }
         }
+        @media (max-width: 767px) {
+            #properties-panel {
+                position: absolute;
+                right: 0;
+                top: 0;
+                height: 100%;
+                width: min(20rem, 90vw) !important;
+                z-index: 40;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 h-[100dvh] w-screen overflow-hidden flex flex-col select-none">
@@ -122,24 +135,24 @@
     <div id="selection-marquee"></div>
 
     <!-- GÓRNY PASEK NAWIGACYJNY -->
-    <header class="win11-dark-mica text-white px-4 py-2.5 flex justify-between items-center border-b border-white/10 z-30 shrink-0 shadow-sm">
+    <header class="win11-dark-mica text-white px-2 sm:px-4 py-2.5 flex justify-between items-center border-b border-white/10 z-30 shrink-0 shadow-sm">
         <div class="flex items-center space-x-3">
             <button onclick="toggleLeftSidebar()" class="bg-white/10 hover:bg-white/20 p-2 rounded-lg text-slate-200 transition" title="Menu biblioteki">
                 <i class="fa-solid fa-bars text-lg"></i>
             </button>
-            <div class="bg-blue-600 p-2 rounded-xl text-white shadow-md shadow-blue-500/20">
+            <div class="bg-blue-600 p-2 rounded-xl text-white shadow-md shadow-blue-500/20 hidden sm:block">
                 <i class="fa-solid fa-compass-drafting text-lg"></i>
             </div>
-            <div>
+            <div class="hidden sm:block">
                 <h1 class="font-semibold text-sm md:text-base leading-tight">Planer Stoisk Targowych CAD</h1>
                 <p class="text-[11px] text-slate-400 hidden sm:block">Skala: 1 px = 1 cm | [Prawy przycisk] Przesuwanie siatki | [Podwójny klik] Zaznacz wszystko | [C] Centruj</p>
             </div>
         </div>
 
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1.5 sm:space-x-2">
             <button onclick="toggleRightSidebar()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2" title="Panel Właściwości i Inspektora">
                 <i class="fa-solid fa-sliders text-blue-400"></i>
-                <span class="hidden sm:inline">Inspektor</span>
+                <span>Inspektor</span>
             </button>
 
             <button onclick="document.getElementById('json-input').click()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2">
@@ -151,8 +164,12 @@
                 <i class="fa-solid fa-floppy-disk text-emerald-400"></i> <span class="hidden sm:inline">Zapisz</span>
             </button>
 
+            <button onclick="openPdfModal()" class="bg-white/10 hover:bg-white/20 text-slate-200 text-xs md:text-sm px-3 py-1.5 rounded-lg border border-white/10 transition flex items-center gap-2" title="Eksport do PDF (A4 / A3)">
+                <i class="fa-solid fa-file-pdf text-red-400"></i> <span class="hidden sm:inline">PDF</span>
+            </button>
+
             <button onclick="exportToPNG()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm px-3.5 py-1.5 rounded-lg shadow-md shadow-blue-600/30 font-medium transition flex items-center gap-2">
-                <i class="fa-solid fa-file-image"></i> <span>Eksportuj PNG</span>
+                <i class="fa-solid fa-file-image"></i> <span class="hidden sm:inline">Eksportuj PNG</span><span class="sm:hidden">PNG</span>
             </button>
         </div>
     </header>
@@ -177,6 +194,10 @@
             <div class="p-4 border-b border-slate-200/60 whitespace-nowrap">
                 <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Katalog wyposażenia</h3>
                 <div class="grid grid-cols-2 gap-2" id="preset-library"></div>
+                <div id="custom-library-wrap" class="hidden mt-3">
+                    <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Własny katalog</h3>
+                    <div class="grid grid-cols-2 gap-2" id="custom-library"></div>
+                </div>
             </div>
 
             <!-- Pola tekstowe wolnostojące -->
@@ -210,6 +231,57 @@
                 <button onclick="addCustomItem()" class="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 rounded-lg font-medium transition shadow-sm flex items-center justify-center gap-2">
                     <i class="fa-solid fa-plus text-blue-400"></i> Dodaj obiekt do planszy
                 </button>
+                <button onclick="saveCustomPresetFromForm()" class="w-full mt-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 shadow-xs">
+                    <i class="fa-solid fa-bookmark text-blue-600"></i> Zapisz w katalogu
+                </button>
+            </div>
+
+            <!-- Stoisko (granica) -->
+            <div class="p-4 border-b border-slate-200/60 whitespace-nowrap">
+                <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Stoisko (granica)</h3>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Szerokość (m)</label>
+                        <input type="number" id="stand-w" value="6" step="0.1" min="0.5" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Długość (m)</label>
+                        <input type="number" id="stand-h" value="4" step="0.1" min="0.5" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="setStand()" class="flex-1 bg-violet-600 hover:bg-violet-500 text-white text-xs py-1.5 rounded-lg transition font-medium">Ustaw / zmień</button>
+                    <button onclick="removeStand()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded-lg transition font-medium">Usuń</button>
+                </div>
+                <p id="stand-stats" class="text-[10px] text-slate-500 mt-2 whitespace-normal">Granicę przesuniesz przeciągając jej fioletową etykietę.</p>
+            </div>
+
+            <!-- Analiza przejść -->
+            <div class="p-4 border-b border-slate-200/60 whitespace-nowrap">
+                <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Analiza przejść</h3>
+                <label class="inline-flex items-center cursor-pointer mb-2">
+                    <input type="checkbox" id="passage-toggle" onchange="setPassage()" class="sr-only peer">
+                    <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                    <span class="ml-2 text-xs font-medium text-slate-700">Pokaż wąskie przejścia</span>
+                </label>
+                <div class="flex items-center gap-2">
+                    <label class="text-[10px] font-medium text-slate-600">Minimum</label>
+                    <input type="number" id="passage-min" value="90" min="20" max="500" step="5" oninput="setPassage()" class="w-16 text-xs px-2 py-1 bg-white/80 border border-slate-300 rounded-lg outline-none">
+                    <span class="text-[10px] text-slate-500">cm</span>
+                </div>
+                <p id="passage-count" class="text-[10px] text-slate-500 mt-2 whitespace-normal">Szczeliny od 15 cm do wartości minimum są zaznaczane na pomarańczowo.</p>
+            </div>
+
+            <!-- Warianty układu -->
+            <div class="p-4 border-b border-slate-200/60 whitespace-nowrap">
+                <h3 class="font-medium text-[11px] text-slate-500 uppercase tracking-wider mb-2.5">Warianty układu</h3>
+                <select id="variant-select" onchange="switchVariant(parseInt(this.value))" class="w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white/80 outline-none focus:ring-2 focus:ring-blue-500 mb-2"></select>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button onclick="addVariant()" class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] py-1.5 rounded-lg font-medium transition" title="Nowy wariant jako kopia bieżącego">+ Kopia</button>
+                    <button onclick="renameVariant()" class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-[11px] py-1.5 rounded-lg font-medium transition">Nazwa</button>
+                    <button onclick="deleteVariant()" class="bg-red-50 hover:bg-red-100 text-red-600 text-[11px] py-1.5 rounded-lg font-medium transition">Usuń</button>
+                </div>
+                <button onclick="openVariantsCompare()" class="w-full mt-2 bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs py-1.5 rounded-lg font-medium transition">Porównaj warianty</button>
             </div>
 
             <!-- Tło / Rzut przestrzeni -->
@@ -246,7 +318,7 @@
                                     <span id="bg-scale-val" class="font-mono ml-1">100%</span>
                                 </div>
                             </div>
-                            <input type="range" id="bg-scale" min="0.1" max="60.0" step="0.05" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <input type="range" id="bg-scale" min="0.1" max="60.0" step="0.001" value="1.0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
 
                         <div>
@@ -291,6 +363,10 @@
                             <input type="range" id="bg-y" min="-10000" max="10000" step="1" value="0" oninput="updateBgSettings()" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
 
+                        <button onclick="startCalibration()" class="w-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs py-1.5 rounded-lg transition font-medium flex items-center justify-center gap-2" title="Kliknij dwa punkty o znanej odległości na rzucie">
+                            <i class="fa-solid fa-ruler-horizontal"></i> Kalibruj skalę (2 punkty)
+                        </button>
+
                         <div class="flex gap-2 pt-1">
                             <button onclick="resetBgTransform()" class="flex-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs py-1.5 rounded-lg transition font-medium">Reset tła</button>
                             <button onclick="removeBackground()" class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 text-xs py-1.5 rounded-lg transition font-medium">Usuń tło</button>
@@ -303,50 +379,9 @@
         <!-- GŁÓWNY OBSZAR ROBOCZY -->
         <main class="flex-1 relative bg-slate-200 overflow-hidden flex flex-col">
             
-            <!-- Górny pasek narzędziowy siatki -->
-            <div class="win11-mica border-b border-slate-200/80 px-4 py-2 flex flex-wrap justify-between items-center gap-3 z-10 shadow-xs">
-                
-                <div class="flex items-center space-x-3 flex-wrap gap-2">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="snap-toggle" checked class="sr-only peer">
-                        <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span class="ml-2 text-xs font-medium text-slate-700">Przyciąganie</span>
-                    </label>
-
-                    <select id="snap-step" class="text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white/80 outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="0.01" selected>1 cm</option>
-                        <option value="0.05">5 cm</option>
-                        <option value="0.1">10 cm</option>
-                        <option value="0.5">50 cm</option>
-                    </select>
-
-                    <label class="inline-flex items-center cursor-pointer border-l border-slate-300 pl-3">
-                        <input type="checkbox" id="dimensions-toggle" onchange="toggleDimensionsLayer()" class="sr-only peer">
-                        <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-                        <span class="ml-2 text-xs font-semibold text-blue-700"><i class="fa-solid fa-ruler-combined"></i> Wymiary CAD</span>
-                    </label>
-                </div>
-
-                <div class="flex items-center gap-2 bg-white/60 border border-slate-300/80 rounded-xl px-3 py-1 shadow-inner">
-                    <span class="text-xs font-semibold text-blue-600"><i class="fa-solid fa-rotate"></i> Obrót siatki:</span>
-                    <button onclick="adjustGenericValue('grid-rotation-slider', -1, 0, 360)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">-</button>
-                    <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="w-20 sm:w-24 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                    <button onclick="adjustGenericValue('grid-rotation-slider', 1, 0, 360)" class="px-1.5 py-0.5 bg-white border border-slate-300 rounded text-[10px] hover:bg-slate-100 font-bold">+</button>
-                    <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-11 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-0.5 outline-none">
-                    <span class="text-xs font-bold text-slate-500">°</span>
-                </div>
-
-                <div class="flex items-center space-x-1 bg-white/60 rounded-xl p-1 border border-slate-300/80">
-                    <button onclick="adjustZoom(-0.1)" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition" title="Pomniejsz"><i class="fa-solid fa-minus text-xs"></i></button>
-                    <span id="zoom-level" class="text-xs font-mono px-2 font-bold text-slate-700">100%</span>
-                    <button onclick="adjustZoom(0.1)" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition" title="Powiększ"><i class="fa-solid fa-plus text-xs"></i></button>
-                    <button onclick="resetZoom()" class="p-1.5 text-slate-600 hover:bg-white rounded-lg transition border-l border-slate-300 ml-1" title="Resetuj zoom"><i class="fa-solid fa-rotate-left text-xs"></i></button>
-                </div>
-            </div>
-
             <!-- Viewport -->
             <div id="viewport" class="flex-1 relative overflow-auto cursor-default">
-                <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[20000px] min-h-[12000px]" style="transform-origin: 10000px 6000px;">
+                <div id="canvas-wrapper" class="relative transition-transform duration-75 min-w-[20000px] min-h-[12000px]" style="transform-origin: 10000px 6000px; isolation: isolate;">
                     
                     <div id="grid-bg" class="absolute inset-0 bg-white"
                          style="background-size: 100px 100px; background-image: linear-gradient(to right, rgba(203, 213, 225, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(203, 213, 225, 0.6) 1px, transparent 1px);">
@@ -364,6 +399,10 @@
                     </div>
 
                     <div id="objects-layer" class="absolute inset-0" style="z-index: 30;"></div>
+
+                    <svg id="overlay-layer" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 850; overflow: visible;">
+                        <g id="overlay-content"></g>
+                    </svg>
 
                     <svg id="dimensions-layer" class="absolute inset-0 w-full h-full pointer-events-none hidden" style="z-index: 900; overflow: visible;">
                         <defs>
@@ -406,6 +445,65 @@
             </div>
 
             <div class="space-y-4 flex-1">
+                <!-- Widok i narzędzia (dawny górny pasek) -->
+                <details id="view-tools" open class="border border-slate-200/70 rounded-xl bg-white/50">
+                    <summary class="cursor-pointer select-none px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                        <i class="fa-solid fa-screwdriver-wrench text-blue-600"></i> Widok i narzędzia
+                    </summary>
+                    <div class="px-3 pb-3 space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-undo" onclick="undo()" class="bg-white hover:bg-slate-100 text-slate-700 text-xs py-2 rounded-lg border border-slate-200 font-medium transition flex items-center justify-center gap-2" style="opacity:0.4" title="Cofnij (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i> Cofnij</button>
+                            <button id="btn-redo" onclick="redo()" class="bg-white hover:bg-slate-100 text-slate-700 text-xs py-2 rounded-lg border border-slate-200 font-medium transition flex items-center justify-center gap-2" style="opacity:0.4" title="Ponów (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i> Ponów</button>
+                            <button onclick="openBomModal()" class="bg-white hover:bg-slate-100 text-slate-700 text-xs py-2 rounded-lg border border-slate-200 font-medium transition flex items-center justify-center gap-2" title="Zestawienie wyposażenia i powierzchni"><i class="fa-solid fa-list-check text-amber-500"></i> Zestawienie</button>
+                            <button onclick="openProjectsModal()" class="bg-white hover:bg-slate-100 text-slate-700 text-xs py-2 rounded-lg border border-slate-200 font-medium transition flex items-center justify-center gap-2" title="Projekty zapisane w przeglądarce"><i class="fa-solid fa-box-archive text-purple-500"></i> Projekty</button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="snap-toggle" checked class="sr-only peer">
+                        <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-2 text-xs font-medium text-slate-700">Przyciąganie</span>
+                    </label>
+                            <select id="snap-step" class="text-xs border border-slate-300 rounded-lg px-2 py-1 bg-white/80 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="0.01" selected>1 cm</option>
+                                <option value="0.05">5 cm</option>
+                                <option value="0.1">10 cm</option>
+                                <option value="0.5">50 cm</option>
+                            </select>
+                        </div>
+
+                        <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" id="dimensions-toggle" onchange="toggleDimensionsLayer()" class="sr-only peer">
+                        <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-2 text-xs font-medium text-slate-700"><i class="fa-solid fa-ruler-combined text-blue-700"></i> Wymiary CAD</span>
+                    </label>
+
+                        <div class="grid grid-cols-[1fr_auto] gap-2">
+                            <button id="btn-measure" onclick="toggleMeasureTool()" class="bg-white hover:bg-slate-100 text-slate-700 text-xs py-2 rounded-lg border border-slate-200 font-medium transition flex items-center justify-center gap-2" title="Linijka: przeciągnij na planszy, aby zmierzyć odległość"><i class="fa-solid fa-ruler text-teal-600"></i> Linijka</button>
+                            <button onclick="clearRulers()" class="bg-white hover:bg-slate-100 text-slate-700 text-xs py-2 rounded-lg border border-slate-200 font-medium transition flex items-center justify-center gap-2 px-3" title="Usuń wszystkie pomiary"><i class="fa-solid fa-eraser"></i></button>
+                        </div>
+
+                        <div class="bg-white/60 border border-slate-300/80 rounded-xl px-3 py-2">
+                            <div class="text-xs font-semibold text-blue-600 mb-1.5"><i class="fa-solid fa-rotate"></i> Obrót siatki</div>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="adjustGenericValue('grid-rotation-slider', -1, 0, 360)" class="px-2 py-1 bg-white border border-slate-300 rounded text-xs hover:bg-slate-100 font-bold">-</button>
+                                <input type="range" id="grid-rotation-slider" min="0" max="360" value="0" step="1" oninput="setGridRotation(this.value)" class="flex-1 min-w-0 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                                <button onclick="adjustGenericValue('grid-rotation-slider', 1, 0, 360)" class="px-2 py-1 bg-white border border-slate-300 rounded text-xs hover:bg-slate-100 font-bold">+</button>
+                                <input type="number" id="grid-rotation-num" min="0" max="360" value="0" onchange="setGridRotation(this.value)" class="w-12 text-center text-xs font-mono font-bold bg-white border border-slate-300 rounded py-1 outline-none">
+                                <span class="text-xs font-bold text-slate-500">°</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between bg-white/60 rounded-xl p-1 border border-slate-300/80">
+                            <button onclick="adjustZoom(-0.1)" class="p-2 text-slate-600 hover:bg-white rounded-lg transition" title="Pomniejsz"><i class="fa-solid fa-minus text-xs"></i></button>
+                            <span id="zoom-level" class="text-xs font-mono px-2 font-bold text-slate-700">100%</span>
+                            <button onclick="adjustZoom(0.1)" class="p-2 text-slate-600 hover:bg-white rounded-lg transition" title="Powiększ"><i class="fa-solid fa-plus text-xs"></i></button>
+                            <button onclick="resetZoom()" class="p-2 text-slate-600 hover:bg-white rounded-lg transition border-l border-slate-300" title="Resetuj zoom"><i class="fa-solid fa-rotate-left text-xs"></i></button>
+                            <button onclick="fitToScreen()" class="p-2 text-slate-600 hover:bg-white rounded-lg transition" title="Dopasuj do ekranu (F)"><i class="fa-solid fa-expand text-xs"></i></button>
+                        </div>
+                    </div>
+                </details>
+
                 <div>
                     <label class="block text-[10px] font-medium text-slate-600 mb-1">Etykieta / Treść tekstu</label>
                     <input type="text" id="prop-label" oninput="updateSelectedObject()" class="w-full text-xs px-2.5 py-1.5 bg-white/80 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
@@ -471,6 +569,75 @@
                             </button>
                         </div>
                     </div>
+
+                    <div class="space-y-2">
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="prop-locked" onchange="setLockSelected(this.checked)" class="sr-only peer">
+                            <div class="relative w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span class="ml-2 text-xs font-medium text-slate-700"><i class="fa-solid fa-lock text-slate-500"></i> Zablokuj położenie</span>
+                        </label>
+                        <button onclick="saveCustomPresetFromSelected()" class="w-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs py-1.5 rounded-lg font-medium transition flex items-center justify-center gap-2 shadow-xs">
+                            <i class="fa-solid fa-bookmark text-blue-600"></i> Zapisz do własnego katalogu
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Właściwości grupy (wiele zaznaczonych) -->
+                <div id="group-props" class="space-y-3.5 hidden">
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Styl grupy (kolor i przezroczystość)</label>
+                        <div class="flex items-center gap-2 mb-2">
+                            <input type="color" id="group-color" value="#475569" oninput="setGroupColor(this.value)" class="w-8 h-8 rounded-lg border border-slate-300 cursor-pointer bg-transparent">
+                            <span class="text-[10px] text-slate-500">Kolor wszystkich zaznaczonych</span>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] font-medium text-slate-600 mb-1">
+                            <span>Przezroczystość (Opacity)</span>
+                            <span id="group-opacity-val" class="font-mono">100%</span>
+                        </div>
+                        <input type="range" id="group-opacity" min="0.1" max="1" step="0.05" value="1" oninput="setGroupOpacity(this.value)" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Obrót grupy (wokół środka)</label>
+                        <div class="grid grid-cols-4 gap-1">
+                            <button onclick="rotateGroup(-90)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">-90°</button>
+                            <button onclick="rotateGroup(-1)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">-1°</button>
+                            <button onclick="rotateGroup(1)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">+1°</button>
+                            <button onclick="rotateGroup(90)" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">+90°</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Warstwa grupy (Z-Index)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="moveGroupLayer('top')" class="bg-white border border-slate-200 hover:bg-slate-100 text-xs py-1.5 rounded-lg font-medium text-slate-700 flex items-center justify-center gap-1 shadow-xs"><i class="fa-solid fa-arrow-up"></i> Na wierzch</button>
+                            <button onclick="moveGroupLayer('bottom')" class="bg-white border border-slate-200 hover:bg-slate-100 text-xs py-1.5 rounded-lg font-medium text-slate-700 flex items-center justify-center gap-1 shadow-xs"><i class="fa-solid fa-arrow-down"></i> Pod spód</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Wyrównaj</label>
+                        <div class="grid grid-cols-3 gap-1">
+                            <button onclick="alignSelected('left')" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">Do lewej</button>
+                            <button onclick="alignSelected('hcenter')" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">Środek ↔</button>
+                            <button onclick="alignSelected('right')" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">Do prawej</button>
+                            <button onclick="alignSelected('top')" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">Do góry</button>
+                            <button onclick="alignSelected('vcenter')" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">Środek ↕</button>
+                            <button onclick="alignSelected('bottom')" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium">Do dołu</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1 mt-1">
+                            <button onclick="distributeSelected('x')" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium" title="Wymaga min. 3 elementów">Rozmieść ↔</button>
+                            <button onclick="distributeSelected('y')" class="text-[10px] bg-white border border-slate-200 hover:bg-slate-100 py-1 rounded-md font-medium" title="Wymaga min. 3 elementów">Rozmieść ↕</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-600 mb-1">Blokada położenia</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setLockSelected(true)" class="bg-white border border-slate-200 hover:bg-slate-100 text-xs py-1.5 rounded-lg font-medium text-slate-700 flex items-center justify-center gap-1 shadow-xs"><i class="fa-solid fa-lock"></i> Zablokuj</button>
+                            <button onclick="setLockSelected(false)" class="bg-white border border-slate-200 hover:bg-slate-100 text-xs py-1.5 rounded-lg font-medium text-slate-700 flex items-center justify-center gap-1 shadow-xs"><i class="fa-solid fa-lock-open"></i> Odblokuj</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Podgląd struktury warstw -->
@@ -491,6 +658,21 @@
         </aside>
     </div>
 
+    <!-- Podpowiedź narzędzia / komunikaty -->
+    <div id="tool-hint" class="fixed bottom-16 left-1/2 -translate-x-1/2 win11-dark-mica text-white text-xs px-4 py-2 rounded-full shadow-lg z-20 hidden border border-white/10"></div>
+    <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 win11-dark-mica text-white text-xs px-4 py-2 rounded-full shadow-lg z-50 hidden border border-white/10"></div>
+
+    <!-- Okno modalne -->
+    <div id="modal-root" class="fixed inset-0 z-[1000] hidden items-center justify-center bg-black/40 p-4" onclick="if(event.target===this) closeModal()">
+        <div class="win11-mica rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[88vh] flex flex-col">
+            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200/70 shrink-0">
+                <h2 id="modal-title" class="font-semibold text-sm text-slate-800"></h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="modal-body" class="p-5 overflow-y-auto text-xs text-slate-700"></div>
+        </div>
+    </div>
+
     <!-- SKRYPT JAVASCRIPT -->
     <script>
         const SCALE = 100;
@@ -503,6 +685,13 @@
         let nextObjectId = 1;
 
         let bgConfig = { url: '', opacity: 0.5, scale: 1, rotation: 0, x: 0, y: 0 };
+        let dragMoved = false;
+
+        function escapeHtml(str) {
+            return String(str === undefined || str === null ? '' : str)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
 
         const PRESETS = [
             { type: 'kallax_1x4', name: 'Kallax 1x4', w: 0.42, h: 0.39, color: '#475569', icon: 'fa-cubes' },
@@ -523,8 +712,12 @@
         ];
 
         window.addEventListener('DOMContentLoaded', () => {
+            loadCustomPresets();
             loadFromLocalStorage();
             renderPresetLibrary();
+            renderCustomLibrary();
+            renderVariantUI();
+            syncStandInputs();
             if (objects.length === 0) {
                 initPresetsOnCanvas();
             } else {
@@ -532,9 +725,11 @@
                 renderObjects();
             }
             initInteractions();
+            initExtraInteractions();
             initKeyboardShortcuts();
             centerViewport();
             setInterval(autoSaveLocalStorage, 120000);
+            window.addEventListener('beforeunload', autoSaveLocalStorage);
         });
 
         function centerViewport() {
@@ -547,6 +742,8 @@
             const sidebar = document.getElementById('left-sidebar');
             const overlay = document.getElementById('mobile-overlay');
             if (window.innerWidth < 768) {
+                const rp = document.getElementById('properties-panel');
+                if (rp && !sidebar.classList.contains('mobile-open')) rp.classList.add('hidden');
                 sidebar.classList.toggle('mobile-open');
                 overlay.classList.toggle('hidden');
             } else {
@@ -555,7 +752,15 @@
         }
 
         function toggleRightSidebar() {
-            document.getElementById('properties-panel').classList.toggle('hidden');
+            const rpanel = document.getElementById('properties-panel');
+            if (window.innerWidth < 768 && rpanel.classList.contains('hidden')) {
+                const ls = document.getElementById('left-sidebar');
+                if (ls && ls.classList.contains('mobile-open')) {
+                    ls.classList.remove('mobile-open');
+                    document.getElementById('mobile-overlay').classList.add('hidden');
+                }
+            }
+            rpanel.classList.toggle('hidden');
             updatePropertiesPanel();
         }
 
@@ -600,7 +805,7 @@
                     return;
                 }
 
-                if (e.button === 0 && !e.target.closest('.booth-object') && !e.target.closest('aside') && !e.target.closest('header')) {
+                if (e.button === 0 && !e.target.closest('.booth-object') && !e.target.closest('aside') && !e.target.closest('header') && !e.target.closest('#overlay-layer')) {
                     isMarquee = true;
                     marqueeStartX = e.clientX;
                     marqueeStartY = e.clientY;
@@ -642,7 +847,7 @@
             window.addEventListener('mouseup', (e) => {
                 if (isPanning) {
                     isPanning = false;
-                    viewport.style.cursor = 'default';
+                    viewport.style.cursor = activeTool ? 'crosshair' : 'default';
                 }
 
                 if (isMarquee) {
@@ -669,7 +874,7 @@
             });
 
             viewport.addEventListener('dblclick', (e) => {
-                if (!e.target.closest('.booth-object') && !e.target.closest('aside') && !e.target.closest('header')) {
+                if (!e.target.closest('.booth-object') && !e.target.closest('aside') && !e.target.closest('header') && !e.target.closest('#overlay-layer')) {
                     if (objects.length > 0) {
                         selectedIds = objects.map(o => o.id);
                         renderObjects();
@@ -685,17 +890,60 @@
 
         function initKeyboardShortcuts() {
             window.addEventListener('keydown', (e) => {
-                if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
-                
-                if (e.key.toLowerCase() === 'c') {
+                const ae = document.activeElement;
+                const tag = ae ? ae.tagName : '';
+                const type = ae && ae.type ? ae.type : '';
+                const isTextField = tag === 'TEXTAREA' || tag === 'SELECT' || (tag === 'INPUT' && !['range', 'checkbox', 'color', 'file', 'button'].includes(type));
+                if (isTextField) return;
+
+                const modalOpen = !document.getElementById('modal-root').classList.contains('hidden');
+                if (e.key === 'Escape') {
+                    if (modalOpen) { closeModal(); return; }
+                    if (activeTool) { cancelTool(); return; }
+                    deselectAll();
+                    return;
+                }
+                if (modalOpen) return;
+
+                const ctrl = e.ctrlKey || e.metaKey;
+                const k = e.key.toLowerCase();
+
+                if (ctrl) {
+                    if (k === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
+                    else if (k === 'y') { e.preventDefault(); redo(); }
+                    else if (k === 'a') { e.preventDefault(); selectedIds = objects.map(o => o.id); renderObjects(); updatePropertiesPanel(); }
+                    else if (k === 'd') { e.preventDefault(); duplicateSelected(); }
+                    else if (k === 'c') { e.preventDefault(); copySelected(); }
+                    else if (k === 'v') { e.preventDefault(); pasteClipboard(); }
+                    return;
+                }
+
+                if (e.key === 'Delete' || e.key === 'Backspace') {
+                    if (selectedIds.length > 0) { e.preventDefault(); deleteSelected(); }
+                    return;
+                }
+
+                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    if (tag === 'INPUT' && type === 'range') return; // strzałki sterują suwakiem
+                    if (selectedIds.length === 0) return;
+                    e.preventDefault();
+                    nudgeSelected(e.key, e.shiftKey);
+                    return;
+                }
+
+                if (k === 'c') {
                     e.preventDefault();
                     centerAllObjects();
+                } else if (k === 'f') {
+                    e.preventDefault();
+                    fitToScreen();
                 }
             });
         }
 
         function centerAllObjects() {
             if (objects.length === 0) return;
+            saveHistory();
             let minX = Math.min(...objects.map(o => o.x));
             let maxX = Math.max(...objects.map(o => o.x + o.w * SCALE));
             let minY = Math.min(...objects.map(o => o.y));
@@ -714,12 +962,16 @@
                 obj.x += offsetX;
                 obj.y += offsetY;
             });
+            // granica stoiska i pomiary przesuwają się razem z elementami
+            if (stand) { stand.x += offsetX; stand.y += offsetY; }
+            rulers.forEach(r => { r.x1 += offsetX; r.x2 += offsetX; r.y1 += offsetY; r.y2 += offsetY; });
             renderObjects();
         }
 
         function addObjectFromPreset(type) {
             const preset = PRESETS.find(p => p.type === type);
             if (!preset) return;
+            saveHistory();
             const newObj = {
                 id: nextObjectId++,
                 name: preset.name,
@@ -741,6 +993,7 @@
 
         function addTextItem() {
             const textContent = document.getElementById('custom-text-input').value || 'Napis reklamowy';
+            saveHistory();
             const newObj = {
                 id: nextObjectId++,
                 name: textContent,
@@ -764,6 +1017,7 @@
             const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
             const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
             const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
+            saveHistory();
             const newObj = {
                 id: nextObjectId++,
                 name: name,
@@ -789,44 +1043,47 @@
                 const heightPx = obj.h * SCALE;
                 const isSelected = selectedIds.includes(obj.id);
                 const objOpacity = obj.opacity !== undefined ? obj.opacity : 1.0;
+                const cursorStyle = obj.locked ? 'cursor: default;' : '';
+                const lockBadge = obj.locked ? `<i class="fa-solid fa-lock no-export" style="position:absolute;top:-7px;right:-7px;width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:7px;background:#0f172a;color:#fff;border-radius:9999px;z-index:2;"></i>` : '';
                 
                 if (obj.type === 'text') {
                     return `
                     <div id="obj-${obj.id}"
                          class="booth-object ${isSelected ? 'selected' : ''}"
-                         style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg); opacity: ${objOpacity};"
+                         style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg); opacity: ${objOpacity}; ${cursorStyle}"
                          onpointerdown="startDragging(event, ${obj.id})"
                          onclick="selectObject(event, ${obj.id})">
                         <div class="w-full h-full flex items-center justify-center p-1 text-slate-900 font-bold text-lg select-none truncate" style="color: ${obj.color};">
-                            ${obj.name}
+                            ${escapeHtml(obj.name)}
                         </div>
+                        ${lockBadge}
                     </div>`;
                 }
 
                 return `
                 <div id="obj-${obj.id}"
                      class="booth-object ${isSelected ? 'selected' : ''}"
-                     style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg); opacity: ${objOpacity};"
+                     style="left: ${obj.x}px; top: ${obj.y}px; width: ${widthPx}px; height: ${heightPx}px; z-index: ${obj.zIndex}; transform: rotate(${obj.rotation}deg); opacity: ${objOpacity}; ${cursorStyle}"
                      onpointerdown="startDragging(event, ${obj.id})"
                      onclick="selectObject(event, ${obj.id})">
                     <div class="w-full h-full rounded-xl shadow-md flex flex-col items-center justify-center p-1 text-white overflow-hidden border border-white/20 relative"
                          style="background-color: ${obj.color};">
-                        <span class="text-[10px] font-semibold leading-tight text-center truncate w-full">${obj.name}</span>
+                        <span class="text-[10px] font-semibold leading-tight text-center truncate w-full">${escapeHtml(obj.name)}</span>
                         <span class="text-[8px] font-mono opacity-80">${obj.w}m × ${obj.h}m</span>
                     </div>
+                    ${lockBadge}
                 </div>`;
             }).join('');
             
-            const svgLayer = document.getElementById('dimensions-layer');
-            if (svgLayer && !svgLayer.classList.contains('hidden')) {
-                updateDimensionsSVG();
-            }
+            refreshOverlays();
             updateLayerStructurePreview();
         }
 
         function startDragging(e, id) {
             if (e.target.closest('button')) return;
             e.stopPropagation();
+            dragMoved = false;
+            if (e.shiftKey) return; // Shift+klik obsługuje selectObject (dodawanie/odejmowanie z zaznaczenia)
 
             if (!selectedIds.includes(id)) {
                 selectedIds = [id];
@@ -839,12 +1096,20 @@
             const initialPositions = {};
             selectedIds.forEach(selId => {
                 const o = objects.find(obj => obj.id === selId);
-                if (o) initialPositions[selId] = { x: o.x, y: o.y };
+                if (o && !o.locked) initialPositions[selId] = { x: o.x, y: o.y };
             });
+            if (Object.keys(initialPositions).length === 0) return; // zablokowane elementy nie są przesuwane
+            let historySaved = false;
 
             function onPointerMove(moveEvent) {
-                const dx = (moveEvent.clientX - startX) / currentZoom;
-                const dy = (moveEvent.clientY - startY) / currentZoom;
+                const rawDx = moveEvent.clientX - startX;
+                const rawDy = moveEvent.clientY - startY;
+                if (Math.abs(rawDx) + Math.abs(rawDy) > 3) dragMoved = true;
+                if (!historySaved && (rawDx || rawDy)) { saveHistory(); historySaved = true; }
+                // uwzględnienie obrotu siatki: przeciągany obiekt ma podążać za kursorem
+                const gr = (gridRotation * Math.PI) / 180;
+                const dx = (rawDx * Math.cos(gr) + rawDy * Math.sin(gr)) / currentZoom;
+                const dy = (-rawDx * Math.sin(gr) + rawDy * Math.cos(gr)) / currentZoom;
 
                 selectedIds.forEach(selId => {
                     const obj = objects.find(o => o.id === selId);
@@ -868,10 +1133,7 @@
                     }
                 });
 
-                const svgLayer = document.getElementById('dimensions-layer');
-                if (svgLayer && !svgLayer.classList.contains('hidden')) {
-                    updateDimensionsSVG();
-                }
+                scheduleOverlay();
             }
 
             function onPointerUp() {
@@ -884,6 +1146,7 @@
         }
 
         function selectObject(e, id) {
+            if (e && dragMoved) { dragMoved = false; return; } // po przeciągnięciu nie zmieniaj zaznaczenia grupy
             if (e && e.shiftKey) {
                 if (selectedIds.includes(id)) {
                     selectedIds = selectedIds.filter(i => i !== id);
@@ -909,7 +1172,10 @@
             if (panel.classList.contains('hidden')) return;
 
             const singleProps = document.getElementById('single-props');
+            const groupProps = document.getElementById('group-props');
             const titleEl = document.getElementById('prop-title');
+
+            if (groupProps) groupProps.classList.toggle('hidden', selectedIds.length < 2);
 
             if (selectedIds.length === 0) {
                 if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-sliders text-blue-600"></i> Inspektor obiektu`;
@@ -929,6 +1195,7 @@
                     const colorHexEl = document.getElementById('prop-color-hex');
                     const opacityEl = document.getElementById('prop-opacity');
                     const opacityValEl = document.getElementById('prop-opacity-val');
+                    const lockedEl = document.getElementById('prop-locked');
 
                     if (labelEl) labelEl.value = obj.name;
                     if (widthEl) widthEl.value = obj.w;
@@ -937,6 +1204,7 @@
                     if (rotValEl) rotValEl.innerText = `${obj.rotation}°`;
                     if (colorEl) colorEl.value = obj.color;
                     if (colorHexEl) colorHexEl.innerText = obj.color;
+                    if (lockedEl) lockedEl.checked = !!obj.locked;
                     
                     const currentOpacity = obj.opacity !== undefined ? obj.opacity : 1.0;
                     if (opacityEl) opacityEl.value = currentOpacity;
@@ -947,6 +1215,14 @@
                 if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-layer-group text-blue-600"></i> Zaznaczono (${selectedIds.length} szt.)`;
                 const labelEl = document.getElementById('prop-label');
                 if (labelEl) labelEl.value = `Grupa elementów (${selectedIds.length})`;
+                const first = objects.find(o => o.id === selectedIds[0]);
+                const gc = document.getElementById('group-color');
+                const go = document.getElementById('group-opacity');
+                const gov = document.getElementById('group-opacity-val');
+                if (first && gc) gc.value = first.color;
+                const op = first && first.opacity !== undefined ? first.opacity : 1.0;
+                if (go) go.value = op;
+                if (gov) gov.innerText = `${Math.round(op * 100)}%`;
             }
             updateLayerStructurePreview();
         }
@@ -955,6 +1231,7 @@
             if (selectedIds.length !== 1) return;
             const obj = objects.find(o => o.id === selectedIds[0]);
             if (!obj) return;
+            saveHistory('prop-' + obj.id);
             
             const labelEl = document.getElementById('prop-label');
             const widthEl = document.getElementById('prop-width');
@@ -996,6 +1273,7 @@
             if (selectedIds.length !== 1) return;
             const obj = objects.find(o => o.id === selectedIds[0]);
             if (!obj) return;
+            saveHistory();
             obj.rotation = deg;
             const rotEl = document.getElementById('prop-rotation');
             const rotValEl = document.getElementById('prop-rotation-val');
@@ -1009,6 +1287,7 @@
             const obj = objects.find(o => o.id === selectedIds[0]);
             if (!obj) return;
             
+            saveHistory();
             objects.sort((a, b) => a.zIndex - b.zIndex);
             const index = objects.findIndex(o => o.id === obj.id);
 
@@ -1043,19 +1322,20 @@
             const sorted = [...objects].sort((a, b) => b.zIndex - a.zIndex);
             listEl.innerHTML = sorted.map(o => `
                 <div onclick="selectObject(null, ${o.id})" class="flex justify-between items-center p-1.5 rounded cursor-pointer hover:bg-slate-100 ${selectedIds.includes(o.id) ? 'bg-blue-50 border border-blue-200 font-semibold' : ''}">
-                    <span class="truncate">${o.name}</span>
-                    <span class="text-[10px] font-mono text-slate-400">Z: ${o.zIndex}</span>
+                    <span class="truncate">${escapeHtml(o.name)}</span>
+                    <span class="text-[10px] font-mono text-slate-400">${o.locked ? '<i class="fa-solid fa-lock mr-1"></i>' : ''}Z: ${o.zIndex}</span>
                 </div>
             `).join('');
         }
 
         function duplicateSelected() {
             if (selectedIds.length === 0) return;
+            saveHistory();
             const newSelectedIds = [];
             selectedIds.forEach(id => {
                 const obj = objects.find(o => o.id === id);
                 if (obj) {
-                    const newObj = { ...obj, id: nextObjectId++, x: obj.x + 30, y: obj.y + 30, zIndex: objects.length + 1 };
+                    const newObj = { ...obj, id: nextObjectId++, x: obj.x + 30, y: obj.y + 30, zIndex: objects.length + 1, locked: false };
                     objects.push(newObj);
                     newSelectedIds.push(newObj.id);
                 }
@@ -1068,19 +1348,25 @@
 
         function deleteSelected() {
             if (selectedIds.length === 0) return;
-            objects = objects.filter(o => !selectedIds.includes(o.id));
+            const toDelete = selectedIds.filter(id => { const o = objects.find(x => x.id === id); return o && !o.locked; });
+            if (toDelete.length === 0) { showToast('Zaznaczone elementy są zablokowane — odblokuj je, aby usunąć.'); return; }
+            saveHistory();
+            objects = objects.filter(o => !toDelete.includes(o.id));
+            if (toDelete.length < selectedIds.length) showToast('Zablokowane elementy pozostały na planszy.');
             normalizeZIndices();
             deselectAll();
         }
 
         function adjustZoom(delta) {
-            currentZoom = Math.max(0.05, Math.min(60.0, currentZoom + delta));
-            applyTransforms();
+            const vp = document.getElementById('viewport');
+            const r = vp.getBoundingClientRect();
+            setZoomAt(currentZoom + delta, r.left + vp.clientWidth / 2, r.top + vp.clientHeight / 2);
         }
 
         function resetZoom() {
-            currentZoom = 1.0;
-            applyTransforms();
+            const vp = document.getElementById('viewport');
+            const r = vp.getBoundingClientRect();
+            setZoomAt(1.0, r.left + vp.clientWidth / 2, r.top + vp.clientHeight / 2);
         }
 
         function setGridRotation(val) {
@@ -1255,55 +1541,1216 @@
 
         function updateDimensionsSVG() {
             const contentGroup = document.getElementById('dimensions-content');
-            if (!contentGroup || objects.length === 0) return;
-            
+            if (!contentGroup) return;
+
+            // Napisy / pola tekstowe nie są elementami wyposażenia - pomijamy je w wymiarach CAD
+            const cadObjects = objects.filter(o => o.type !== 'text');
+            if (cadObjects.length === 0) {
+                contentGroup.innerHTML = '';
+                return;
+            }
+
+            // Style podane także jako atrybuty, dzięki czemu wymiary poprawnie renderują się w eksporcie PNG
+            const TXT = 'font-family="Segoe UI, monospace" font-size="11" font-weight="600" fill="#1e293b" text-anchor="middle"';
+            const TXT_BG = 'fill="rgba(255, 255, 255, 0.9)" rx="3"';
+            const DIM_LINE = 'stroke="#0067c0" stroke-width="1.5" stroke-dasharray="3 3"';
+            const labelW = (txt) => Math.ceil(txt.length * 6.8 + 14);
+
             let svgHTML = '';
-            const geometries = objects.map(obj => ({ obj, geom: getObjectGeometry(obj) }));
+            const geometries = cadObjects.map(obj => ({ obj, geom: getObjectGeometry(obj) }));
             const globalMinX = Math.min(...geometries.map(g => g.geom.minX));
             const globalMaxX = Math.max(...geometries.map(g => g.geom.maxX));
             const globalMinY = Math.min(...geometries.map(g => g.geom.minY));
             const globalMaxY = Math.max(...geometries.map(g => g.geom.maxY));
-            
+
             const totalWidthM = ((globalMaxX - globalMinX) / SCALE).toFixed(2);
             const totalHeightM = ((globalMaxY - globalMinY) / SCALE).toFixed(2);
+            const totalAreaM2 = (((globalMaxX - globalMinX) / SCALE) * ((globalMaxY - globalMinY) / SCALE)).toFixed(2);
 
-            svgHTML += `<rect x="${globalMinX}" y="${globalMinY}" width="${globalMaxX - globalMinX}" height="${globalMaxY - globalMinY}" class="dimension-boundary" />`;
-            
+            svgHTML += `<rect x="${globalMinX}" y="${globalMinY}" width="${globalMaxX - globalMinX}" height="${globalMaxY - globalMinY}" class="dimension-boundary" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4 4" />`;
+
+            const topTxt = `CAŁOŚĆ: ${totalWidthM}m`;
+            const topW = labelW(topTxt);
             const dimYTop = globalMinY - 25;
             svgHTML += `
-                <line x1="${globalMinX}" y1="${dimYTop}" x2="${globalMaxX}" y2="${dimYTop}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
+                <line x1="${globalMinX}" y1="${dimYTop}" x2="${globalMaxX}" y2="${dimYTop}" class="dimension-line" ${DIM_LINE} marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
                 <line x1="${globalMinX}" y1="${globalMinY}" x2="${globalMinX}" y2="${dimYTop - 5}" stroke="#0067c0" stroke-width="1" />
                 <line x1="${globalMaxX}" y1="${globalMinY}" x2="${globalMaxX}" y2="${dimYTop - 5}" stroke="#0067c0" stroke-width="1" />
-                <rect x="${(globalMinX + globalMaxX)/2 - 35}" y="${dimYTop - 11}" width="70" height="18" class="dimension-text-bg" />
-                <text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text">CAŁOŚĆ: ${totalWidthM}m</text>
+                <rect x="${(globalMinX + globalMaxX)/2 - topW/2}" y="${dimYTop - 11}" width="${topW}" height="18" class="dimension-text-bg" ${TXT_BG} />
+                <text x="${(globalMinX + globalMaxX)/2}" y="${dimYTop + 3}" class="dimension-text" ${TXT}>${topTxt}</text>
             `;
 
+            const sideTxt = `CAŁOŚĆ: ${totalHeightM}m`;
+            const sideW = labelW(sideTxt);
             const dimXLeft = globalMinX - 35;
             const centerY = (globalMinY + globalMaxY) / 2;
             svgHTML += `
-                <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
+                <line x1="${dimXLeft}" y1="${globalMinY}" x2="${dimXLeft}" y2="${globalMaxY}" class="dimension-line" ${DIM_LINE} marker-start="url(#dim-arrow)" marker-end="url(#dim-arrow)" />
                 <line x1="${globalMinX}" y1="${globalMinY}" x2="${dimXLeft - 5}" y2="${globalMinY}" stroke="#0067c0" stroke-width="1" />
                 <line x1="${globalMinX}" y1="${globalMaxY}" x2="${dimXLeft - 5}" y2="${globalMaxY}" stroke="#0067c0" stroke-width="1" />
                 <g transform="translate(${dimXLeft - 12}, ${centerY}) rotate(-90)">
-                    <rect x="-45" y="-9" width="90" height="18" class="dimension-text-bg" />
-                    <text x="0" y="4" class="dimension-text" text-anchor="middle">CAŁOŚĆ: ${totalHeightM}m</text>
+                    <rect x="${-sideW/2}" y="-9" width="${sideW}" height="18" class="dimension-text-bg" ${TXT_BG} />
+                    <text x="0" y="4" class="dimension-text" ${TXT}>${sideTxt}</text>
                 </g>
+            `;
+
+            // Powierzchnia całości (prostokąt obejmujący wszystkie elementy) w m²
+            const areaTxt = `POWIERZCHNIA: ${totalAreaM2} m²`;
+            const areaW = labelW(areaTxt);
+            const areaY = globalMaxY + 22;
+            svgHTML += `
+                <rect x="${(globalMinX + globalMaxX)/2 - areaW/2}" y="${areaY - 11}" width="${areaW}" height="18" class="dimension-text-bg" ${TXT_BG} />
+                <text x="${(globalMinX + globalMaxX)/2}" y="${areaY + 3}" class="dimension-text" ${TXT}>${areaTxt}</text>
             `;
 
             geometries.forEach(({ obj, geom }) => {
                 const wM = obj.w.toFixed(2);
                 const hM = obj.h.toFixed(2);
+                const aM2 = (obj.w * obj.h).toFixed(2);
+                const l1 = `${wM}×${hM}m`;
+                const l2 = `${aM2} m²`;
+                const bw = Math.max(56, Math.ceil(l1.length * 6.2 + 10));
                 svgHTML += `
                     <circle cx="${geom.cx}" cy="${geom.cy}" r="3" fill="#0067c0" />
-                    <rect x="${geom.cx - 28}" y="${geom.cy - 10}" width="56" height="20" rx="4" fill="rgba(30, 41, 59, 0.85)" />
-                    <text x="${geom.cx}" y="${geom.cy + 4}" fill="#ffffff" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">${wM}×${hM}m</text>
+                    <rect x="${geom.cx - bw/2}" y="${geom.cy - 10}" width="${bw}" height="31" rx="4" fill="rgba(30, 41, 59, 0.85)" />
+                    <text x="${geom.cx}" y="${geom.cy + 4}" fill="#ffffff" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">${l1}</text>
+                    <text x="${geom.cx}" y="${geom.cy + 16}" fill="#93c5fd" font-size="10" font-family="monospace" text-anchor="middle" font-weight="bold">${l2}</text>
                 `;
             });
             contentGroup.innerHTML = svgHTML;
         }
 
+        /* =====================================================================
+           ROZSZERZENIA: historia, skróty, grupa, wyrównywanie, blokada, zoom,
+           stoisko, linijka, kalibracja, przejścia, zestawienie, katalog własny,
+           warianty, projekty, eksport PDF
+           ===================================================================== */
+
+        const ORIGIN = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 }; // zgodne z transform-origin kontenera
+        let stand = null;            // { x, y (px), w, h (m) }
+        let rulers = [];             // { id, x1, y1, x2, y2 }
+        let nextRulerId = 1;
+        let variants = [{ name: 'Wariant 1', objects: [], stand: null, rulers: [] }];
+        let activeVariant = 0;
+        let customPresets = [];
+        let passageEnabled = false;
+        let passageMinCm = 90;
+        let activeTool = null;       // null | 'measure' | 'calibrate'
+        let toolPreview = null;
+        let calibPts = [];
+        let clipboardObjs = [];
+        let pasteCount = 0;
+        let currentProjectId = null;
+        let currentProjectName = 'Projekt stoiska';
+        let undoStack = [];
+        let redoStack = [];
+        let lastHistKey = null;
+        let lastHistTime = 0;
+        let overlayRaf = 0;
+        let toastTimer = null;
+
+        function selectedObjects() {
+            return objects.filter(o => selectedIds.includes(o.id));
+        }
+
+        function clamp(v, a, b) {
+            return Math.max(a, Math.min(b, v));
+        }
+
+        /* ---------- Komunikaty ---------- */
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.textContent = msg;
+            t.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.add('hidden'), 2800);
+        }
+
+        function setHint(msg) {
+            const h = document.getElementById('tool-hint');
+            if (!h) return;
+            if (msg) {
+                h.textContent = msg;
+                h.classList.remove('hidden');
+            } else {
+                h.classList.add('hidden');
+            }
+        }
+
+        /* ---------- Okno modalne ---------- */
+        function openModal(title, html) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').innerHTML = html;
+            const r = document.getElementById('modal-root');
+            r.classList.remove('hidden');
+            r.classList.add('flex');
+        }
+
+        function closeModal() {
+            const r = document.getElementById('modal-root');
+            r.classList.add('hidden');
+            r.classList.remove('flex');
+        }
+
+        /* ---------- Historia: cofnij / ponów ---------- */
+        function snapshotState() {
+            return JSON.stringify({ objects, stand, rulers });
+        }
+
+        function saveHistory(key) {
+            const now = Date.now();
+            if (key && key === lastHistKey && now - lastHistTime < 800) {
+                lastHistTime = now;
+                return;
+            }
+            undoStack.push(snapshotState());
+            if (undoStack.length > 100) undoStack.shift();
+            redoStack = [];
+            lastHistKey = key || null;
+            lastHistTime = now;
+            updateHistoryButtons();
+        }
+
+        function updateHistoryButtons() {
+            const u = document.getElementById('btn-undo');
+            const r = document.getElementById('btn-redo');
+            if (u) u.style.opacity = undoStack.length ? '1' : '0.4';
+            if (r) r.style.opacity = redoStack.length ? '1' : '0.4';
+        }
+
+        function restoreState(str) {
+            const d = JSON.parse(str);
+            objects = d.objects || [];
+            stand = d.stand || null;
+            rulers = d.rulers || [];
+            nextObjectId = Math.max(nextObjectId, ...objects.map(o => o.id + 1), 1);
+            nextRulerId = Math.max(nextRulerId, ...rulers.map(r => r.id + 1), 1);
+            selectedIds = selectedIds.filter(id => objects.some(o => o.id === id));
+            normalizeZIndices();
+            renderObjects();
+            updatePropertiesPanel();
+            syncStandInputs();
+        }
+
+        function undo() {
+            if (!undoStack.length) return;
+            redoStack.push(snapshotState());
+            restoreState(undoStack.pop());
+            lastHistKey = null;
+            updateHistoryButtons();
+        }
+
+        function redo() {
+            if (!redoStack.length) return;
+            undoStack.push(snapshotState());
+            restoreState(redoStack.pop());
+            lastHistKey = null;
+            updateHistoryButtons();
+        }
+
+        /* ---------- Współrzędne / zoom ---------- */
+        function clientToCanvas(cx, cy) {
+            const vp = document.getElementById('viewport');
+            const rect = vp.getBoundingClientRect();
+            const sx = vp.scrollLeft + (cx - rect.left);
+            const sy = vp.scrollTop + (cy - rect.top);
+            const dx = (sx - ORIGIN.x) / currentZoom;
+            const dy = (sy - ORIGIN.y) / currentZoom;
+            const r = (gridRotation * Math.PI) / 180;
+            return {
+                x: ORIGIN.x + dx * Math.cos(r) + dy * Math.sin(r),
+                y: ORIGIN.y - dx * Math.sin(r) + dy * Math.cos(r)
+            };
+        }
+
+        function canvasToContent(p, z) {
+            const zoom = z === undefined ? currentZoom : z;
+            const dx = p.x - ORIGIN.x;
+            const dy = p.y - ORIGIN.y;
+            const r = (gridRotation * Math.PI) / 180;
+            return {
+                x: ORIGIN.x + zoom * (dx * Math.cos(r) - dy * Math.sin(r)),
+                y: ORIGIN.y + zoom * (dx * Math.sin(r) + dy * Math.cos(r))
+            };
+        }
+
+        function applyZoomNoTransition() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.style.transition = 'none';
+            applyTransforms();
+            requestAnimationFrame(() => { wrapper.style.transition = ''; });
+        }
+
+        // Zoom z zachowaniem punktu pod kursorem (współrzędne klienta)
+        function setZoomAt(newZoom, cx, cy) {
+            const vp = document.getElementById('viewport');
+            const rect = vp.getBoundingClientRect();
+            const p = clientToCanvas(cx, cy);
+            currentZoom = clamp(newZoom, 0.05, 60.0);
+            applyZoomNoTransition();
+            const c = canvasToContent(p);
+            vp.scrollLeft = c.x - (cx - rect.left);
+            vp.scrollTop = c.y - (cy - rect.top);
+        }
+
+        function getContentBounds() {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            objects.forEach(o => {
+                const g = getObjectGeometry(o);
+                minX = Math.min(minX, g.minX); minY = Math.min(minY, g.minY);
+                maxX = Math.max(maxX, g.maxX); maxY = Math.max(maxY, g.maxY);
+            });
+            if (stand) {
+                minX = Math.min(minX, stand.x); minY = Math.min(minY, stand.y);
+                maxX = Math.max(maxX, stand.x + stand.w * SCALE); maxY = Math.max(maxY, stand.y + stand.h * SCALE);
+            }
+            if (minX === Infinity) return null;
+            return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+        }
+
+        function fitToScreen() {
+            const vp = document.getElementById('viewport');
+            const b = getContentBounds();
+            if (!b) { resetZoom(); centerViewport(); return; }
+            const r = (gridRotation * Math.PI) / 180;
+            const ew = Math.abs(b.width * Math.cos(r)) + Math.abs(b.height * Math.sin(r));
+            const eh = Math.abs(b.width * Math.sin(r)) + Math.abs(b.height * Math.cos(r));
+            const pad = 120;
+            currentZoom = clamp(Math.min(vp.clientWidth / (ew + pad * 2), vp.clientHeight / (eh + pad * 2)), 0.05, 4);
+            applyZoomNoTransition();
+            const c = canvasToContent({ x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2 });
+            vp.scrollLeft = c.x - vp.clientWidth / 2;
+            vp.scrollTop = c.y - vp.clientHeight / 2;
+        }
+
+        function snapPoint(p) {
+            const toggle = document.getElementById('snap-toggle');
+            if (toggle && toggle.checked) {
+                const step = (parseFloat(document.getElementById('snap-step').value) || 0.01) * SCALE;
+                return { x: Math.round(p.x / step) * step, y: Math.round(p.y / step) * step };
+            }
+            return { x: p.x, y: p.y };
+        }
+
+        /* ---------- Dodatkowe interakcje (narzędzia, kółko myszy) ---------- */
+        function initExtraInteractions() {
+            const viewport = document.getElementById('viewport');
+            let measureStart = null;
+
+            viewport.addEventListener('pointerdown', (e) => {
+                if (!activeTool || e.button !== 0) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const p = snapPoint(clientToCanvas(e.clientX, e.clientY));
+                if (activeTool === 'measure') {
+                    measureStart = p;
+                    toolPreview = { type: 'measure', x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+                    renderOverlay();
+                } else if (activeTool === 'calibrate') {
+                    handleCalibrationClick(p);
+                }
+            }, true);
+
+            window.addEventListener('pointermove', (e) => {
+                if (activeTool === 'measure' && measureStart) {
+                    const p = snapPoint(clientToCanvas(e.clientX, e.clientY));
+                    toolPreview = { type: 'measure', x1: measureStart.x, y1: measureStart.y, x2: p.x, y2: p.y };
+                    scheduleOverlay();
+                } else if (activeTool === 'calibrate' && calibPts.length === 1) {
+                    const p = snapPoint(clientToCanvas(e.clientX, e.clientY));
+                    toolPreview = { type: 'calib', x1: calibPts[0].x, y1: calibPts[0].y, x2: p.x, y2: p.y };
+                    scheduleOverlay();
+                }
+            });
+
+            window.addEventListener('pointerup', (e) => {
+                if (activeTool === 'measure' && measureStart) {
+                    const p = snapPoint(clientToCanvas(e.clientX, e.clientY));
+                    if (Math.hypot(p.x - measureStart.x, p.y - measureStart.y) >= 2) {
+                        saveHistory();
+                        rulers.push({ id: nextRulerId++, x1: measureStart.x, y1: measureStart.y, x2: p.x, y2: p.y });
+                    }
+                    measureStart = null;
+                    toolPreview = null;
+                    renderOverlay();
+                }
+            });
+
+            // Zoom: Ctrl/Cmd + kółko (także gest "pinch" na gładziku) oraz zwykłe kółko myszy z "kliknięciami".
+            // Przewijanie gładzikiem (płynne, małe wartości) nadal przesuwa widok jak dotychczas.
+            viewport.addEventListener('wheel', (e) => {
+                const mouseNotch = e.deltaX === 0 && e.deltaMode === 0 && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) >= 100;
+                if (!(e.ctrlKey || e.metaKey || mouseNotch || e.deltaMode === 1)) return;
+                e.preventDefault();
+                const k = (e.ctrlKey && Math.abs(e.deltaY) < 50) ? 0.01 : 0.0015;
+                setZoomAt(currentZoom * Math.exp(-e.deltaY * k), e.clientX, e.clientY);
+            }, { passive: false });
+        }
+
+        function setActiveTool(tool) {
+            activeTool = tool;
+            toolPreview = null;
+            calibPts = [];
+            const vp = document.getElementById('viewport');
+            if (vp) vp.style.cursor = tool ? 'crosshair' : 'default';
+            const btn = document.getElementById('btn-measure');
+            if (btn) {
+                btn.classList.toggle('ring-2', tool === 'measure');
+                btn.classList.toggle('ring-teal-500', tool === 'measure');
+            }
+            if (tool === 'measure') setHint('Linijka: przeciągnij na planszy, aby zmierzyć odległość. Esc — wyjście.');
+            else if (tool === 'calibrate') setHint('Kalibracja: kliknij pierwszy punkt o znanej odległości na rzucie. Esc — anuluj.');
+            else setHint('');
+            renderOverlay();
+        }
+
+        function cancelTool() {
+            setActiveTool(null);
+        }
+
+        function toggleMeasureTool() {
+            setActiveTool(activeTool === 'measure' ? null : 'measure');
+            // na telefonie inspektor zasłania planszę - chowamy go, aby można było mierzyć
+            if (activeTool === 'measure' && window.innerWidth < 768) {
+                const rp = document.getElementById('properties-panel');
+                if (rp) rp.classList.add('hidden');
+            }
+        }
+
+        function clearRulers() {
+            if (!rulers.length) return;
+            saveHistory();
+            rulers = [];
+            renderOverlay();
+        }
+
+        function removeRuler(id) {
+            saveHistory();
+            rulers = rulers.filter(r => r.id !== id);
+            renderOverlay();
+        }
+
+        /* ---------- Kalibracja tła ---------- */
+        function startCalibration() {
+            if (!bgConfig.url) { showToast('Najpierw wgraj plik tła.'); return; }
+            setActiveTool('calibrate');
+        }
+
+        function handleCalibrationClick(p) {
+            calibPts.push(p);
+            if (calibPts.length === 1) {
+                toolPreview = { type: 'calib', x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+                setHint('Kalibracja: kliknij drugi punkt. Esc — anuluj.');
+                renderOverlay();
+                return;
+            }
+            const a = calibPts[0];
+            const b = calibPts[1];
+            const dist = Math.hypot(b.x - a.x, b.y - a.y);
+            if (dist < 5) {
+                showToast('Punkty są zbyt blisko siebie — wskaż drugi punkt dalej.');
+                calibPts = [a];
+                return;
+            }
+            const current = (dist / SCALE).toFixed(2);
+            const ans = prompt(`Odległość między punktami na planszy wynosi teraz ${current} m.\nPodaj rzeczywistą odległość (w metrach):`, current);
+            const real = parseFloat(String(ans === null ? '' : ans).replace(',', '.'));
+            setActiveTool(null);
+            if (!(real > 0)) return;
+            applyBgCalibration(a, dist, real * SCALE);
+        }
+
+        function applyBgCalibration(A, measuredPx, realPx) {
+            const oldS = bgConfig.scale || 1;
+            const wanted = oldS * (realPx / measuredPx);
+            const newS = clamp(wanted, 0.1, 60);
+            const k = newS / oldS;
+            const ax = A.x - ORIGIN.x;
+            const ay = A.y - ORIGIN.y;
+            // pierwszy punkt zostaje w miejscu, reszta tła skaluje się względem niego
+            const nx = clamp(Math.round(ax - k * (ax - (bgConfig.x || 0))), -6000, 6000);
+            const ny = clamp(Math.round(ay - k * (ay - (bgConfig.y || 0))), -10000, 10000);
+            document.getElementById('bg-scale').value = newS;
+            document.getElementById('bg-x').value = nx;
+            document.getElementById('bg-y').value = ny;
+            updateBgSettings();
+            showToast(newS !== wanted ? 'Skala tła ograniczona do dopuszczalnego zakresu.' : 'Skala tła została skorygowana.');
+        }
+
+        /* ---------- Blokada, grupa, wyrównywanie ---------- */
+        function setLockSelected(flag) {
+            if (selectedIds.length === 0) return;
+            saveHistory();
+            selectedObjects().forEach(o => { o.locked = !!flag; });
+            renderObjects();
+            updatePropertiesPanel();
+        }
+
+        function setGroupColor(value) {
+            if (selectedIds.length < 2) return;
+            saveHistory('gcolor');
+            selectedObjects().forEach(o => { o.color = value; });
+            renderObjects();
+        }
+
+        function setGroupOpacity(value) {
+            if (selectedIds.length < 2) return;
+            saveHistory('gopacity');
+            const v = parseFloat(value);
+            selectedObjects().forEach(o => { o.opacity = v; });
+            const lbl = document.getElementById('group-opacity-val');
+            if (lbl) lbl.innerText = `${Math.round(v * 100)}%`;
+            renderObjects();
+        }
+
+        function rotateGroup(delta) {
+            const sel = selectedObjects().filter(o => !o.locked);
+            if (sel.length < 2) return;
+            saveHistory();
+            const cx = sel.reduce((a, o) => a + o.x + o.w * SCALE / 2, 0) / sel.length;
+            const cy = sel.reduce((a, o) => a + o.y + o.h * SCALE / 2, 0) / sel.length;
+            const rad = (delta * Math.PI) / 180;
+            const cos = Math.cos(rad);
+            const sin = Math.sin(rad);
+            sel.forEach(o => {
+                const ox = o.x + o.w * SCALE / 2 - cx;
+                const oy = o.y + o.h * SCALE / 2 - cy;
+                const nx = cx + ox * cos - oy * sin;
+                const ny = cy + ox * sin + oy * cos;
+                o.x = nx - o.w * SCALE / 2;
+                o.y = ny - o.h * SCALE / 2;
+                o.rotation = (((Math.round(o.rotation + delta)) % 360) + 360) % 360;
+            });
+            renderObjects();
+        }
+
+        function moveGroupLayer(where) {
+            if (selectedIds.length < 2) return;
+            saveHistory();
+            objects.sort((a, b) => a.zIndex - b.zIndex);
+            const chosen = objects.filter(o => selectedIds.includes(o.id));
+            const others = objects.filter(o => !selectedIds.includes(o.id));
+            objects = where === 'top' ? [...others, ...chosen] : [...chosen, ...others];
+            objects.forEach((o, i) => { o.zIndex = i + 1; });
+            renderObjects();
+        }
+
+        function alignSelected(mode) {
+            const sel = selectedObjects();
+            if (sel.length < 2) return;
+            saveHistory();
+            const geos = sel.map(o => ({ o, g: getObjectGeometry(o) }));
+            const minX = Math.min(...geos.map(x => x.g.minX));
+            const maxX = Math.max(...geos.map(x => x.g.maxX));
+            const minY = Math.min(...geos.map(x => x.g.minY));
+            const maxY = Math.max(...geos.map(x => x.g.maxY));
+            geos.forEach(({ o, g }) => {
+                if (o.locked) return;
+                let dx = 0, dy = 0;
+                if (mode === 'left') dx = minX - g.minX;
+                else if (mode === 'right') dx = maxX - g.maxX;
+                else if (mode === 'hcenter') dx = (minX + maxX) / 2 - (g.minX + g.maxX) / 2;
+                else if (mode === 'top') dy = minY - g.minY;
+                else if (mode === 'bottom') dy = maxY - g.maxY;
+                else if (mode === 'vcenter') dy = (minY + maxY) / 2 - (g.minY + g.maxY) / 2;
+                o.x += dx;
+                o.y += dy;
+            });
+            renderObjects();
+        }
+
+        function distributeSelected(axis) {
+            const sel = selectedObjects();
+            if (sel.length < 3) { showToast('Rozmieszczanie wymaga zaznaczenia min. 3 elementów.'); return; }
+            saveHistory();
+            const isX = axis === 'x';
+            const items = sel.map(o => ({ o, g: getObjectGeometry(o) }));
+            const lo = (it) => isX ? it.g.minX : it.g.minY;
+            const hi = (it) => isX ? it.g.maxX : it.g.maxY;
+            items.sort((a, b) => (lo(a) + hi(a)) - (lo(b) + hi(b)));
+            const start = lo(items[0]);
+            const end = hi(items[items.length - 1]);
+            const sizes = items.reduce((a, it) => a + (hi(it) - lo(it)), 0);
+            const gap = (end - start - sizes) / (items.length - 1);
+            let cursor = start;
+            items.forEach(it => {
+                const size = hi(it) - lo(it);
+                const delta = cursor - lo(it);
+                if (!it.o.locked) {
+                    if (isX) it.o.x += delta; else it.o.y += delta;
+                }
+                cursor += size + gap;
+            });
+            renderObjects();
+        }
+
+        function nudgeSelected(key, big) {
+            const targets = selectedObjects().filter(o => !o.locked);
+            if (!targets.length) { showToast('Zaznaczone elementy są zablokowane.'); return; }
+            saveHistory('arrow');
+            const snapOn = document.getElementById('snap-toggle').checked;
+            let step = snapOn ? (parseFloat(document.getElementById('snap-step').value) || 0.01) * SCALE : 1;
+            if (big) step *= 10;
+            let vx = key === 'ArrowLeft' ? -step : key === 'ArrowRight' ? step : 0;
+            let vy = key === 'ArrowUp' ? -step : key === 'ArrowDown' ? step : 0;
+            // kierunek zgodny z tym, co widać na ekranie (obrócona siatka)
+            const gr = (gridRotation * Math.PI) / 180;
+            const dx = vx * Math.cos(gr) + vy * Math.sin(gr);
+            const dy = -vx * Math.sin(gr) + vy * Math.cos(gr);
+            targets.forEach(o => { o.x += dx; o.y += dy; });
+            renderObjects();
+        }
+
+        function copySelected() {
+            const sel = selectedObjects();
+            if (!sel.length) return;
+            clipboardObjs = JSON.parse(JSON.stringify(sel));
+            pasteCount = 0;
+            showToast(`Skopiowano: ${sel.length} szt.`);
+        }
+
+        function pasteClipboard() {
+            if (!clipboardObjs.length) return;
+            saveHistory();
+            pasteCount++;
+            const ids = [];
+            clipboardObjs.forEach(o => {
+                const n = JSON.parse(JSON.stringify(o));
+                n.id = nextObjectId++;
+                n.x = o.x + 30 * pasteCount;
+                n.y = o.y + 30 * pasteCount;
+                n.zIndex = objects.length + 1;
+                n.locked = false;
+                objects.push(n);
+                ids.push(n.id);
+            });
+            selectedIds = ids;
+            normalizeZIndices();
+            renderObjects();
+            updatePropertiesPanel();
+        }
+
+        /* ---------- Stoisko (granica) ---------- */
+        function isOutsideStand(o, st) {
+            const g = getObjectGeometry(o);
+            const eps = 0.5;
+            return g.minX < st.x - eps || g.minY < st.y - eps ||
+                   g.maxX > st.x + st.w * SCALE + eps || g.maxY > st.y + st.h * SCALE + eps;
+        }
+
+        function computeStats(objs, st) {
+            const items = objs.filter(o => o.type !== 'text');
+            const occupied = items.reduce((a, o) => a + o.w * o.h, 0);
+            let bbox = 0, bw = 0, bh = 0;
+            if (items.length) {
+                const gs = items.map(getObjectGeometry);
+                bw = (Math.max(...gs.map(g => g.maxX)) - Math.min(...gs.map(g => g.minX))) / SCALE;
+                bh = (Math.max(...gs.map(g => g.maxY)) - Math.min(...gs.map(g => g.minY))) / SCALE;
+                bbox = bw * bh;
+            }
+            const standArea = st ? st.w * st.h : 0;
+            const outside = st ? items.filter(o => isOutsideStand(o, st)).length : 0;
+            return { count: items.length, occupied, bbox, bw, bh, standArea, fillPct: standArea ? occupied / standArea * 100 : 0, outside };
+        }
+
+        function setStand() {
+            const w = parseFloat(document.getElementById('stand-w').value);
+            const h = parseFloat(document.getElementById('stand-h').value);
+            if (!(w >= 0.5) || !(h >= 0.5)) { showToast('Podaj wymiary stoiska (min. 0,5 m).'); return; }
+            saveHistory();
+            if (stand) {
+                const cx = stand.x + stand.w * SCALE / 2;
+                const cy = stand.y + stand.h * SCALE / 2;
+                stand.w = w;
+                stand.h = h;
+                stand.x = Math.round(cx - w * SCALE / 2);
+                stand.y = Math.round(cy - h * SCALE / 2);
+            } else {
+                const b = getContentBounds();
+                const cx = b ? (b.minX + b.maxX) / 2 : CANVAS_WIDTH / 2;
+                const cy = b ? (b.minY + b.maxY) / 2 : CANVAS_HEIGHT / 2;
+                stand = { x: Math.round(cx - w * SCALE / 2), y: Math.round(cy - h * SCALE / 2), w, h };
+            }
+            renderOverlay();
+        }
+
+        function removeStand() {
+            if (!stand) return;
+            saveHistory();
+            stand = null;
+            renderOverlay();
+        }
+
+        function syncStandInputs() {
+            if (stand) {
+                const w = document.getElementById('stand-w');
+                const h = document.getElementById('stand-h');
+                if (w) w.value = stand.w;
+                if (h) h.value = stand.h;
+            }
+            updateStandStats();
+        }
+
+        function updateStandStats() {
+            const el = document.getElementById('stand-stats');
+            if (!el) return;
+            if (!stand) {
+                el.textContent = 'Granicę przesuniesz przeciągając jej fioletową etykietę.';
+                return;
+            }
+            const st = computeStats(objects, stand);
+            el.textContent = `Pow. stoiska: ${st.standArea.toFixed(2)} m² · zajęte: ${st.occupied.toFixed(2)} m² (${st.fillPct.toFixed(0)}%)` +
+                (st.outside ? ` · poza granicą: ${st.outside}` : '');
+        }
+
+        function startStandDrag(e) {
+            if (!stand || e.button !== 0) return;
+            e.stopPropagation();
+            e.preventDefault();
+            const sx = e.clientX, sy = e.clientY;
+            const ix = stand.x, iy = stand.y;
+            let saved = false;
+
+            function onMove(ev) {
+                const rawDx = ev.clientX - sx;
+                const rawDy = ev.clientY - sy;
+                if (!saved && (rawDx || rawDy)) { saveHistory(); saved = true; }
+                const gr = (gridRotation * Math.PI) / 180;
+                const dx = (rawDx * Math.cos(gr) + rawDy * Math.sin(gr)) / currentZoom;
+                const dy = (-rawDx * Math.sin(gr) + rawDy * Math.cos(gr)) / currentZoom;
+                let nx = ix + dx, ny = iy + dy;
+                if (document.getElementById('snap-toggle').checked) {
+                    const step = (parseFloat(document.getElementById('snap-step').value) || 0.01) * SCALE;
+                    nx = Math.round(nx / step) * step;
+                    ny = Math.round(ny / step) * step;
+                }
+                stand.x = nx;
+                stand.y = ny;
+                scheduleOverlay();
+            }
+            function onUp() {
+                window.removeEventListener('pointermove', onMove);
+                window.removeEventListener('pointerup', onUp);
+            }
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+        }
+
+        /* ---------- Analiza przejść ---------- */
+        function setPassage() {
+            passageEnabled = !!document.getElementById('passage-toggle').checked;
+            passageMinCm = clamp(parseFloat(document.getElementById('passage-min').value) || 90, 20, 500);
+            renderOverlay();
+        }
+
+        function syncPassageInputs() {
+            const t = document.getElementById('passage-toggle');
+            const m = document.getElementById('passage-min');
+            if (t) t.checked = passageEnabled;
+            if (m) m.value = passageMinCm;
+        }
+
+        function ptSegDist(p, a, b) {
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const l2 = dx * dx + dy * dy;
+            let t = l2 ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2 : 0;
+            t = Math.max(0, Math.min(1, t));
+            const q = { x: a.x + t * dx, y: a.y + t * dy };
+            return { d: Math.hypot(p.x - q.x, p.y - q.y), q };
+        }
+
+        function polysOverlap(A, B) {
+            for (const poly of [A, B]) {
+                for (let i = 0; i < poly.length; i++) {
+                    const a = poly[i], b = poly[(i + 1) % poly.length];
+                    const nx = -(b.y - a.y), ny = b.x - a.x;
+                    let minA = Infinity, maxA = -Infinity, minB = Infinity, maxB = -Infinity;
+                    A.forEach(p => { const v = p.x * nx + p.y * ny; minA = Math.min(minA, v); maxA = Math.max(maxA, v); });
+                    B.forEach(p => { const v = p.x * nx + p.y * ny; minB = Math.min(minB, v); maxB = Math.max(maxB, v); });
+                    if (maxA < minB || maxB < minA) return false;
+                }
+            }
+            return true;
+        }
+
+        function polyDistance(A, B) {
+            let best = { d: Infinity, p1: null, p2: null };
+            A.forEach(p => {
+                for (let i = 0; i < B.length; i++) {
+                    const r = ptSegDist(p, B[i], B[(i + 1) % B.length]);
+                    if (r.d < best.d) best = { d: r.d, p1: p, p2: r.q };
+                }
+            });
+            B.forEach(p => {
+                for (let i = 0; i < A.length; i++) {
+                    const r = ptSegDist(p, A[i], A[(i + 1) % A.length]);
+                    if (r.d < best.d) best = { d: r.d, p1: r.q, p2: p };
+                }
+            });
+            return best;
+        }
+
+        function computePassages() {
+            const items = objects.filter(o => o.type !== 'text').map(o => ({ o, g: getObjectGeometry(o) }));
+            const thr = passageMinCm;
+            const lo = 15; // węższe szczeliny to nie przejścia (elementy ustawione obok siebie)
+            const res = [];
+            for (let i = 0; i < items.length; i++) {
+                for (let j = i + 1; j < items.length; j++) {
+                    const a = items[i], b = items[j];
+                    const gx = Math.max(0, Math.max(a.g.minX, b.g.minX) - Math.min(a.g.maxX, b.g.maxX));
+                    const gy = Math.max(0, Math.max(a.g.minY, b.g.minY) - Math.min(a.g.maxY, b.g.maxY));
+                    if (Math.hypot(gx, gy) > thr) continue;
+                    if (polysOverlap(a.g.corners, b.g.corners)) continue;
+                    const r = polyDistance(a.g.corners, b.g.corners);
+                    if (r.d >= lo && r.d < thr) res.push(r);
+                    if (res.length >= 400) return res;
+                }
+            }
+            return res;
+        }
+
+        /* ---------- Warstwa nakładek (stoisko, przejścia, linijki) ---------- */
+        function refreshOverlays() {
+            const svgLayer = document.getElementById('dimensions-layer');
+            if (svgLayer && !svgLayer.classList.contains('hidden')) {
+                updateDimensionsSVG();
+            }
+            renderOverlay();
+        }
+
+        function scheduleOverlay() {
+            if (overlayRaf) return;
+            overlayRaf = requestAnimationFrame(() => {
+                overlayRaf = 0;
+                refreshOverlays();
+            });
+        }
+
+        function svgChip(x, y, text, bg, fg, drag) {
+            const w = Math.ceil(text.length * 6.6 + 16);
+            const attrs = drag ? 'style="cursor:move" pointer-events="all" onpointerdown="startStandDrag(event)"' : '';
+            return `<rect x="${x}" y="${y}" width="${w}" height="20" rx="4" fill="${bg}" ${attrs} />` +
+                   `<text x="${x + 8}" y="${y + 14}" font-family="Segoe UI, monospace" font-size="11" font-weight="600" fill="${fg}" ${attrs}>${text}</text>`;
+        }
+
+        function svgCenterChip(cx, cy, text, bg, fg) {
+            const w = Math.ceil(text.length * 6.6 + 14);
+            return `<rect x="${cx - w / 2}" y="${cy - 10}" width="${w}" height="20" rx="4" fill="${bg}" />` +
+                   `<text x="${cx}" y="${cy + 4}" font-family="Segoe UI, monospace" font-size="11" font-weight="700" fill="${fg}" text-anchor="middle">${text}</text>`;
+        }
+
+        function renderOverlay() {
+            const g = document.getElementById('overlay-content');
+            if (!g) return;
+            let h = '';
+
+            // Stoisko
+            if (stand) {
+                const sw = stand.w * SCALE, sh = stand.h * SCALE;
+                const st = computeStats(objects, stand);
+                h += `<rect x="${stand.x}" y="${stand.y}" width="${sw}" height="${sh}" fill="none" stroke="#7c3aed" stroke-width="2.5" />`;
+                objects.filter(o => o.type !== 'text' && isOutsideStand(o, stand)).forEach(o => {
+                    const pts = getObjectGeometry(o).corners.map(c => `${c.x},${c.y}`).join(' ');
+                    h += `<polygon points="${pts}" fill="rgba(220,38,38,0.10)" stroke="#dc2626" stroke-width="2" stroke-dasharray="5 3" />`;
+                });
+                const label = `STOISKO ${stand.w.toFixed(2)}×${stand.h.toFixed(2)} m = ${st.standArea.toFixed(2)} m² · zajęte ${st.fillPct.toFixed(0)}%`;
+                h += svgChip(stand.x, stand.y - 24, label, '#7c3aed', '#ffffff', true);
+                if (st.outside) {
+                    h += svgChip(stand.x, stand.y - 48, `⚠ poza stoiskiem: ${st.outside} elem.`, '#dc2626', '#ffffff', true);
+                }
+            }
+
+            // Wąskie przejścia
+            const pc = document.getElementById('passage-count');
+            if (passageEnabled) {
+                const list = computePassages();
+                list.forEach(r => {
+                    h += `<line x1="${r.p1.x}" y1="${r.p1.y}" x2="${r.p2.x}" y2="${r.p2.y}" stroke="#f59e0b" stroke-width="2" />` +
+                         `<circle cx="${r.p1.x}" cy="${r.p1.y}" r="2.5" fill="#f59e0b" /><circle cx="${r.p2.x}" cy="${r.p2.y}" r="2.5" fill="#f59e0b" />` +
+                         svgCenterChip((r.p1.x + r.p2.x) / 2, (r.p1.y + r.p2.y) / 2, `${Math.round(r.d)} cm`, 'rgba(245,158,11,0.95)', '#1e293b');
+                });
+                if (pc) pc.textContent = list.length ? `Wykryto wąskich przejść: ${list.length} (poniżej ${passageMinCm} cm).` : `Brak wąskich przejść poniżej ${passageMinCm} cm.`;
+            } else if (pc) {
+                pc.textContent = 'Szczeliny od 15 cm do wartości minimum są zaznaczane na pomarańczowo.';
+            }
+
+            // Linijki
+            rulers.forEach(r => {
+                const len = (Math.hypot(r.x2 - r.x1, r.y2 - r.y1) / SCALE).toFixed(2);
+                const mx = (r.x1 + r.x2) / 2, my = (r.y1 + r.y2) / 2;
+                const txt = `${len} m`;
+                const w = Math.ceil(txt.length * 6.6 + 14);
+                h += `<line x1="${r.x1}" y1="${r.y1}" x2="${r.x2}" y2="${r.y2}" stroke="#0f766e" stroke-width="1.5" />` +
+                     `<circle cx="${r.x1}" cy="${r.y1}" r="3" fill="#0f766e" /><circle cx="${r.x2}" cy="${r.y2}" r="3" fill="#0f766e" />` +
+                     svgCenterChip(mx, my, txt, '#0f766e', '#ffffff') +
+                     `<g class="no-export" pointer-events="all" style="cursor:pointer" onpointerdown="event.stopPropagation()" onclick="removeRuler(${r.id})">` +
+                     `<circle cx="${mx + w / 2 + 11}" cy="${my}" r="7" fill="#ffffff" stroke="#0f766e" stroke-width="1" />` +
+                     `<text x="${mx + w / 2 + 11}" y="${my + 4}" font-family="Segoe UI, monospace" font-size="11" font-weight="700" fill="#0f766e" text-anchor="middle">×</text></g>`;
+            });
+
+            // Podgląd narzędzia
+            if (toolPreview) {
+                const color = toolPreview.type === 'calib' ? '#d97706' : '#0f766e';
+                const len = (Math.hypot(toolPreview.x2 - toolPreview.x1, toolPreview.y2 - toolPreview.y1) / SCALE).toFixed(2);
+                h += `<line class="no-export" x1="${toolPreview.x1}" y1="${toolPreview.y1}" x2="${toolPreview.x2}" y2="${toolPreview.y2}" stroke="${color}" stroke-width="1.5" stroke-dasharray="4 3" />` +
+                     `<circle class="no-export" cx="${toolPreview.x1}" cy="${toolPreview.y1}" r="4" fill="${color}" />`;
+                if (len > 0) h += `<g class="no-export">${svgCenterChip((toolPreview.x1 + toolPreview.x2) / 2, (toolPreview.y1 + toolPreview.y2) / 2, `${len} m`, color, '#ffffff')}</g>`;
+            }
+
+            g.innerHTML = h;
+            updateStandStats();
+        }
+
+        /* ---------- Własny katalog ---------- */
+        function loadCustomPresets() {
+            try {
+                const raw = localStorage.getItem('cad_targi_custom_presets');
+                const arr = raw ? JSON.parse(raw) : [];
+                customPresets = Array.isArray(arr) ? arr.filter(p => p && p.name && p.w > 0 && p.h > 0) : [];
+            } catch (e) {
+                customPresets = [];
+            }
+        }
+
+        function persistCustomPresets() {
+            try {
+                localStorage.setItem('cad_targi_custom_presets', JSON.stringify(customPresets));
+            } catch (e) {
+                showToast('Nie udało się zapisać katalogu w przeglądarce.');
+            }
+        }
+
+        function renderCustomLibrary() {
+            const wrap = document.getElementById('custom-library-wrap');
+            const c = document.getElementById('custom-library');
+            if (!c || !wrap) return;
+            wrap.classList.toggle('hidden', customPresets.length === 0);
+            c.innerHTML = customPresets.map((p, i) => `
+                <div class="relative">
+                    <button onclick="addObjectFromCustom(${i})" class="w-full bg-white/70 hover:bg-blue-50 border border-slate-200/80 hover:border-blue-300 p-2.5 rounded-xl text-left transition flex flex-col justify-between group shadow-xs">
+                        <div class="flex justify-between items-center mb-1">
+                            <div class="w-6 h-6 rounded-lg shadow-xs border border-slate-200 flex items-center justify-center text-white" style="background-color: ${escapeHtml(p.color || '#475569')};">
+                                <i class="fa-solid fa-bookmark text-xs"></i>
+                            </div>
+                            <span class="text-[9px] font-mono text-slate-400 bg-white px-1 py-0.5 rounded">${p.w}x${p.h}m</span>
+                        </div>
+                        <span class="font-medium text-xs text-slate-700 group-hover:text-blue-700 truncate">${escapeHtml(p.name)}</span>
+                    </button>
+                    <button onclick="removeCustomPreset(${i})" class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-slate-300 hover:bg-red-500 text-white text-[10px] leading-none flex items-center justify-center" title="Usuń z katalogu">×</button>
+                </div>
+            `).join('');
+        }
+
+        function addCustomPreset(name, w, h, color) {
+            if (customPresets.some(p => p.name === name && p.w === w && p.h === h)) {
+                showToast('Taki element jest już w Twoim katalogu.');
+                return;
+            }
+            customPresets.push({ name, w, h, color });
+            persistCustomPresets();
+            renderCustomLibrary();
+            showToast('Zapisano w własnym katalogu.');
+        }
+
+        function saveCustomPresetFromForm() {
+            const w = parseFloat(document.getElementById('custom-w').value) || 1.0;
+            const h = parseFloat(document.getElementById('custom-h').value) || 1.0;
+            const name = document.getElementById('custom-name').value || 'Obiekt niestandardowy';
+            addCustomPreset(name, w, h, '#475569');
+        }
+
+        function saveCustomPresetFromSelected() {
+            if (selectedIds.length !== 1) return;
+            const o = objects.find(x => x.id === selectedIds[0]);
+            if (!o) return;
+            if (o.type === 'text') { showToast('Napisów nie zapisuje się w katalogu wyposażenia.'); return; }
+            addCustomPreset(o.name, o.w, o.h, o.color);
+        }
+
+        function addObjectFromCustom(i) {
+            const p = customPresets[i];
+            if (!p) return;
+            saveHistory();
+            const newObj = {
+                id: nextObjectId++,
+                name: p.name,
+                type: 'custom',
+                x: CANVAS_WIDTH / 2 - (p.w * SCALE) / 2,
+                y: CANVAS_HEIGHT / 2 - (p.h * SCALE) / 2,
+                w: p.w, h: p.h, rotation: 0, color: p.color || '#475569', opacity: 1.0, zIndex: objects.length + 1
+            };
+            objects.push(newObj);
+            normalizeZIndices();
+            renderObjects();
+            selectObject(null, newObj.id);
+        }
+
+        function removeCustomPreset(i) {
+            customPresets.splice(i, 1);
+            persistCustomPresets();
+            renderCustomLibrary();
+        }
+
+        /* ---------- Zestawienie wyposażenia ---------- */
+        function fmtM2(v) { return v.toFixed(2).replace('.', ','); }
+
+        function computeBom(objs) {
+            const map = new Map();
+            objs.filter(o => o.type !== 'text').forEach(o => {
+                const key = `${o.type}|${o.name}|${o.w}|${o.h}`;
+                if (!map.has(key)) map.set(key, { name: o.name, w: o.w, h: o.h, qty: 0, unit: o.w * o.h, color: o.color });
+                map.get(key).qty++;
+            });
+            const rows = [...map.values()];
+            rows.forEach(r => { r.total = r.qty * r.unit; });
+            rows.sort((a, b) => a.name.localeCompare(b.name, 'pl'));
+            return rows;
+        }
+
+        function openBomModal() {
+            const rows = computeBom(objects);
+            const st = computeStats(objects, stand);
+            const variantName = variants[activeVariant] ? variants[activeVariant].name : '';
+            let html = `<p class="mb-3 text-slate-500">Wariant: <b class="text-slate-700">${escapeHtml(variantName)}</b></p>`;
+            html += `<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                <div class="bg-white/80 border border-slate-200 rounded-lg p-2.5"><div class="text-[10px] text-slate-500">Elementów</div><div class="text-base font-bold text-slate-800">${st.count}</div></div>
+                <div class="bg-white/80 border border-slate-200 rounded-lg p-2.5"><div class="text-[10px] text-slate-500">Pow. zajęta</div><div class="text-base font-bold text-slate-800">${st.occupied.toFixed(2)} m²</div></div>
+                <div class="bg-white/80 border border-slate-200 rounded-lg p-2.5"><div class="text-[10px] text-slate-500">Obrys całości</div><div class="text-base font-bold text-slate-800">${st.bbox.toFixed(2)} m²</div></div>
+                <div class="bg-white/80 border border-slate-200 rounded-lg p-2.5"><div class="text-[10px] text-slate-500">${stand ? 'Stoisko / zajęte' : 'Stoisko'}</div><div class="text-base font-bold text-slate-800">${stand ? st.standArea.toFixed(2) + ' m² / ' + st.fillPct.toFixed(0) + '%' : 'brak'}</div></div>
+            </div>`;
+            if (stand && st.outside) {
+                html += `<p class="mb-3 text-red-600 font-medium">⚠ Elementów wystających poza stoisko: ${st.outside}</p>`;
+            }
+            if (!rows.length) {
+                html += `<p class="text-slate-500">Brak elementów wyposażenia na planszy.</p>`;
+            } else {
+                html += `<div class="overflow-x-auto border border-slate-200 rounded-lg"><table class="w-full text-left bg-white/80">
+                    <thead class="bg-slate-100 text-[10px] uppercase text-slate-500"><tr>
+                        <th class="px-3 py-2">Nazwa</th><th class="px-3 py-2">Wymiary [m]</th><th class="px-3 py-2 text-right">Szt.</th>
+                        <th class="px-3 py-2 text-right">Pow. jedn. [m²]</th><th class="px-3 py-2 text-right">Pow. łączna [m²]</th></tr></thead><tbody>`;
+                rows.forEach(r => {
+                    html += `<tr class="border-t border-slate-100"><td class="px-3 py-1.5"><span class="inline-block w-2.5 h-2.5 rounded-sm mr-2 align-middle" style="background:${escapeHtml(r.color)}"></span>${escapeHtml(r.name)}</td>
+                        <td class="px-3 py-1.5 font-mono">${r.w} × ${r.h}</td><td class="px-3 py-1.5 text-right font-mono">${r.qty}</td>
+                        <td class="px-3 py-1.5 text-right font-mono">${r.unit.toFixed(2)}</td><td class="px-3 py-1.5 text-right font-mono">${r.total.toFixed(2)}</td></tr>`;
+                });
+                html += `<tr class="border-t-2 border-slate-300 bg-slate-50 font-semibold"><td class="px-3 py-2" colspan="2">Razem</td>
+                    <td class="px-3 py-2 text-right font-mono">${st.count}</td><td class="px-3 py-2"></td><td class="px-3 py-2 text-right font-mono">${st.occupied.toFixed(2)}</td></tr>`;
+                html += `</tbody></table></div>`;
+            }
+            html += `<div class="flex gap-2 mt-4"><button onclick="downloadBomCsv()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"><i class="fa-solid fa-file-csv"></i> Pobierz CSV (Excel)</button></div>`;
+            openModal('Zestawienie wyposażenia i powierzchni', html);
+        }
+
+        function downloadBomCsv() {
+            const rows = computeBom(objects);
+            const st = computeStats(objects, stand);
+            const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+            const lines = [['Nazwa', 'Szerokość [m]', 'Długość [m]', 'Ilość [szt.]', 'Powierzchnia jedn. [m²]', 'Powierzchnia łączna [m²]'].map(q).join(';')];
+            rows.forEach(r => {
+                lines.push([q(r.name), String(r.w).replace('.', ','), String(r.h).replace('.', ','), r.qty, fmtM2(r.unit), fmtM2(r.total)].join(';'));
+            });
+            lines.push(['Razem', '', '', st.count, '', fmtM2(st.occupied)].map((v, i) => i === 0 ? q(v) : v).join(';'));
+            lines.push('');
+            lines.push([q('Obrys całości [m²]'), '', '', '', '', fmtM2(st.bbox)].join(';'));
+            if (stand) {
+                lines.push([q('Powierzchnia stoiska [m²]'), '', '', '', '', fmtM2(st.standArea)].join(';'));
+                lines.push([q('Zajęcie stoiska [%]'), '', '', '', '', st.fillPct.toFixed(1).replace('.', ',')].join(';'));
+            }
+            const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'zestawienie-wyposazenia.csv'; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        /* ---------- Warianty układu ---------- */
+        function syncActiveVariant() {
+            const v = variants[activeVariant];
+            if (!v) return;
+            v.objects = JSON.parse(JSON.stringify(objects));
+            v.stand = stand ? { ...stand } : null;
+            v.rulers = JSON.parse(JSON.stringify(rulers));
+        }
+
+        function loadVariantLive(i) {
+            const v = variants[i];
+            objects = JSON.parse(JSON.stringify(v.objects || []));
+            stand = v.stand ? { ...v.stand } : null;
+            rulers = JSON.parse(JSON.stringify(v.rulers || []));
+            normalizeZIndices();
+            selectedIds = [];
+        }
+
+        function resetHistory() {
+            undoStack = [];
+            redoStack = [];
+            lastHistKey = null;
+            updateHistoryButtons();
+        }
+
+        function renderVariantUI() {
+            const sel = document.getElementById('variant-select');
+            if (!sel) return;
+            sel.innerHTML = variants.map((v, i) => `<option value="${i}" ${i === activeVariant ? 'selected' : ''}>${escapeHtml(v.name)}</option>`).join('');
+        }
+
+        function switchVariant(i) {
+            if (isNaN(i) || i === activeVariant || !variants[i]) return;
+            syncActiveVariant();
+            activeVariant = i;
+            loadVariantLive(i);
+            resetHistory();
+            renderObjects();
+            updatePropertiesPanel();
+            syncStandInputs();
+            renderVariantUI();
+        }
+
+        function addVariant() {
+            syncActiveVariant();
+            const name = prompt('Nazwa nowego wariantu (kopia bieżącego układu):', `Wariant ${variants.length + 1}`);
+            if (name === null) return;
+            variants.push({
+                name: name.trim() || `Wariant ${variants.length + 1}`,
+                objects: JSON.parse(JSON.stringify(objects)),
+                stand: stand ? { ...stand } : null,
+                rulers: JSON.parse(JSON.stringify(rulers))
+            });
+            switchVariant(variants.length - 1);
+        }
+
+        function renameVariant() {
+            const v = variants[activeVariant];
+            const name = prompt('Nowa nazwa wariantu:', v.name);
+            if (name === null || !name.trim()) return;
+            v.name = name.trim();
+            renderVariantUI();
+        }
+
+        function deleteVariant() {
+            if (variants.length < 2) { showToast('Projekt musi mieć co najmniej jeden wariant.'); return; }
+            if (!confirm(`Usunąć wariant „${variants[activeVariant].name}”?`)) return;
+            variants.splice(activeVariant, 1);
+            activeVariant = Math.min(activeVariant, variants.length - 1);
+            loadVariantLive(activeVariant);
+            resetHistory();
+            renderObjects();
+            updatePropertiesPanel();
+            syncStandInputs();
+            renderVariantUI();
+        }
+
+        function openVariantsCompare() {
+            syncActiveVariant();
+            let html = `<div class="overflow-x-auto border border-slate-200 rounded-lg"><table class="w-full text-left bg-white/80">
+                <thead class="bg-slate-100 text-[10px] uppercase text-slate-500"><tr>
+                <th class="px-3 py-2">Wariant</th><th class="px-3 py-2 text-right">Elementów</th><th class="px-3 py-2 text-right">Pow. zajęta [m²]</th>
+                <th class="px-3 py-2 text-right">Obrys [m²]</th><th class="px-3 py-2 text-right">Stoisko [m²]</th><th class="px-3 py-2 text-right">Zajęcie</th><th class="px-3 py-2 text-right">Poza granicą</th><th class="px-3 py-2"></th></tr></thead><tbody>`;
+            variants.forEach((v, i) => {
+                const st = computeStats(v.objects || [], v.stand);
+                html += `<tr class="border-t border-slate-100 ${i === activeVariant ? 'bg-blue-50' : ''}">
+                    <td class="px-3 py-1.5 font-medium">${escapeHtml(v.name)}${i === activeVariant ? ' <span class="text-[10px] text-blue-600">(aktywny)</span>' : ''}</td>
+                    <td class="px-3 py-1.5 text-right font-mono">${st.count}</td><td class="px-3 py-1.5 text-right font-mono">${st.occupied.toFixed(2)}</td>
+                    <td class="px-3 py-1.5 text-right font-mono">${st.bbox.toFixed(2)}</td>
+                    <td class="px-3 py-1.5 text-right font-mono">${v.stand ? st.standArea.toFixed(2) : '—'}</td>
+                    <td class="px-3 py-1.5 text-right font-mono">${v.stand ? st.fillPct.toFixed(0) + '%' : '—'}</td>
+                    <td class="px-3 py-1.5 text-right font-mono ${st.outside ? 'text-red-600 font-semibold' : ''}">${v.stand ? st.outside : '—'}</td>
+                    <td class="px-3 py-1.5 text-right">${i === activeVariant ? '' : `<button onclick="switchVariant(${i}); closeModal();" class="text-blue-600 hover:underline">Przełącz</button>`}</td></tr>`;
+            });
+            html += `</tbody></table></div>`;
+            openModal('Porównanie wariantów', html);
+        }
+
+        /* ---------- Dane projektu (JSON, autozapis, projekty) ---------- */
+        function getProjectData() {
+            syncActiveVariant();
+            return {
+                version: 2,
+                name: currentProjectName,
+                objects,
+                bgConfig,
+                stand,
+                rulers,
+                variants,
+                activeVariant,
+                passage: { enabled: passageEnabled, min: passageMinCm }
+            };
+        }
+
+        function applyBgConfig(cfg) {
+            const img = document.getElementById('bg-image');
+            const bgControls = document.getElementById('bg-controls');
+            if (cfg && cfg.url) {
+                bgConfig = {
+                    url: cfg.url,
+                    opacity: cfg.opacity !== undefined ? cfg.opacity : 0.5,
+                    scale: cfg.scale !== undefined ? cfg.scale : 1,
+                    rotation: cfg.rotation || 0,
+                    x: cfg.x || 0,
+                    y: cfg.y || 0
+                };
+                if (img) { img.src = bgConfig.url; img.classList.remove('hidden'); }
+                if (bgControls) bgControls.classList.remove('hidden');
+                const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+                set('bg-opacity', bgConfig.opacity);
+                set('bg-scale', bgConfig.scale);
+                set('bg-rotation', bgConfig.rotation);
+                set('bg-x', bgConfig.x);
+                set('bg-y', bgConfig.y);
+                updateBgSettings();
+            } else {
+                removeBackground();
+            }
+        }
+
+        function applyProjectData(data) {
+            if (!data || typeof data !== 'object' || (!Array.isArray(data.objects) && !Array.isArray(data.variants))) {
+                throw new Error('Nieprawidłowy plik projektu');
+            }
+            if (Array.isArray(data.variants) && data.variants.length) {
+                variants = data.variants.map((v, i) => ({
+                    name: (v && v.name) || `Wariant ${i + 1}`,
+                    objects: Array.isArray(v && v.objects) ? v.objects : [],
+                    stand: (v && v.stand) || null,
+                    rulers: Array.isArray(v && v.rulers) ? v.rulers : []
+                }));
+                activeVariant = clamp(parseInt(data.activeVariant) || 0, 0, variants.length - 1);
+            } else {
+                variants = [{
+                    name: 'Wariant 1',
+                    objects: data.objects,
+                    stand: data.stand || null,
+                    rulers: Array.isArray(data.rulers) ? data.rulers : []
+                }];
+                activeVariant = 0;
+            }
+            loadVariantLive(activeVariant);
+            let maxId = 0, maxRuler = 0;
+            variants.forEach(v => {
+                (v.objects || []).forEach(o => { maxId = Math.max(maxId, o.id || 0); });
+                (v.rulers || []).forEach(r => { maxRuler = Math.max(maxRuler, r.id || 0); });
+            });
+            nextObjectId = Math.max(nextObjectId, maxId + 1);
+            nextRulerId = Math.max(nextRulerId, maxRuler + 1);
+
+            applyBgConfig(data.bgConfig);
+
+            if (data.passage) {
+                passageEnabled = !!data.passage.enabled;
+                passageMinCm = clamp(parseFloat(data.passage.min) || 90, 20, 500);
+            }
+            if (data.name) currentProjectName = data.name;
+            syncPassageInputs();
+            renderVariantUI();
+            deselectAll();
+            renderObjects();
+            syncStandInputs();
+        }
+
         function saveProjectJSON() {
-            const data = { objects, bgConfig };
+            const data = getProjectData();
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1318,45 +2765,23 @@
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (data.objects) {
-                        objects = data.objects;
-                        nextObjectId = Math.max(...objects.map(o => o.id), 0) + 1;
-                        normalizeZIndices();
-                    }
-                    if (data.bgConfig) {
-                        bgConfig = data.bgConfig;
-                        if (bgConfig.url) {
-                            const img = document.getElementById('bg-image');
-                            img.src = bgConfig.url;
-                            img.classList.remove('hidden');
-                            const bgControls = document.getElementById('bg-controls');
-                            if (bgControls) bgControls.classList.remove('hidden');
-                            const opacityEl = document.getElementById('bg-opacity');
-                            const scaleEl = document.getElementById('bg-scale');
-                            const rotationEl = document.getElementById('bg-rotation');
-                            const xEl = document.getElementById('bg-x');
-                            const yEl = document.getElementById('bg-y');
-
-                            if (opacityEl) opacityEl.value = bgConfig.opacity;
-                            if (scaleEl) scaleEl.value = bgConfig.scale;
-                            if (rotationEl) rotationEl.value = bgConfig.rotation;
-                            if (xEl) xEl.value = bgConfig.x;
-                            if (yEl) yEl.value = bgConfig.y;
-                            updateBgSettings();
-                        }
-                    }
-                    deselectAll();
-                    renderObjects();
+                    applyProjectData(data);
+                    currentProjectId = null;
+                    resetHistory();
                 } catch (err) {
                     alert('Błąd odczytu pliku JSON projektu!');
                 }
+                event.target.value = '';
             };
             reader.readAsText(file);
         }
 
         function autoSaveLocalStorage() {
-            const data = { objects, bgConfig };
-            localStorage.setItem('cad_targi_autosave', JSON.stringify(data));
+            try {
+                localStorage.setItem('cad_targi_autosave', JSON.stringify(getProjectData()));
+            } catch (err) {
+                console.warn('Autozapis nieudany (np. zbyt duże tło):', err);
+            }
         }
 
         function loadFromLocalStorage() {
@@ -1364,32 +2789,11 @@
                 const saved = localStorage.getItem('cad_targi_autosave');
                 if (saved) {
                     const data = JSON.parse(saved);
-                    if (data.objects && data.objects.length > 0) {
-                        objects = data.objects;
-                        nextObjectId = Math.max(...objects.map(o => o.id), 0) + 1;
-                        normalizeZIndices();
-                    }
-                    if (data.bgConfig && data.bgConfig.url) {
-                        bgConfig = data.bgConfig;
-                        const img = document.getElementById('bg-image');
-                        if (img) {
-                            img.src = bgConfig.url;
-                            img.classList.remove('hidden');
-                        }
-                        const bgControls = document.getElementById('bg-controls');
-                        if (bgControls) bgControls.classList.remove('hidden');
-                        const opacityEl = document.getElementById('bg-opacity');
-                        const scaleEl = document.getElementById('bg-scale');
-                        const rotationEl = document.getElementById('bg-rotation');
-                        const xEl = document.getElementById('bg-x');
-                        const yEl = document.getElementById('bg-y');
-
-                        if (opacityEl) opacityEl.value = bgConfig.opacity;
-                        if (scaleEl) scaleEl.value = bgConfig.scale;
-                        if (rotationEl) rotationEl.value = bgConfig.rotation;
-                        if (xEl) xEl.value = bgConfig.x;
-                        if (yEl) yEl.value = bgConfig.y;
-                        updateBgSettings();
+                    const hasObjects = Array.isArray(data.objects) && data.objects.length > 0;
+                    const hasVariantObjects = Array.isArray(data.variants) && data.variants.some(v => v && Array.isArray(v.objects) && v.objects.length > 0);
+                    const hasBg = !!(data.bgConfig && data.bgConfig.url);
+                    if (hasObjects || hasVariantObjects || hasBg || data.stand) {
+                        applyProjectData(data);
                     }
                 }
             } catch(e) {
@@ -1397,19 +2801,145 @@
             }
         }
 
-        function exportToPNG() {
-            deselectAll();
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            
-            if (objects.length > 0) {
-                objects.forEach(obj => {
-                    const geom = getObjectGeometry(obj);
-                    minX = Math.min(minX, geom.minX);
-                    minY = Math.min(minY, geom.minY);
-                    maxX = Math.max(maxX, geom.maxX);
-                    maxY = Math.max(maxY, geom.maxY);
-                });
+        /* ---------- Projekty w przeglądarce (IndexedDB) ---------- */
+        function openDb() {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) { reject(new Error('Brak IndexedDB')); return; }
+                const req = indexedDB.open('cad_targi_db', 1);
+                req.onupgradeneeded = () => { req.result.createObjectStore('projects', { keyPath: 'id' }); };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function dbTx(mode, fn) {
+            return openDb().then(db => new Promise((resolve, reject) => {
+                const tx = db.transaction('projects', mode);
+                const req = fn(tx.objectStore('projects'));
+                tx.oncomplete = () => { db.close(); resolve(req ? req.result : undefined); };
+                tx.onerror = () => { db.close(); reject(tx.error); };
+                tx.onabort = () => { db.close(); reject(tx.error); };
+            }));
+        }
+
+        async function openProjectsModal() {
+            openModal('Projekty zapisane w tej przeglądarce', '<p class="text-slate-500">Wczytywanie…</p>');
+            await refreshProjectsModal();
+        }
+
+        async function refreshProjectsModal() {
+            const body = document.getElementById('modal-body');
+            let list = [];
+            try {
+                list = await dbTx('readonly', st => st.getAll());
+            } catch (e) {
+                body.innerHTML = '<p class="text-red-600">Pamięć projektów jest niedostępna w tej przeglądarce (np. tryb prywatny). Użyj przycisku „Zapisz” (plik JSON).</p>';
+                return;
             }
+            list.sort((a, b) => b.updated - a.updated);
+            let html = `<div class="flex gap-2 mb-4">
+                <input type="text" id="project-name-input" value="${escapeHtml(currentProjectName)}" placeholder="Nazwa projektu" class="flex-1 text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="saveProjectNew()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-1.5 rounded-lg font-medium transition">Zapisz jako nowy</button>
+            </div>`;
+            if (!list.length) {
+                html += '<p class="text-slate-500">Brak zapisanych projektów.</p>';
+            } else {
+                html += '<div class="space-y-2">';
+                list.forEach(r => {
+                    const nObjs = (r.data && Array.isArray(r.data.variants)) ? r.data.variants.reduce((a, v) => a + ((v.objects || []).length), 0) : ((r.data && r.data.objects) ? r.data.objects.length : 0);
+                    const nVar = (r.data && Array.isArray(r.data.variants)) ? r.data.variants.length : 1;
+                    html += `<div class="flex items-center justify-between gap-2 bg-white/80 border ${r.id === currentProjectId ? 'border-blue-400' : 'border-slate-200'} rounded-lg px-3 py-2">
+                        <div class="min-w-0">
+                            <div class="font-semibold text-slate-800 truncate">${escapeHtml(r.name)}${r.id === currentProjectId ? ' <span class="text-[10px] text-blue-600">(bieżący)</span>' : ''}</div>
+                            <div class="text-[10px] text-slate-500">${new Date(r.updated).toLocaleString('pl-PL')} · wariantów: ${nVar} · elementów: ${nObjs}</div>
+                        </div>
+                        <div class="flex gap-1.5 shrink-0">
+                            <button onclick="loadProjectById('${r.id}')" class="bg-white border border-slate-200 hover:bg-slate-100 px-2.5 py-1 rounded-lg font-medium">Otwórz</button>
+                            <button onclick="overwriteProject('${r.id}')" class="bg-white border border-slate-200 hover:bg-slate-100 px-2.5 py-1 rounded-lg font-medium">Nadpisz</button>
+                            <button onclick="deleteProjectById('${r.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded-lg font-medium">Usuń</button>
+                        </div></div>`;
+                });
+                html += '</div>';
+            }
+            body.innerHTML = html;
+        }
+
+        async function saveProjectNew() {
+            const input = document.getElementById('project-name-input');
+            const name = (input && input.value.trim()) || 'Projekt stoiska';
+            currentProjectName = name;
+            const rec = { id: 'p' + Date.now(), name, updated: Date.now(), data: JSON.parse(JSON.stringify(getProjectData())) };
+            try {
+                await dbTx('readwrite', st => st.put(rec));
+                currentProjectId = rec.id;
+                showToast('Projekt zapisany.');
+            } catch (e) {
+                showToast('Nie udało się zapisać projektu (zbyt duży plik tła?).');
+            }
+            await refreshProjectsModal();
+        }
+
+        async function overwriteProject(id) {
+            if (!confirm('Nadpisać zapisany projekt bieżącym układem?')) return;
+            try {
+                const old = await dbTx('readonly', st => st.get(id));
+                const rec = { id, name: old ? old.name : currentProjectName, updated: Date.now(), data: JSON.parse(JSON.stringify(getProjectData())) };
+                await dbTx('readwrite', st => st.put(rec));
+                currentProjectId = id;
+                currentProjectName = rec.name;
+                showToast('Projekt zaktualizowany.');
+            } catch (e) {
+                showToast('Nie udało się zapisać projektu.');
+            }
+            await refreshProjectsModal();
+        }
+
+        async function loadProjectById(id) {
+            try {
+                const rec = await dbTx('readonly', st => st.get(id));
+                if (!rec) return;
+                if (!confirm(`Otworzyć projekt „${rec.name}”? Bieżący, niezapisany układ zostanie zastąpiony.`)) return;
+                currentProjectName = rec.name;
+                applyProjectData(rec.data);
+                currentProjectName = rec.name;
+                currentProjectId = id;
+                resetHistory();
+                closeModal();
+            } catch (e) {
+                showToast('Nie udało się otworzyć projektu.');
+            }
+        }
+
+        async function deleteProjectById(id) {
+            if (!confirm('Usunąć zapisany projekt?')) return;
+            try {
+                await dbTx('readwrite', st => st.delete(id));
+                if (currentProjectId === id) currentProjectId = null;
+            } catch (e) {
+                showToast('Nie udało się usunąć projektu.');
+            }
+            await refreshProjectsModal();
+        }
+
+        /* ---------- Eksport: wspólne funkcje ---------- */
+        function getExportBounds() {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+            objects.forEach(obj => {
+                const geom = getObjectGeometry(obj);
+                minX = Math.min(minX, geom.minX);
+                minY = Math.min(minY, geom.minY);
+                maxX = Math.max(maxX, geom.maxX);
+                maxY = Math.max(maxY, geom.maxY);
+            });
+            if (stand) {
+                minX = Math.min(minX, stand.x); minY = Math.min(minY, stand.y);
+                maxX = Math.max(maxX, stand.x + stand.w * SCALE); maxY = Math.max(maxY, stand.y + stand.h * SCALE);
+            }
+            rulers.forEach(r => {
+                minX = Math.min(minX, r.x1, r.x2); maxX = Math.max(maxX, r.x1, r.x2);
+                minY = Math.min(minY, r.y1, r.y2); maxY = Math.max(maxY, r.y1, r.y2);
+            });
 
             const bgImgElement = document.getElementById('bg-image');
             if (bgImgElement && !bgImgElement.classList.contains('hidden') && bgImgElement.naturalWidth) {
@@ -1423,53 +2953,327 @@
                 maxY = Math.max(maxY, bgCenterY + (bgH / 2));
             }
 
-            if (minX === Infinity) {
-                alert('Brak elementów lub tła do wyeksportowania!');
-                return;
-            }
+            if (minX === Infinity) return null;
 
             const padding = 150;
             minX = Math.max(0, minX - padding);
             minY = Math.max(0, minY - padding);
             maxX = Math.min(CANVAS_WIDTH, maxX + padding);
             maxY = Math.min(CANVAS_HEIGHT, maxY + padding);
-
-            const exportWidth = maxX - minX;
-            const exportHeight = maxY - minY;
-
-            const gridBg = document.getElementById('grid-bg');
-            const subgridBg = document.getElementById('subgrid-bg');
-            if (gridBg) gridBg.style.backgroundImage = 'none';
-            if (subgridBg) subgridBg.style.backgroundImage = 'none';
-
-            const wrapper = document.getElementById('canvas-wrapper');
-            const originalTransform = wrapper.style.transform;
-            wrapper.style.transform = 'scale(1) rotate(0deg)';
-
-            setTimeout(() => {
-                html2canvas(wrapper, {
-                    x: minX, y: minY,
-                    width: exportWidth, height: exportHeight,
-                    scale: 3,
-                    useCORS: true,
-                    backgroundColor: '#ffffff'
-                }).then(canvas => {
-                    if (gridBg) gridBg.style.backgroundImage = '';
-                    if (subgridBg) subgridBg.style.backgroundImage = '';
-                    wrapper.style.transform = originalTransform;
-                    
-                    const a = document.createElement('a');
-                    a.href = canvas.toDataURL('image/png');
-                    a.download = 'rzut-stoiska-hd.png';
-                    a.click();
-                }).catch(err => {
-                    if (gridBg) gridBg.style.backgroundImage = '';
-                    if (subgridBg) subgridBg.style.backgroundImage = '';
-                    wrapper.style.transform = originalTransform;
-                    alert('Błąd podczas generowania pliku PNG.');
-                });
-            }, 150);
+            return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
         }
+
+        function safeExportScale(b, wanted) {
+            return Math.max(0.5, Math.min(wanted, 12000 / Math.max(b.width, b.height), Math.sqrt(80e6 / (b.width * b.height))));
+        }
+
+        function captureDrawing(b, scale) {
+            return new Promise((resolve, reject) => {
+                const gridBg = document.getElementById('grid-bg');
+                const subgridBg = document.getElementById('subgrid-bg');
+                if (gridBg) gridBg.style.backgroundImage = 'none';
+                if (subgridBg) subgridBg.style.backgroundImage = 'none';
+
+                const wrapper = document.getElementById('canvas-wrapper');
+                const originalTransform = wrapper.style.transform;
+                wrapper.style.transform = 'scale(1) rotate(0deg)';
+
+                const restore = () => {
+                    if (gridBg) gridBg.style.backgroundImage = '';
+                    if (subgridBg) subgridBg.style.backgroundImage = '';
+                    wrapper.style.transform = originalTransform;
+                };
+
+                setTimeout(() => {
+                    html2canvas(wrapper, {
+                        x: b.minX, y: b.minY,
+                        width: b.width, height: b.height,
+                        scale: scale,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        onclone: (clonedDoc) => prepareCloneForExport(clonedDoc, b.minX, b.minY, b.width, b.height)
+                    }).then(canvas => {
+                        restore();
+                        resolve(canvas);
+                    }).catch(err => {
+                        restore();
+                        reject(err);
+                    });
+                }, 150);
+            });
+        }
+
+        // Poprawa czytelności etykiet wyłącznie w kopii przeznaczonej do eksportu (widok na ekranie bez zmian)
+        function prepareCloneForExport(doc, minX, minY, w, h) {
+            const byId = (id) => objects.find(o => `obj-${o.id}` === id);
+
+            doc.querySelectorAll('.no-export').forEach(el => el.remove());
+
+            doc.querySelectorAll('.booth-object').forEach(el => {
+                const obj = byId(el.id);
+                const inner = el.firstElementChild;
+                if (!obj || !inner) return;
+
+                if (obj.type === 'text') {
+                    inner.classList.remove('truncate');
+                    inner.style.whiteSpace = 'nowrap';
+                    inner.style.overflow = 'visible';
+                    inner.style.textOverflow = 'clip';
+                } else {
+                    const spans = inner.querySelectorAll('span');
+                    const nameEl = spans[0], dimEl = spans[1];
+                    if (!nameEl) return;
+                    nameEl.classList.remove('truncate');
+                    nameEl.style.whiteSpace = 'normal';
+                    nameEl.style.overflow = 'visible';
+                    nameEl.style.textOverflow = 'clip';
+                    nameEl.style.overflowWrap = 'anywhere';
+                    nameEl.style.lineHeight = '1.1';
+                    if (dimEl) { dimEl.style.whiteSpace = 'nowrap'; dimEl.style.lineHeight = '1.1'; }
+                    inner.style.padding = '1px';
+
+                    // dopasowanie czcionki tak, aby etykieta mieściła się w obiekcie
+                    let f = 12;
+                    const apply = () => {
+                        nameEl.style.fontSize = f + 'px';
+                        if (dimEl) dimEl.style.fontSize = (f * 0.8) + 'px';
+                    };
+                    apply();
+                    while (f > 3 && (inner.scrollHeight > inner.clientHeight + 0.5 || inner.scrollWidth > inner.clientWidth + 0.5 ||
+                           nameEl.scrollWidth > nameEl.clientWidth + 0.5 || (dimEl && dimEl.scrollWidth > dimEl.clientWidth + 0.5))) {
+                        f -= 0.5;
+                        apply();
+                    }
+                }
+
+                // etykiety obiektów obróconych "do góry nogami" odwracamy, aby były czytelne
+                const rot = ((obj.rotation % 360) + 360) % 360;
+                if (rot > 90 && rot < 270) inner.style.transform = 'rotate(180deg)';
+            });
+
+            // Warstwy SVG: ograniczenie do eksportowanego obszaru (zamiast 20000x12000 px)
+            ['dimensions-layer', 'overlay-layer'].forEach(id => {
+                const svg = doc.getElementById(id);
+                if (svg && !svg.classList.contains('hidden')) {
+                    svg.setAttribute('viewBox', `${minX} ${minY} ${w} ${h}`);
+                    svg.setAttribute('width', w);
+                    svg.setAttribute('height', h);
+                    svg.style.left = minX + 'px';
+                    svg.style.top = minY + 'px';
+                    svg.style.width = w + 'px';
+                    svg.style.height = h + 'px';
+                }
+            });
+        }
+
+        function exportToPNG() {
+            deselectAll();
+            const b = getExportBounds();
+            if (!b) {
+                alert('Brak elementów lub tła do wyeksportowania!');
+                return;
+            }
+            captureDrawing(b, safeExportScale(b, 4)).then(canvas => {
+                const a = document.createElement('a');
+                a.href = canvas.toDataURL('image/png');
+                a.download = 'rzut-stoiska-hd.png';
+                a.click();
+            }).catch(() => {
+                alert('Błąd podczas generowania pliku PNG.');
+            });
+        }
+
+        /* ---------- Eksport do PDF ---------- */
+        function openPdfModal() {
+            const lbl = 'block text-[10px] font-medium text-slate-600 mb-1';
+            const sel = 'w-full text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-blue-500';
+            openModal('Eksport do PDF', `
+                <div class="space-y-3 max-w-md">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="${lbl}">Format papieru</label>
+                            <select id="pdf-format" class="${sel}"><option value="a4">A4</option><option value="a3" selected>A3</option></select></div>
+                        <div><label class="${lbl}">Orientacja</label>
+                            <select id="pdf-orient" class="${sel}"><option value="auto" selected>Automatyczna</option><option value="landscape">Pozioma</option><option value="portrait">Pionowa</option></select></div>
+                    </div>
+                    <div><label class="${lbl}">Nazwa projektu (tabelka rysunkowa)</label>
+                        <input type="text" id="pdf-title" value="${escapeHtml(currentProjectName)}" class="${sel}"></div>
+                    <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" id="pdf-legend" checked> <span>Dołącz legendę (zestawienie wyposażenia)</span></label>
+                    <p class="text-[10px] text-slate-500">Skala rysunku jest dobierana automatycznie ze skali normalnych (1:10, 1:20, 1:50 …) i podana w tabelce. Przy wydruku w 100% jest zgodna z rzeczywistością.</p>
+                    <button onclick="generatePdf()" class="bg-red-600 hover:bg-red-500 text-white text-xs px-4 py-2 rounded-lg font-medium transition flex items-center gap-2"><i class="fa-solid fa-file-pdf"></i> Generuj PDF</button>
+                </div>`);
+        }
+
+        function generatePdf() {
+            const fmt = document.getElementById('pdf-format').value;
+            const orient = document.getElementById('pdf-orient').value;
+            const title = document.getElementById('pdf-title').value.trim() || 'Projekt stoiska';
+            const withLegend = document.getElementById('pdf-legend').checked;
+
+            deselectAll();
+            const b = getExportBounds();
+            if (!b) { alert('Brak elementów lub tła do wyeksportowania!'); return; }
+            currentProjectName = title;
+            closeModal();
+            showToast('Generowanie PDF…');
+
+            let pw = fmt === 'a3' ? 420 : 297;
+            let ph = fmt === 'a3' ? 297 : 210;
+            const portrait = orient === 'portrait' || (orient === 'auto' && b.height > b.width * 1.15);
+            if (portrait) { const t = pw; pw = ph; ph = t; }
+
+            const M = 10, titleH = 26;
+            const legendW = withLegend ? Math.round(pw * (portrait ? 0.30 : 0.22)) : 0;
+            const areaX = M, areaY = M;
+            const areaW = pw - 2 * M - (withLegend ? legendW + 5 : 0);
+            const areaH = ph - 2 * M - titleH - 5;
+
+            const rw = b.width * 10;   // rzeczywiste mm (1 px = 1 cm)
+            const rh = b.height * 10;
+            const need = Math.max(rw / areaW, rh / areaH);
+            const SCALES = [1, 2, 5, 10, 20, 25, 50, 75, 100, 125, 150, 200, 250, 300, 400, 500, 750, 1000, 1500, 2000];
+            const S = SCALES.find(v => v >= need) || Math.ceil(need);
+            const dw = rw / S, dh = rh / S;
+            const pxmm = 200 / 25.4; // 200 dpi
+
+            const capture = safeExportScale(b, Math.min(8, dw * pxmm / b.width));
+            captureDrawing(b, capture).then(drawCanvas => {
+                const W = Math.round(pw * pxmm), H = Math.round(ph * pxmm);
+                const page = document.createElement('canvas');
+                page.width = W; page.height = H;
+                const ctx = page.getContext('2d');
+                const mm = (v) => v * pxmm;
+                const font = (sizeMm, weight) => { ctx.font = `${weight || '400'} ${mm(sizeMm)}px "Segoe UI", Arial, sans-serif`; };
+                const fit = (text, maxMm) => {
+                    let t = String(text);
+                    if (ctx.measureText(t).width <= mm(maxMm)) return t;
+                    while (t.length > 1 && ctx.measureText(t + '…').width > mm(maxMm)) t = t.slice(0, -1);
+                    return t + '…';
+                };
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, W, H);
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = mm(0.5);
+                ctx.strokeRect(mm(5), mm(5), mm(pw - 10), mm(ph - 10));
+
+                // obszar rysunku
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = mm(0.25);
+                ctx.strokeRect(mm(areaX), mm(areaY), mm(areaW), mm(areaH));
+                const dx = areaX + (areaW - dw) / 2;
+                const dy = areaY + (areaH - dh) / 2;
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(drawCanvas, mm(dx), mm(dy), mm(dw), mm(dh));
+
+                // podziałka liniowa
+                const bars = [0.5, 1, 2, 5, 10, 20, 50];
+                const barM = bars.find(v => { const l = v * 1000 / S; return l >= 15 && l <= 70; }) || bars[bars.length - 1];
+                const barLen = barM * 1000 / S;
+                const bx = areaX + 5, by = areaY + areaH - 9;
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.fillRect(mm(bx - 2), mm(by - 6), mm(barLen + 22), mm(12));
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = mm(0.25);
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(mm(bx), mm(by), mm(barLen / 2), mm(1.6));
+                ctx.strokeRect(mm(bx), mm(by), mm(barLen), mm(1.6));
+                font(2.6, '400');
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillText('0', mm(bx - 0.5), mm(by - 1));
+                ctx.fillText(String(barM / 2), mm(bx + barLen / 2 - 1), mm(by - 1));
+                ctx.fillText(`${barM} m`, mm(bx + barLen - 1), mm(by - 1));
+
+                // legenda
+                const bom = computeBom(objects);
+                const st = computeStats(objects, stand);
+                if (withLegend) {
+                    const lx = pw - M - legendW, ly = areaY;
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = mm(0.25);
+                    ctx.strokeRect(mm(lx), mm(ly), mm(legendW), mm(areaH));
+                    ctx.fillStyle = '#0f172a';
+                    font(3.8, '700');
+                    ctx.fillText('LEGENDA – WYPOSAŻENIE', mm(lx + 3), mm(ly + 7));
+                    ctx.beginPath(); ctx.moveTo(mm(lx), mm(ly + 10)); ctx.lineTo(mm(lx + legendW), mm(ly + 10)); ctx.stroke();
+                    const rowH = 9, footH = 16;
+                    const maxRows = Math.floor((areaH - 10 - footH) / rowH);
+                    bom.slice(0, maxRows).forEach((r, i) => {
+                        const ry = ly + 10 + i * rowH;
+                        ctx.fillStyle = r.color;
+                        ctx.fillRect(mm(lx + 3), mm(ry + 2.2), mm(4.5), mm(4.5));
+                        ctx.strokeStyle = '#475569';
+                        ctx.lineWidth = mm(0.15);
+                        ctx.strokeRect(mm(lx + 3), mm(ry + 2.2), mm(4.5), mm(4.5));
+                        ctx.fillStyle = '#0f172a';
+                        font(3.1, '600');
+                        ctx.fillText(fit(r.name, legendW - 24), mm(lx + 10), mm(ry + 4.3));
+                        font(2.6, '400');
+                        ctx.fillStyle = '#475569';
+                        ctx.fillText(fit(`${r.w} × ${r.h} m · ${r.total.toFixed(2)} m²`, legendW - 24), mm(lx + 10), mm(ry + 7.6));
+                        ctx.fillStyle = '#0f172a';
+                        font(3.4, '700');
+                        const q = `× ${r.qty}`;
+                        ctx.fillText(q, mm(lx + legendW - 3) - ctx.measureText(q).width, mm(ry + 5.4));
+                    });
+                    if (bom.length > maxRows) {
+                        font(2.6, '400');
+                        ctx.fillStyle = '#64748b';
+                        ctx.fillText(`… oraz ${bom.length - maxRows} poz. więcej`, mm(lx + 3), mm(ly + 10 + maxRows * rowH + 4));
+                    }
+                    const fy = ly + areaH - footH;
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.beginPath(); ctx.moveTo(mm(lx), mm(fy)); ctx.lineTo(mm(lx + legendW), mm(fy)); ctx.stroke();
+                    ctx.fillStyle = '#0f172a';
+                    font(3, '600');
+                    ctx.fillText(`Razem elementów: ${st.count}`, mm(lx + 3), mm(fy + 5.5));
+                    ctx.fillText(`Pow. zajęta: ${st.occupied.toFixed(2)} m²`, mm(lx + 3), mm(fy + 10.5));
+                }
+
+                // tabelka rysunkowa
+                const tx = M, ty = ph - M - titleH, tw = pw - 2 * M;
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = mm(0.4);
+                ctx.strokeRect(mm(tx), mm(ty), mm(tw), mm(titleH));
+                const areaText = stand ? `${st.standArea.toFixed(2)} m² (stoisko)` : `${st.bbox.toFixed(2)} m² (obrys)`;
+                const cells = [
+                    ['PROJEKT', title, 0.34],
+                    ['WARIANT', variants[activeVariant] ? variants[activeVariant].name : '', 0.17],
+                    ['DATA', new Date().toLocaleDateString('pl-PL'), 0.11],
+                    ['SKALA', `1:${S}`, 0.09],
+                    ['FORMAT', `${fmt.toUpperCase()} ${portrait ? 'pion' : 'poziom'}`, 0.10],
+                    ['POWIERZCHNIA', areaText, 0.19]
+                ];
+                let cx = tx;
+                cells.forEach(([lab, val, frac], i) => {
+                    const cw = tw * frac;
+                    if (i > 0) { ctx.beginPath(); ctx.moveTo(mm(cx), mm(ty)); ctx.lineTo(mm(cx), mm(ty + titleH)); ctx.stroke(); }
+                    ctx.fillStyle = '#64748b';
+                    font(2.6, '600');
+                    ctx.fillText(lab, mm(cx + 2.5), mm(ty + 6));
+                    ctx.fillStyle = '#0f172a';
+                    font(i === 0 ? 6 : 4.6, '700');
+                    ctx.fillText(fit(val, cw - 5), mm(cx + 2.5), mm(ty + 17.5));
+                    cx += cw;
+                });
+
+                const imgData = page.toDataURL('image/png');
+                const safeName = title.replace(/[^\p{L}\p{N}_-]+/gu, '_').replace(/^_+|_+$/g, '') || 'rzut-stoiska';
+                if (window.jspdf && window.jspdf.jsPDF) {
+                    const pdf = new window.jspdf.jsPDF({ orientation: portrait ? 'portrait' : 'landscape', unit: 'mm', format: fmt });
+                    pdf.addImage(imgData, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
+                    pdf.save(`${safeName}.pdf`);
+                    showToast('PDF zapisany.');
+                } else {
+                    const a = document.createElement('a');
+                    a.href = imgData; a.download = `${safeName}.png`; a.click();
+                    alert('Biblioteka PDF nie została wczytana (brak połączenia z internetem?). Zapisano arkusz jako plik PNG.');
+                }
+            }).catch(() => {
+                alert('Błąd podczas generowania pliku PDF.');
+            });
+        }
+
     </script>
 </body>
 </html>
