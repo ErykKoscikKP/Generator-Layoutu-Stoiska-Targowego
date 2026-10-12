@@ -145,7 +145,7 @@
             </div>
             <div class="hidden sm:block">
                 <h1 class="font-semibold text-sm md:text-base leading-tight">Planer Stoisk Targowych CAD</h1>
-                <p class="text-[11px] text-slate-400 hidden sm:block">Skala: 1 px = 1 cm | [Prawy przycisk] Przesuwanie siatki | [Podwójny klik] Zaznacz wszystko | [C] Centruj</p>
+                <p class="text-[11px] text-slate-400 hidden sm:block"> [Prawy przycisk myszy] Przesuwanie siatki | [Podwójny klik] Zaznacz wszystko | [Klawisz C] Centruj grupę lub obiekt</p>
             </div>
         </div>
 
@@ -2558,7 +2558,7 @@
                 lines.push([q('Powierzchnia stoiska [m²]'), '', '', '', '', fmtM2(st.standArea)].join(';'));
                 lines.push([q('Zajęcie stoiska [%]'), '', '', '', '', st.fillPct.toFixed(1).replace('.', ',')].join(';'));
             }
-            const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+            const blob = new Blob(['' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url; a.download = 'zestawienie-wyposazenia.csv'; a.click();
